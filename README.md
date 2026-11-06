@@ -10,9 +10,9 @@ Spring Boot 4 · Java 17 · Gradle · MySQL 8 · Thymeleaf · HTML/JavaScript/jQ
 
 | GitHub | 이름 | 맡은 기능 |
 |---|---|---|
-| [jihun-moon](https://github.com/jihun-moon) (팀장) | | |
-| [khs219012](https://github.com/khs219012) | | |
-| [Parkjaehyun1204](https://github.com/Parkjaehyun1204) | | |
+| [jihun-moon](https://github.com/jihun-moon) (팀장) | 문지훈 | |
+| [khs219012](https://github.com/khs219012) | 김현수 | |
+| [Parkjaehyun1204](https://github.com/Parkjaehyun1204) | 박재현 | |
 
 ## 진행 순서
 

@@ -23,7 +23,7 @@ Spring Boot 4 · Java 17 · Gradle · MySQL 8 · Thymeleaf · HTML/JavaScript/jQ
 5. [역할 분담과 일정](docs/05-역할분담.md)
 6. 구현 → 각자 [내 파트 정리](docs/parts/_틀.md) → 발표
 
-같이 작업하는 법은 [CONTRIBUTING.md](CONTRIBUTING.md), 코드 규칙은 [팀 코드 규칙](.claude/skills/practical-code-style/SKILL.md)에 있습니다.
+같이 작업하는 법은 [CONTRIBUTING.md](CONTRIBUTING.md), 코드 규칙은 [팀 코드 규칙](docs/코드-규칙.md)에 있습니다.
 
 ## 실행
 

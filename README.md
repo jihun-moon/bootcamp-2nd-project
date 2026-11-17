@@ -1,36 +1,22 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TripMate
 
-## Getting Started
+다인원 여행의 역할 배정과 숙소 투표를 돕는 웹 서비스.
 
-First, run the development server:
+| 폴더 | 무엇 | 여는 곳 |
+|---|---|---|
+| `backend/` | Spring Boot 4.1 · Java 25 · JPA · H2(로컬) / Postgres(배포) | IntelliJ에서 `backend/build.gradle` 열기 |
+| `frontend/` | Next.js 16 · TypeScript · Tailwind | IntelliJ(Ultimate) 또는 VS Code |
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 로컬 실행
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. 백엔드: IntelliJ에서 `BackendApplication` 실행, 또는 `cd backend && ./gradlew bootRun` → http://localhost:8080
+2. 프론트: `cd frontend && npm install && npm run dev` → http://localhost:3000
+3. 예시 방: http://localhost:3000/trips/1 (백엔드가 켤 때마다 넣어 둔다)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+브라우저는 `/api/*` 를 Next 로 부르고 Next 가 `BACKEND_URL`(기본 `http://localhost:8080`)로 넘긴다.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 지금 된 것 / 목업인 것
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- API 연결: 여행방 조회 `GET /api/trips/{id}`, 생성 `POST /api/trips`
+- 목업(`frontend/src/lib/mock.ts`): 역할 추천, 역할 보드, 그룹 취향, 숙소 매트릭스
+- 화면만: 설문 저장, 카카오 로그인, 초대 링크, 숙소 링크 추가

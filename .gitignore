@@ -1,0 +1,4 @@
+# IntelliJ 개인 설정. 팀이 같이 쓸 실행 설정은 .run/ 에 둔다
+.idea/
+*.iml
+.DS_Store

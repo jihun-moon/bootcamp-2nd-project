@@ -36,10 +36,19 @@ export type RoleBoard = {
   assignments: Assignment[];
 };
 
-// 아래는 아직 API 가 없어 목업으로만 쓴다
+// Spring StayDto.Board
 export type Stay = {
-  id: string;
+  id: number;
   title: string;
   url: string;
-  tags: string[];
+  imageUrl: string | null;
+  amenities: string[];
+  voterIds: number[];
+};
+
+export type StayBoard = {
+  amenities: { key: string; label: string }[];
+  preferences: Record<string, { avg: number; min: number }>;
+  surveyed: number;
+  stays: Stay[];
 };

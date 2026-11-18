@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import type { RoleBoard, Trip } from "./types";
+import type { RoleBoard, StayBoard, Trip } from "./types";
 
 // 서버 컴포넌트는 rewrite 를 거치지 않으니 Spring 주소로 바로 부른다
 const backendUrl = process.env.BACKEND_URL ?? "http://localhost:8080";
@@ -16,3 +16,6 @@ export const getTrip = (tripId: string) => get<Trip>(`/api/trips/${tripId}`);
 
 // GET: /api/trips/1/roles
 export const getRoleBoard = (tripId: string) => get<RoleBoard>(`/api/trips/${tripId}/roles`);
+
+// GET: /api/trips/1/stays
+export const getStayBoard = (tripId: string) => get<StayBoard>(`/api/trips/${tripId}/stays`);

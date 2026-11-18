@@ -10,7 +10,7 @@ public interface SurveyAnswerRepository extends JpaRepository<SurveyAnswer, Long
 
     Optional<SurveyAnswer> findByMemberId(Long memberId);
 
-    // 매칭은 방 전체 설문을 한 번에 읽는다. avoid 는 점수에 쓰니 같이 읽는다
-    @EntityGraph(attributePaths = {"member", "avoid"})
+    // 매칭과 그룹 취향은 방 전체 설문을 한 번에 읽는다. avoid·preferences 를 따로 부르면 사람 수만큼 쿼리가 나간다
+    @EntityGraph(attributePaths = {"member", "avoid", "preferences"})
     List<SurveyAnswer> findByMemberTripId(Long tripId);
 }

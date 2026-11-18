@@ -34,8 +34,9 @@ public class TripEvents {
         return emitter;
     }
 
-    // 커밋 뒤에 보낸다. 먼저 보내면 화면이 커밋 전 옛 값을 다시 읽어 간다
-    @TransactionalEventListener
+    // 커밋 뒤에 보낸다. 먼저 보내면 화면이 커밋 전 옛 값을 다시 읽어 간다.
+    // 숙소 추가처럼 트랜잭션 밖에서 저장을 마친 경우는 바로 보낸다(fallbackExecution)
+    @TransactionalEventListener(fallbackExecution = true)
     void send(TripChanged event) {
         sendAll(emitters.getOrDefault(event.tripId(), Set.of()), "change", event.what());
     }

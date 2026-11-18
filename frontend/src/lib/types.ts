@@ -15,21 +15,28 @@ export type Trip = {
   members: Member[];
 };
 
-// 아래는 아직 API 가 없어 목업으로만 쓴다
+// Spring RoleDto.Board
 export type Role = {
-  id: string;
+  id: number;
   title: string;
   required: boolean;
+  capacity: number;
   tasks: string[];
 };
 
 export type Assignment = {
-  roleId: string;
+  roleId: number;
   memberId: number;
   reasons: string[];
   version: number;
 };
 
+export type RoleBoard = {
+  roles: Role[];
+  assignments: Assignment[];
+};
+
+// 아래는 아직 API 가 없어 목업으로만 쓴다
 export type Stay = {
   id: string;
   title: string;

@@ -1,24 +1,6 @@
-import type { Assignment, Role, Stay } from "./types";
+import type { Stay } from "./types";
 
-// 역할·숙소 API 가 생기기 전까지 화면을 채우는 값. memberId 는 백엔드 예시 방(id 1)의 참여자 id
-
-export const roles: Role[] = [
-  { id: "r1", title: "총무·타임라인", required: true, tasks: ["회비 걷기", "일정표 공유"] },
-  { id: "r2", title: "운전", required: true, tasks: ["차량 픽업", "주유"] },
-  { id: "r3", title: "장보기", required: true, tasks: ["고기 사기", "술·음료"] },
-  { id: "r4", title: "바베큐 세팅", required: false, tasks: ["그릴 준비", "뒷정리"] },
-  { id: "r5", title: "여행 DJ", required: false, tasks: ["플레이리스트"] },
-  { id: "r6", title: "기록 담당", required: false, tasks: ["사진·영상", "후기 정리"] },
-];
-
-export const assignments: Assignment[] = [
-  { roleId: "r1", memberId: 1, reasons: ["계획형 +3"], version: 1 },
-  { roleId: "r2", memberId: 3, reasons: ["자차 보유 +4"], version: 1 },
-  { roleId: "r2", memberId: 5, reasons: ["자차 보유 +4"], version: 1 },
-  { roleId: "r3", memberId: 2, reasons: ["요리 선호 +2"], version: 1 },
-  { roleId: "r4", memberId: 7, reasons: ["이동 적은 역할 우선 +2"], version: 1 },
-  { roleId: "r6", memberId: 8, reasons: ["촬영 선호 +3"], version: 1 },
-];
+// 숙소 API 가 생기기 전까지 화면을 채우는 값
 
 // 숙소 매트릭스의 열이자 그룹 취향 차트의 축
 export const stayTags = ["독채", "개별 바베큐", "온수풀", "노래방", "방 3개 이상", "화장실 2개", "1층·엘리베이터"];

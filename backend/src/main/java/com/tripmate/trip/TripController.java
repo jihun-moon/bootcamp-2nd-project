@@ -1,5 +1,7 @@
 package com.tripmate.trip;
 
+import com.tripmate.role.Role;
+import com.tripmate.role.RoleRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,9 +14,11 @@ import org.springframework.web.server.ResponseStatusException;
 public class TripController {
 
     private final TripRepository tripRepository;
+    private final RoleRepository roleRepository;
 
-    public TripController(TripRepository tripRepository) {
+    public TripController(TripRepository tripRepository, RoleRepository roleRepository) {
         this.tripRepository = tripRepository;
+        this.roleRepository = roleRepository;
     }
 
     // GET: /api/trips/1
@@ -34,6 +38,7 @@ public class TripController {
         // 로그인 붙기 전이라 만든 사람을 이름 없이 방장으로 넣는다
         trip.addMember("방장", true);
         tripRepository.save(trip);
+        roleRepository.saveAll(Role.defaultsFor(trip));
         return ResponseEntity.status(HttpStatus.CREATED).body(TripDto.Response.from(trip));
     }
 }

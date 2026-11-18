@@ -17,6 +17,8 @@
 
 ## 지금 된 것 / 목업인 것
 
-- API 연결: 여행방 조회 `GET /api/trips/{id}`, 생성 `POST /api/trips`
-- 목업(`frontend/src/lib/mock.ts`): 역할 추천, 역할 보드, 그룹 취향, 숙소 매트릭스
-- 화면만: 설문 저장, 카카오 로그인, 초대 링크, 숙소 링크 추가
+- API 연결: 여행방 조회·생성, 설문 저장·조회, 역할 보드 조회, 역할 추천([알고리즘 설명](docs/matching.md))
+- 목업(`frontend/src/lib/mock.ts`): 그룹 취향, 숙소 매트릭스
+- 화면만: 카드 이동 저장, 카카오 로그인, 초대 링크, 숙소 링크 추가
+
+설계: [ERD](docs/erd.md)

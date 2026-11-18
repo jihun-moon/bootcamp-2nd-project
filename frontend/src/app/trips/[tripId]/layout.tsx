@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { getTrip } from "@/lib/api";
+import LiveRefresh from "./LiveRefresh";
 import TripTabs from "./TripTabs";
 
 async function TripHeader({ params }: { params: Promise<{ tripId: string }> }) {
@@ -29,6 +30,7 @@ export default function TripLayout({ children, params }: LayoutProps<"/trips/[tr
       </header>
       <Suspense fallback={<div className="h-10 border-b border-line" />}>
         <TripTabs />
+        <LiveRefresh />
       </Suspense>
       <main className="pt-6">{children}</main>
     </div>

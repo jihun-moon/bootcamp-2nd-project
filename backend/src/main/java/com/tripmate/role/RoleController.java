@@ -3,7 +3,9 @@ package com.tripmate.role;
 import com.tripmate.survey.SurveyAnswer;
 import com.tripmate.survey.SurveyAnswerRepository;
 import com.tripmate.trip.MemberRepository;
+import com.tripmate.trip.TripChanged;
 import com.tripmate.trip.TripRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -31,14 +33,17 @@ public class RoleController {
     private final RoleRepository roleRepository;
     private final AssignmentRepository assignmentRepository;
     private final SurveyAnswerRepository surveyAnswerRepository;
+    private final ApplicationEventPublisher events;
 
     public RoleController(TripRepository tripRepository, MemberRepository memberRepository, RoleRepository roleRepository,
-                          AssignmentRepository assignmentRepository, SurveyAnswerRepository surveyAnswerRepository) {
+                          AssignmentRepository assignmentRepository, SurveyAnswerRepository surveyAnswerRepository,
+                          ApplicationEventPublisher events) {
         this.tripRepository = tripRepository;
         this.memberRepository = memberRepository;
         this.roleRepository = roleRepository;
         this.assignmentRepository = assignmentRepository;
         this.surveyAnswerRepository = surveyAnswerRepository;
+        this.events = events;
     }
 
     // PATCH: /api/trips/1/roles/assignments/2  body = RoleDto.MoveRequest 위 주석의 JSON
@@ -65,6 +70,7 @@ public class RoleController {
         }
         // version 이 올라간 값을 응답에 담으려면 먼저 DB 에 내보내야 한다
         assignmentRepository.flush();
+        events.publishEvent(new TripChanged(tripId, "roles"));
         return ResponseEntity.ok(RoleDto.Board.of(roleRepository.findByTripIdOrderById(tripId),
                 assignmentRepository.findByRoleTripIdOrderById(tripId)));
     }
@@ -126,6 +132,7 @@ public class RoleController {
             created.add(new Assignment(members.get(i), role, scores[i][roles.indexOf(role)].reasons()));
         }
         assignmentRepository.saveAll(created);
+        events.publishEvent(new TripChanged(tripId, "roles"));
         return ResponseEntity.ok(RoleDto.Board.of(roles, created));
     }
 }

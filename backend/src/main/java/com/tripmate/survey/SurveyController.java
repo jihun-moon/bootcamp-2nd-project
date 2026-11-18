@@ -4,6 +4,8 @@ import com.tripmate.role.Chore;
 import com.tripmate.stay.Amenity;
 import com.tripmate.trip.Member;
 import com.tripmate.trip.MemberRepository;
+import com.tripmate.trip.TripChanged;
+import org.springframework.context.ApplicationEventPublisher;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,10 +22,13 @@ public class SurveyController {
 
     private final MemberRepository memberRepository;
     private final SurveyAnswerRepository surveyAnswerRepository;
+    private final ApplicationEventPublisher events;
 
-    public SurveyController(MemberRepository memberRepository, SurveyAnswerRepository surveyAnswerRepository) {
+    public SurveyController(MemberRepository memberRepository, SurveyAnswerRepository surveyAnswerRepository,
+                            ApplicationEventPublisher events) {
         this.memberRepository = memberRepository;
         this.surveyAnswerRepository = surveyAnswerRepository;
+        this.events = events;
     }
 
     // PUT: /api/trips/1/members/2/survey  body = SurveyDto.Request 위 주석의 JSON
@@ -39,6 +44,7 @@ public class SurveyController {
         var preferences = (req.preferences() == null) ? Map.<Amenity, Integer>of() : req.preferences();
         survey.update(req.activity(), req.planning(), req.hasCar(), req.separateDeparture(),
                 req.mobilityLimited(), avoid, preferences);
+        events.publishEvent(new TripChanged(tripId, "members"));
         return ResponseEntity.ok(SurveyDto.Response.of(survey, true));
     }
 

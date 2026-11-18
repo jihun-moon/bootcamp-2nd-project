@@ -14,8 +14,14 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  // 카카오 로그인 시작(/oauth2/...)과 카카오가 돌려보내는 곳(/login/oauth2/...)도 Spring 이 처리한다.
+  // 같은 출처로 넘겨야 세션 쿠키가 프론트 주소에 붙는다
   async rewrites() {
-    return [{ source: "/api/:path*", destination: `${backendUrl}/api/:path*` }];
+    return [
+      { source: "/api/:path*", destination: `${backendUrl}/api/:path*` },
+      { source: "/oauth2/:path*", destination: `${backendUrl}/oauth2/:path*` },
+      { source: "/login/oauth2/:path*", destination: `${backendUrl}/login/oauth2/:path*` },
+    ];
   },
 };
 

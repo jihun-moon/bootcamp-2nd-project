@@ -11,6 +11,7 @@ export default async function RolesPage({ params }: PageProps<"/trips/[tripId]">
     <RoleBoard
       key={board.assignments.map((a) => `${a.memberId}:${a.roleId}:${a.version}`).join()}
       tripId={tripId}
+      isHost={trip.members.some((m) => m.id === trip.meId && m.host)}
       members={trip.members}
       roles={board.roles}
       initial={board.assignments}

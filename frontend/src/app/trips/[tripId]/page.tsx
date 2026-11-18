@@ -1,4 +1,5 @@
 import { getTrip } from "@/lib/api";
+import InviteButton from "./InviteButton";
 
 export default async function TripOverview({ params }: PageProps<"/trips/[tripId]">) {
   const { tripId } = await params;
@@ -20,8 +21,7 @@ export default async function TripOverview({ params }: PageProps<"/trips/[tripId
       <section className="rounded-xl border border-line bg-card p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="font-semibold">참여자</h2>
-          {/* 초대 링크 발급은 방 API 에 초대 코드가 생기면 붙인다 */}
-          <button className="text-sm text-accent">초대 링크 복사</button>
+          <InviteButton code={trip.inviteCode} />
         </div>
         <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {trip.members.map((m) => (

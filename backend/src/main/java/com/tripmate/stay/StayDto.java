@@ -1,7 +1,6 @@
 package com.tripmate.stay;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -14,12 +13,11 @@ public final class StayDto {
     private StayDto() {
     }
 
-    // { "url": "https://example.com/stay/1", "title": "숲속 독채", "amenities": ["DETACHED", "PRIVATE_BBQ"], "addedBy": 2 }
-    // title 을 비우면 링크의 og:title 을 쓴다
+    // { "url": "https://example.com/stay/1", "title": "숲속 독채", "amenities": ["DETACHED", "PRIVATE_BBQ"] }
+    // title 을 비우면 링크의 og:title 을 쓴다. 올린 사람은 로그인한 본인
     public record CreateRequest(@NotBlank @Size(max = 2000) @Pattern(regexp = "https?://\\S+") String url,
                                 @Size(max = 200) String title,
-                                Set<Amenity> amenities,
-                                @NotNull Long addedBy) {
+                                Set<Amenity> amenities) {
     }
 
     // { "stayId": 3 }   stayId null = 표 취소

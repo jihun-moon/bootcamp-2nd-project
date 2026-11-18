@@ -1,5 +1,6 @@
 package com.tripmate.trip;
 
+import com.tripmate.user.AppUser;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -37,8 +38,10 @@ public class Trip {
         this.endDate = endDate;
     }
 
-    public void addMember(String name, boolean host) {
-        members.add(new Member(this, name, host));
+    public Member addMember(AppUser user, String name, boolean host) {
+        var member = new Member(this, user, name, host);
+        members.add(member);
+        return member;
     }
 
     public Long getId() { return id; }

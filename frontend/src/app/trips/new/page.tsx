@@ -18,6 +18,10 @@ export default function NewTrip() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
+    if (res.status === 401) {
+      router.push(`/login?next=${encodeURIComponent("/trips/new")}`);
+      return;
+    }
     if (!res.ok) {
       setError("방을 만들지 못했어요. 여행 이름을 확인해 주세요.");
       return;

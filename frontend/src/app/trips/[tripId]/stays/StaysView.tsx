@@ -4,14 +4,12 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Member, StayBoard } from "@/lib/types";
 
-type Props = { tripId: string; members: Member[]; board: StayBoard };
+type Props = { tripId: string; meId: number; members: Member[]; board: StayBoard };
 
 const field = "w-full rounded-lg border border-line bg-card px-3 py-2 text-sm";
 
-export default function StaysView({ tripId, members, board }: Props) {
+export default function StaysView({ tripId, meId, members, board }: Props) {
   const router = useRouter();
-  // shortcut: 로그인 전이라 투표·등록할 사람을 목록에서 고른다. 카카오 로그인 붙이면 뺀다
-  const [meId, setMeId] = useState<number | null>(null);
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState("");
 
@@ -20,11 +18,10 @@ export default function StaysView({ tripId, members, board }: Props) {
   // 그룹이 원하는 정도(평균)를 숙소가 가진 조건만큼 더한다. 갈림(최솟값 1) 표시는 점수와 따로 보여 준다
   const score = (keys: string[]) => keys.reduce((sum, k) => sum + (preferences[k]?.avg ?? 0), 0);
   const ranked = [...board.stays].sort((a, b) => score(b.amenities) - score(a.amenities) || a.id - b.id);
-  const myVote = board.stays.find((s) => meId !== null && s.voterIds.includes(meId))?.id ?? null;
+  const myVote = board.stays.find((s) => s.voterIds.includes(meId))?.id ?? null;
 
   // PUT: /api/trips/1/votes/2  { "stayId": 3 }  같은 숙소를 다시 누르면 취소(null)
   async function vote(stayId: number) {
-    if (meId === null) return;
     setError("");
     const res = await fetch(`/api/trips/${tripId}/votes/${meId}`, {
       method: "PUT",
@@ -35,9 +32,8 @@ export default function StaysView({ tripId, members, board }: Props) {
     router.refresh();
   }
 
-  // POST: /api/trips/1/stays  { "url": "...", "title": "...", "amenities": ["DETACHED"], "addedBy": 2 }
+  // POST: /api/trips/1/stays  { "url": "...", "title": "...", "amenities": ["DETACHED"] }
   async function addStay(form: FormData) {
-    if (meId === null) return;
     setAdding(true);
     setError("");
     const res = await fetch(`/api/trips/${tripId}/stays`, {
@@ -47,7 +43,6 @@ export default function StaysView({ tripId, members, board }: Props) {
         url: form.get("url"),
         title: form.get("title") || null,
         amenities: form.getAll("amenities"),
-        addedBy: meId,
       }),
     });
     setAdding(false);
@@ -60,20 +55,6 @@ export default function StaysView({ tripId, members, board }: Props) {
 
   return (
     <div className="space-y-6">
-      <label className="flex items-center gap-2 text-sm">
-        <span className="text-muted">나는</span>
-        <select
-          value={meId ?? ""}
-          onChange={(e) => setMeId(e.target.value ? Number(e.target.value) : null)}
-          className="rounded-lg border border-line bg-card px-2 py-1"
-        >
-          <option value="">선택하세요</option>
-          {members.map((m) => (
-            <option key={m.id} value={m.id}>{m.name}</option>
-          ))}
-        </select>
-        {meId === null && <span className="text-muted">고르면 투표하고 숙소를 올릴 수 있어요</span>}
-      </label>
 
       <section className="rounded-xl border border-line bg-card p-4">
         <h2 className="mb-1 font-semibold">우리 그룹이 중요하게 보는 것</h2>
@@ -139,7 +120,6 @@ export default function StaysView({ tripId, members, board }: Props) {
                   <td className="p-3 text-center">
                     <button
                       onClick={() => vote(stay.id)}
-                      disabled={meId === null}
                       aria-pressed={myVote === stay.id}
                       className={`rounded-lg border px-3 py-1 disabled:opacity-40 ${
                         myVote === stay.id ? "border-accent bg-accent text-white" : "border-line"
@@ -177,7 +157,7 @@ export default function StaysView({ tripId, members, board }: Props) {
           ))}
         </fieldset>
         <button
-          disabled={meId === null || adding}
+          disabled={adding}
           className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
         >
           {adding ? "올리는 중…" : "올리기"}

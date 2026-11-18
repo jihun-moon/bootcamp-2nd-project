@@ -9,12 +9,14 @@ const UNASSIGNED = -1;
 
 type Props = {
   tripId: string;
+  // 추천은 모두의 배정을 갈아엎으니 방장만 누른다(서버도 막는다)
+  isHost: boolean;
   members: Member[];
   roles: Role[];
   initial: Assignment[];
 };
 
-export default function RoleBoard({ tripId, members, roles, initial }: Props) {
+export default function RoleBoard({ tripId, isHost, members, roles, initial }: Props) {
   const router = useRouter();
   const [board, setBoard] = useState(initial);
   const [dragging, setDragging] = useState<number | null>(null);
@@ -75,13 +77,15 @@ export default function RoleBoard({ tripId, members, roles, initial }: Props) {
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-muted">카드를 끌어 다른 역할로 옮길 수 있어요.</p>
-        <button
-          onClick={recommend}
-          disabled={recommending}
-          className="shrink-0 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-        >
-          {recommending ? "계산 중…" : board.length ? "다시 추천받기" : "설문으로 추천받기"}
-        </button>
+        {isHost && (
+          <button
+            onClick={recommend}
+            disabled={recommending}
+            className="shrink-0 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          >
+            {recommending ? "계산 중…" : board.length ? "다시 추천받기" : "설문으로 추천받기"}
+          </button>
+        )}
       </div>
       {notice && (
         <p role="status" className="rounded-lg border border-amber-400 px-3 py-2 text-sm">

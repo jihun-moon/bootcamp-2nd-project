@@ -77,10 +77,8 @@ const amenities = [
 const box = "space-y-4 rounded-xl border border-line bg-card p-6";
 const choice = "rounded-lg border border-line px-4 py-3 text-left hover:border-accent";
 
-export default function SurveyForm({ tripId, members }: { tripId: string; members: Member[] }) {
+export default function SurveyForm({ tripId, me }: { tripId: string; me: Member }) {
   const router = useRouter();
-  // shortcut: 로그인 전이라 본인을 목록에서 고른다. 카카오 로그인 붙이면 이 단계를 뺀다
-  const [me, setMe] = useState<Member | null>(null);
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
   const [preferences, setPreferences] = useState<Record<string, number>>(
@@ -90,7 +88,6 @@ export default function SurveyForm({ tripId, members }: { tripId: string; member
 
   // PUT: /api/trips/1/members/2/survey  body = { ...answers, preferences }
   async function submit() {
-    if (!me) return;
     setStatus("saving");
     const res = await fetch(`/api/trips/${tripId}/members/${me.id}/survey`, {
       method: "PUT",
@@ -102,25 +99,8 @@ export default function SurveyForm({ tripId, members }: { tripId: string; member
   }
 
   function restart() {
-    setMe(null);
     setStep(0);
     setStatus("idle");
-  }
-
-  if (!me) {
-    return (
-      <div className={box}>
-        <h2 className="text-xl font-semibold">누구세요?</h2>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {members.map((m) => (
-            <button key={m.id} onClick={() => setMe(m)} className={choice}>
-              {m.name}
-              <span className="block text-xs text-muted">{m.surveyDone ? "다시 하기" : "설문 전"}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-    );
   }
 
   const total = questions.length + 1;
@@ -137,7 +117,7 @@ export default function SurveyForm({ tripId, members }: { tripId: string; member
     return (
       <div className={box}>
         <h2 className="text-lg font-semibold">{me.name}님 설문을 저장했어요</h2>
-        <button onClick={restart} className="text-sm text-accent">다른 사람 설문하기</button>
+        <button onClick={restart} className="text-sm text-accent">다시 하기</button>
       </div>
     );
   }

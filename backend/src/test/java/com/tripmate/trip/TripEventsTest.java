@@ -1,10 +1,13 @@
 package com.tripmate.trip;
 
+import com.tripmate.TestLogin;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,19 +26,27 @@ class TripEventsTest {
     @Autowired
     MockMvc mvc;
 
+    // 8 시우
+    MockHttpSession siwoo;
+
+    @BeforeEach
+    void login() throws Exception {
+        siwoo = TestLogin.as(mvc, "시우");
+    }
+
     @Test
     void 저장이_커밋되면_구독자에게_알린다() throws Exception {
-        var stream = mvc.perform(get("/api/trips/1/events"))
+        var stream = mvc.perform(get("/api/trips/1/events").session(siwoo))
                 .andExpect(request().asyncStarted())
                 .andReturn().getResponse();
 
-        mvc.perform(put("/api/trips/1/members/8/survey").contentType(MediaType.APPLICATION_JSON).content("""
+        mvc.perform(put("/api/trips/1/members/8/survey").session(siwoo).contentType(MediaType.APPLICATION_JSON).content("""
                 { "activity": "BOTH", "planning": "OUTLINE", "hasCar": false, "separateDeparture": false,
                   "mobilityLimited": false, "avoid": [] }
                 """)).andExpect(status().isOk());
-        mvc.perform(patch("/api/trips/1/roles/assignments/8").contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(patch("/api/trips/1/roles/assignments/8").session(siwoo).contentType(MediaType.APPLICATION_JSON)
                 .content("{ \"roleId\": 5, \"version\": null }")).andExpect(status().isOk());
-        mvc.perform(patch("/api/trips/1/roles/assignments/8").contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(patch("/api/trips/1/roles/assignments/8").session(siwoo).contentType(MediaType.APPLICATION_JSON)
                 .content("{ \"roleId\": null, \"version\": 0 }")).andExpect(status().isOk());
 
         assertThat(stream.getContentAsString())
@@ -46,9 +57,9 @@ class TripEventsTest {
 
     @Test
     void 막힌_이동은_알리지_않는다() throws Exception {
-        var stream = mvc.perform(get("/api/trips/1/events")).andReturn().getResponse();
+        var stream = mvc.perform(get("/api/trips/1/events").session(siwoo)).andReturn().getResponse();
 
-        mvc.perform(patch("/api/trips/1/roles/assignments/8").contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(patch("/api/trips/1/roles/assignments/8").session(siwoo).contentType(MediaType.APPLICATION_JSON)
                 .content("{ \"roleId\": 5, \"version\": 7 }")).andExpect(status().isConflict());
 
         assertThat(stream.getContentAsString()).doesNotContain("event:change");
@@ -59,7 +70,7 @@ class TripEventsTest {
 
     @Test
     void 조용할_때도_ping_을_보낸다() throws Exception {
-        var stream = mvc.perform(get("/api/trips/1/events")).andReturn().getResponse();
+        var stream = mvc.perform(get("/api/trips/1/events").session(siwoo)).andReturn().getResponse();
 
         tripEvents.ping();
 
@@ -68,6 +79,6 @@ class TripEventsTest {
 
     @Test
     void 없는_방은_404() throws Exception {
-        mvc.perform(get("/api/trips/999/events")).andExpect(status().isNotFound());
+        mvc.perform(get("/api/trips/999/events").session(siwoo)).andExpect(status().isNotFound());
     }
 }

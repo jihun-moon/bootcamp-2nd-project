@@ -3,6 +3,7 @@ package com.tripmate.role;
 import com.tripmate.survey.SurveyAnswer;
 import com.tripmate.survey.SurveyAnswerRepository;
 import com.tripmate.trip.MemberRepository;
+import com.tripmate.trip.TripAccess;
 import com.tripmate.trip.TripChanged;
 import com.tripmate.trip.TripRepository;
 import org.springframework.context.ApplicationEventPublisher;
@@ -34,24 +35,28 @@ public class RoleController {
     private final AssignmentRepository assignmentRepository;
     private final SurveyAnswerRepository surveyAnswerRepository;
     private final ApplicationEventPublisher events;
+    private final TripAccess tripAccess;
 
     public RoleController(TripRepository tripRepository, MemberRepository memberRepository, RoleRepository roleRepository,
                           AssignmentRepository assignmentRepository, SurveyAnswerRepository surveyAnswerRepository,
-                          ApplicationEventPublisher events) {
+                          ApplicationEventPublisher events, TripAccess tripAccess) {
         this.tripRepository = tripRepository;
         this.memberRepository = memberRepository;
         this.roleRepository = roleRepository;
         this.assignmentRepository = assignmentRepository;
         this.surveyAnswerRepository = surveyAnswerRepository;
         this.events = events;
+        this.tripAccess = tripAccess;
     }
 
     // PATCH: /api/trips/1/roles/assignments/2  body = RoleDto.MoveRequest 위 주석의 JSON
-    // 클라이언트가 본 version 과 지금 version 이 다르면 그 사이 누가 옮긴 것이라 409 로 막는다
+    // 클라이언트가 본 version 과 지금 version 이 다르면 그 사이 누가 옮긴 것이라 409 로 막는다.
+    // 보드는 같이 쓰는 것이라 방 참여자면 누구 카드든 옮길 수 있다
     @PatchMapping("/assignments/{memberId}")
     @Transactional
     public ResponseEntity<RoleDto.Board> move(@PathVariable Long tripId, @PathVariable Long memberId,
                                               @RequestBody RoleDto.MoveRequest req) {
+        tripAccess.me(tripId);
         var member = memberRepository.findByIdAndTripId(memberId, tripId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         var target = (req.roleId() == null) ? null : roleRepository.findByIdAndTripId(req.roleId(), tripId)
@@ -85,16 +90,17 @@ public class RoleController {
     @GetMapping
     @Transactional(readOnly = true)
     public ResponseEntity<RoleDto.Board> getBoard(@PathVariable Long tripId) {
-        if (!tripRepository.existsById(tripId)) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        tripAccess.me(tripId);
         return ResponseEntity.ok(RoleDto.Board.of(roleRepository.findByTripIdOrderById(tripId),
                 assignmentRepository.findByRoleTripIdOrderById(tripId)));
     }
 
     // POST: /api/trips/1/roles/recommend
-    // 손으로 옮긴 배정까지 지우고 설문으로 처음부터 다시 짠다
+    // 손으로 옮긴 배정까지 지우고 설문으로 처음부터 다시 짠다. 모두의 배정을 갈아엎으니 방장만
     @PostMapping("/recommend")
     @Transactional
     public ResponseEntity<RoleDto.Board> recommend(@PathVariable Long tripId) {
+        tripAccess.host(tripId);
         var trip = tripRepository.findWithMembersById(tripId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         var members = trip.getMembers();

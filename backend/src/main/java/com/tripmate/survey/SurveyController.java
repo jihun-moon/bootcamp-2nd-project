@@ -2,8 +2,8 @@ package com.tripmate.survey;
 
 import com.tripmate.role.Chore;
 import com.tripmate.stay.Amenity;
-import com.tripmate.trip.Member;
 import com.tripmate.trip.MemberRepository;
+import com.tripmate.trip.TripAccess;
 import com.tripmate.trip.TripChanged;
 import org.springframework.context.ApplicationEventPublisher;
 import jakarta.validation.Valid;
@@ -20,24 +20,26 @@ import java.util.Set;
 @RequestMapping("/api/trips/{tripId}/members/{memberId}/survey")
 public class SurveyController {
 
+    private final TripAccess tripAccess;
     private final MemberRepository memberRepository;
     private final SurveyAnswerRepository surveyAnswerRepository;
     private final ApplicationEventPublisher events;
 
-    public SurveyController(MemberRepository memberRepository, SurveyAnswerRepository surveyAnswerRepository,
-                            ApplicationEventPublisher events) {
+    public SurveyController(TripAccess tripAccess, MemberRepository memberRepository,
+                            SurveyAnswerRepository surveyAnswerRepository, ApplicationEventPublisher events) {
+        this.tripAccess = tripAccess;
         this.memberRepository = memberRepository;
         this.surveyAnswerRepository = surveyAnswerRepository;
         this.events = events;
     }
 
     // PUT: /api/trips/1/members/2/survey  body = SurveyDto.Request 위 주석의 JSON
-    // 다시 하면 고쳐 쓰니 POST 대신 PUT. 처음이든 다시든 같은 요청이다
+    // 다시 하면 고쳐 쓰니 POST 대신 PUT. 처음이든 다시든 같은 요청이다. 본인 설문만 쓸 수 있다
     @PutMapping
     @Transactional
     public ResponseEntity<SurveyDto.Response> saveSurvey(@PathVariable Long tripId, @PathVariable Long memberId,
                                                          @Valid @RequestBody SurveyDto.Request req) {
-        var member = findMember(tripId, memberId);
+        var member = tripAccess.self(tripId, memberId);
         var survey = surveyAnswerRepository.findByMemberId(memberId)
                 .orElseGet(() -> surveyAnswerRepository.save(new SurveyAnswer(member)));
         var avoid = (req.avoid() == null) ? Set.<Chore>of() : req.avoid();
@@ -48,22 +50,16 @@ public class SurveyController {
         return ResponseEntity.ok(SurveyDto.Response.of(survey, true));
     }
 
-    // GET: /api/trips/1/members/2/survey   헤더 X-Member-Id: 1 (보는 사람)
-    // shortcut: 보는 사람을 헤더로 믿는다. 카카오 로그인 붙이면 세션의 사용자로 바꾼다
+    // GET: /api/trips/1/members/2/survey   보는 사람은 로그인한 본인
     @GetMapping
     @Transactional(readOnly = true)
-    public ResponseEntity<SurveyDto.Response> getSurvey(@PathVariable Long tripId, @PathVariable Long memberId,
-                                                        @RequestHeader("X-Member-Id") Long viewerId) {
-        findMember(tripId, memberId);
-        var viewer = findMember(tripId, viewerId);
+    public ResponseEntity<SurveyDto.Response> getSurvey(@PathVariable Long tripId, @PathVariable Long memberId) {
+        var viewer = tripAccess.me(tripId);
+        memberRepository.findByIdAndTripId(memberId, tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         var survey = surveyAnswerRepository.findByMemberId(memberId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         var showPrivate = viewer.getId().equals(memberId) || viewer.isHost();
         return ResponseEntity.ok(SurveyDto.Response.of(survey, showPrivate));
-    }
-
-    private Member findMember(Long tripId, Long memberId) {
-        return memberRepository.findByIdAndTripId(memberId, tripId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 }

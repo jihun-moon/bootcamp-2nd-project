@@ -2,6 +2,7 @@ package com.tripmate.stay;
 
 import com.tripmate.survey.SurveyAnswerRepository;
 import com.tripmate.trip.MemberRepository;
+import com.tripmate.trip.TripAccess;
 import com.tripmate.trip.TripChanged;
 import com.tripmate.trip.TripRepository;
 import jakarta.validation.Valid;
@@ -33,10 +34,11 @@ public class StayController {
     private final SurveyAnswerRepository surveyAnswerRepository;
     private final LinkPreview linkPreview;
     private final ApplicationEventPublisher events;
+    private final TripAccess tripAccess;
 
     public StayController(TripRepository tripRepository, MemberRepository memberRepository, StayRepository stayRepository,
                           VoteRepository voteRepository, SurveyAnswerRepository surveyAnswerRepository,
-                          LinkPreview linkPreview, ApplicationEventPublisher events) {
+                          LinkPreview linkPreview, ApplicationEventPublisher events, TripAccess tripAccess) {
         this.tripRepository = tripRepository;
         this.memberRepository = memberRepository;
         this.stayRepository = stayRepository;
@@ -44,13 +46,14 @@ public class StayController {
         this.surveyAnswerRepository = surveyAnswerRepository;
         this.linkPreview = linkPreview;
         this.events = events;
+        this.tripAccess = tripAccess;
     }
 
     // GET: /api/trips/1/stays
     @GetMapping("/stays")
     @Transactional(readOnly = true)
     public ResponseEntity<StayDto.Board> getBoard(@PathVariable Long tripId) {
-        if (!tripRepository.existsById(tripId)) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        tripAccess.me(tripId);
 
         var surveys = surveyAnswerRepository.findByMemberTripId(tripId);
         var preferences = new EnumMap<Amenity, StayDto.Preference>(Amenity.class);
@@ -77,8 +80,7 @@ public class StayController {
     // 링크 미리보기(최대 5초)를 DB 트랜잭션 밖에서 먼저 한다. 안에서 하면 그동안 커넥션을 붙잡는다
     @PostMapping("/stays")
     public ResponseEntity<StayDto.StayView> addStay(@PathVariable Long tripId, @Valid @RequestBody StayDto.CreateRequest req) {
-        var member = memberRepository.findByIdAndTripId(req.addedBy(), tripId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        var member = tripAccess.me(tripId);
         var preview = linkPreview.fetch(req.url());
         var title = firstNonBlank(req.title(), preview.title(), URI.create(req.url()).getHost());
         var amenities = (req.amenities() == null) ? EnumSet.noneOf(Amenity.class) : req.amenities();
@@ -90,13 +92,12 @@ public class StayController {
                 stay.getUrl(), stay.getImageUrl(), Set.copyOf(stay.getAmenities()), List.of()));
     }
 
-    // PUT: /api/trips/1/votes/2  body = { "stayId": 3 }  (한 사람 한 표라 다시 보내면 표를 옮긴다)
+    // PUT: /api/trips/1/votes/2  body = { "stayId": 3 }  (한 사람 한 표라 다시 보내면 표를 옮긴다. 본인 표만)
     @PutMapping("/votes/{memberId}")
     @Transactional
     public ResponseEntity<Void> vote(@PathVariable Long tripId, @PathVariable Long memberId,
                                      @RequestBody StayDto.VoteRequest req) {
-        var member = memberRepository.findByIdAndTripId(memberId, tripId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        var member = tripAccess.self(tripId, memberId);
         var stay = (req.stayId() == null) ? null : stayRepository.findByIdAndTripId(req.stayId(), tripId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         var current = voteRepository.findByMemberId(memberId);

@@ -12,6 +12,9 @@ export type Trip = {
   destination: string | null;
   startDate: string | null;
   endDate: string | null;
+  inviteCode: string;
+  // 로그인한 사람의 이 방 참여자 id
+  meId: number;
   members: Member[];
 };
 

@@ -5,6 +5,7 @@
 
 ```mermaid
 erDiagram
+    APP_USER ||--o{ MEMBER : "방마다 참여"
     TRIP ||--o{ MEMBER : "참여"
     TRIP ||--o{ ROLE : "역할 목록"
     TRIP ||--o{ STAY : "후보 숙소"
@@ -23,9 +24,15 @@ erDiagram
         date start_date
         date end_date
     }
+    APP_USER {
+        bigint id PK
+        varchar login_id UK "kakao:123 / dev:민지"
+        varchar nickname
+    }
     MEMBER {
         bigint id PK
         bigint trip_id FK
+        bigint user_id FK
         varchar name
         boolean host
         boolean survey_done
@@ -77,7 +84,7 @@ erDiagram
 
 | 정한 것 | 까닭 |
 |---|---|
-| Member 는 "그 방의 참여자"다. 계정이 아니다 | 로그인 전에도 방이 돌아간다. 카카오 로그인 때 `app_user` 를 만들고 Member 에 `user_id` 를 단다(`user` 는 Postgres 예약어) |
+| Member 는 "그 방의 참여자"다. 계정은 `app_user`(카카오·개발용 로그인)이고 Member 가 `user_id` 로 가리킨다 | 방마다 다른 이름을 쓸 수 있고, 예시 방처럼 계정 없는 참여자도 둘 수 있다. `(trip_id, user_id)` 유일로 한 방에 한 번만 들어간다(`user` 는 Postgres 예약어) |
 | 1인 1역할, 1인 1표, 1인 설문 1장을 `member_id` 유일 제약으로 막는다 | Member 가 방 하나에만 속하니 `(trip_id, member_id)` 가 따로 필요 없다 |
 | 숙소 조건은 테이블 대신 enum `Amenity` | 목록이 정해져 있고, 설문 선호 축과 같아야 숙소 점수를 셀 수 있다 |
 | 여러 명이 필요한 역할은 `capacity` | 배정 알고리즘(헝가리안)에서 역할을 capacity 칸만큼 늘려 사람 수와 맞춘다 |
@@ -88,5 +95,4 @@ erDiagram
 
 ## 아직 없는 것
 
-- `app_user` (카카오 로그인 때)
 - 숙소 조건 고치기·숙소 지우기(올릴 때만 체크한다)

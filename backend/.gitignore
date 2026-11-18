@@ -1,5 +1,7 @@
 HELP.md
 .gradle
+# 카카오 키 같은 비밀값(application.properties 의 spring.config.import)
+secrets.properties
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/

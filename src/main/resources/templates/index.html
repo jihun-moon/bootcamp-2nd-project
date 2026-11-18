@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head('여행 역할 배정·숙소 투표')}"></head>
+<body>
+<main class="page narrow center">
+  <h1>TripMate</h1>
+  <p class="muted">8명이 가는 여행, 누가 뭘 맡을지 설문으로 정하고 숙소는 모두가 싫어하지 않는 곳으로.</p>
+  <div class="row">
+    <a th:href="@{/login}" class="btn kakao">로그인</a>
+    <a th:href="@{/trips/new}" class="btn">여행방 만들기</a>
+  </div>
+  <p class="muted small">친구가 보낸 초대 링크가 있으면 그 링크로 들어오세요.</p>
+</main>
+</body>
+</html>

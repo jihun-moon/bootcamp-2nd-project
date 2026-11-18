@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head('설문')}"></head>
+<body th:data-trip-id="${tripId}">
+<div class="page">
+  <header th:replace="~{fragments/common :: tripHeader}"></header>
+  <main class="stack">
+    <div class="bar thin"><div id="progress" class="fill"></div></div>
+
+    <!-- 질문 6개를 한 장씩. 내용은 survey.js 의 QUESTIONS 가 채운다 -->
+    <section id="step-question" class="box stack">
+      <p id="q-count" class="muted small"></p>
+      <h2 id="q-title"></h2>
+      <p id="q-note" class="hint" hidden></p>
+      <div id="q-options" class="grid2"></div>
+      <button type="button" class="link btn-back">← 이전</button>
+    </section>
+
+    <!-- 마지막 장: 숙소 조건 중요도 1~5 -->
+    <section id="step-preferences" class="box stack" hidden>
+      <p id="p-count" class="muted small"></p>
+      <h2>숙소에서 이건 얼마나 중요해요?</h2>
+      <p class="muted small">1 = 없어도 됨, 5 = 꼭 있어야 함</p>
+      <ul id="preferences" class="stack"></ul>
+      <p id="save-error" class="error" hidden>저장하지 못했어요. 다시 눌러 주세요.</p>
+      <div class="between">
+        <button type="button" class="link btn-back">← 이전</button>
+        <button type="button" id="btn-save" class="btn primary">저장하기</button>
+      </div>
+    </section>
+
+    <section id="step-saved" class="box stack" hidden>
+      <h2 id="saved-title"></h2>
+      <button type="button" id="btn-restart" class="link">다시 하기</button>
+    </section>
+  </main>
+</div>
+<script th:src="@{/js/survey.js}"></script>
+</body>
+</html>

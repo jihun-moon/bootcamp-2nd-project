@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head('방 개요')}"></head>
+<body th:data-trip-id="${tripId}">
+<div class="page">
+  <header th:replace="~{fragments/common :: tripHeader}"></header>
+  <main class="stack">
+    <section class="box">
+      <div class="between small"><span>설문 진행</span><span id="survey-count" class="muted"></span></div>
+      <div class="bar"><div id="survey-bar" class="fill"></div></div>
+    </section>
+    <section class="box">
+      <div class="between">
+        <h2>참여자</h2>
+        <button type="button" id="btn-invite" class="link">초대 링크 복사</button>
+      </div>
+      <ul id="members" class="grid4"></ul>
+    </section>
+  </main>
+</div>
+<script th:src="@{/js/trip.js}"></script>
+</body>
+</html>

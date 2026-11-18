@@ -21,9 +21,6 @@ public class DemoTripLoader {
             for (var name : List.of("민지", "도윤", "서연", "하준", "지우", "예린", "시우")) {
                 trip.addMember(name, false);
             }
-            trip.getMembers().stream()
-                    .filter(m -> !List.of("서연", "지우").contains(m.getName()))
-                    .forEach(Member::finishSurvey);
             tripRepository.save(trip);
         };
     }

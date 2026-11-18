@@ -27,6 +27,10 @@ public final class TripDto {
         }
     }
 
+    // POST /api/invites/{inviteCode} 의 응답. 화면이 이 방으로 옮겨 간다
+    public record Joined(Long tripId) {
+    }
+
     public record MemberResponse(Long id, String name, boolean host, boolean surveyDone, String imageUrl) {
 
         static MemberResponse from(Member m) {

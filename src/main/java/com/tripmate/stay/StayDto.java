@@ -24,7 +24,7 @@ public final class StayDto {
     public record VoteRequest(Long stayId) {
     }
 
-    // amenities 는 칸 순서와 한글 이름. 프론트가 이름을 따로 들고 있지 않게 여기서 준다
+    // amenities 는 칸 순서와 한글 이름. 화면(stays.js)이 이름을 따로 들고 있지 않게 여기서 준다
     public record Board(List<AmenityView> amenities, Map<Amenity, Preference> preferences, int surveyed,
                         List<StayView> stays) {
     }

@@ -37,18 +37,6 @@ public class TripController {
         this.events = events;
     }
 
-    // GET: /api/trips/1/events   (브라우저: new EventSource("/api/trips/1/events"))
-    // 받는 것: event: change, data: roles | members | stays
-    @GetMapping(path = "/trips/{tripId}/events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public ResponseEntity<SseEmitter> events(@PathVariable Long tripId) throws IOException {
-        tripAccess.me(tripId);
-        // 배포 때 앞에 둔 중간 서버(nginx 등)가 gzip 으로 묶거나 모아 두면 알림이 바로 안 간다. no-transform 이면 압축을 건너뛴다
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CACHE_CONTROL, "no-cache, no-transform")
-                .header("X-Accel-Buffering", "no")
-                .body(tripEvents.subscribe(tripId));
-    }
-
     // GET: /api/trips/1
     @GetMapping("/trips/{tripId}")
     @Transactional(readOnly = true)
@@ -59,7 +47,8 @@ public class TripController {
         return ResponseEntity.ok(TripDto.Response.of(trip, me));
     }
 
-    // POST: /api/trips  body = TripDto.CreateRequest 위 주석의 JSON   만든 사람이 방장이 된다
+    // POST: /api/trips  body = { "title": "겨울 펜션 2박 3일", "destination": "가평", "startDate": "2027-01-15", "endDate": "2027-01-17" }
+    // 만든 사람이 방장이 된다
     @PostMapping("/trips")
     @Transactional
     public ResponseEntity<TripDto.Response> createTrip(@Valid @RequestBody TripDto.CreateRequest req) {
@@ -71,13 +60,10 @@ public class TripController {
         return ResponseEntity.status(HttpStatus.CREATED).body(TripDto.Response.of(trip, me));
     }
 
-    public record Joined(Long tripId) {
-    }
-
     // POST: /api/invites/3f9a1c2b7d4e   초대 링크로 들어온 사람을 참여자로 넣는다. 이미 있으면 그대로 둔다
     @PostMapping("/invites/{inviteCode}")
     @Transactional
-    public ResponseEntity<Joined> join(@PathVariable String inviteCode) {
+    public ResponseEntity<TripDto.Joined> join(@PathVariable String inviteCode) {
         var user = currentUser.get();
         var trip = tripRepository.findByInviteCode(inviteCode)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
@@ -86,6 +72,18 @@ public class TripController {
             trip.addMember(user, user.getNickname(), false);
             events.publishEvent(new TripChanged(trip.getId(), "members"));
         }
-        return ResponseEntity.ok(new Joined(trip.getId()));
+        return ResponseEntity.ok(new TripDto.Joined(trip.getId()));
+    }
+
+    // GET: /api/trips/1/events   (화면: new EventSource("/api/trips/1/events"))
+    // 받는 것: event: change, data: roles | members | stays
+    @GetMapping(path = "/trips/{tripId}/events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public ResponseEntity<SseEmitter> events(@PathVariable Long tripId) throws IOException {
+        tripAccess.me(tripId);
+        // 배포 때 앞에 둔 중간 서버(nginx 등)가 gzip 으로 묶거나 모아 두면 알림이 바로 안 간다. no-transform 이면 압축을 건너뛴다
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CACHE_CONTROL, "no-cache, no-transform")
+                .header("X-Accel-Buffering", "no")
+                .body(tripEvents.subscribe(tripId));
     }
 }

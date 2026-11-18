@@ -33,7 +33,9 @@ var step = 0;
 var answers = {};
 var preferences = {};
 
-function show(step) {
+// 몇 번째 장을 보여 줄지. 질문 6장 다음이 숙소 조건 장이다
+function go(next) {
+  step = next;
   $('#progress').css('width', (step / TOTAL * 100) + '%');
   $('#step-question').prop('hidden', step >= QUESTIONS.length);
   $('#step-preferences').prop('hidden', step < QUESTIONS.length);
@@ -56,11 +58,6 @@ function show(step) {
     $('#p-count').text(me.name + ' · ' + TOTAL + ' / ' + TOTAL);
     renderPreferences();
   }
-}
-
-function go(next) {
-  step = next;
-  show(step);
 }
 
 function renderPreferences() {
@@ -103,7 +100,7 @@ $(function () {
 
   loadTrip(tripId).done(function (trip) {
     me = trip.members.find(function (m) { return m.id === trip.meId; });
-    show(0);
+    go(0);
   });
 
   $('.btn-back').click(function () { go(step - 1); });

@@ -1,0 +1,17 @@
+## 무엇을 했나
+
+closes #
+
+## 확인
+
+- [ ] 화면에서 직접 눌러 봤다
+- [ ] `cd backend && ./gradlew test` 통과
+- [ ] 프론트를 고쳤으면 `npx tsc --noEmit && npm run lint` 통과
+- [ ] 팀 코드 규칙을 지켰다 (층 나누기, 주소 규칙, 권한 확인)
+- [ ] 확인용 `System.out.println`·`console.log` 를 지웠다
+- [ ] 카카오 키 같은 비밀값이 안 들어갔다
+- [ ] 표나 주소가 바뀌었으면 `docs/` 도 고쳤다
+- [ ] 내 기능이면 `docs/parts/<내아이디>.md` 도 고쳤다
+
+## 화면 (있으면)
+

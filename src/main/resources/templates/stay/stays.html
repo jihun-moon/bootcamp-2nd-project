@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head('숙소')}"></head>
+<body th:data-trip-id="${tripId}">
+<div class="page">
+  <header th:replace="~{fragments/common :: tripHeader}"></header>
+  <main class="stack">
+    <section class="box">
+      <h2>우리 그룹이 중요하게 보는 것</h2>
+      <p id="pref-empty" class="muted small">설문이 모이면 보여요.</p>
+      <p id="pref-note" class="muted small" hidden></p>
+      <ul id="pref-bars" class="stack"></ul>
+    </section>
+
+    <section id="stay-table" class="box scroll" hidden>
+      <table>
+        <thead><tr id="stay-head"></tr></thead>
+        <tbody id="stay-rows"></tbody>
+      </table>
+    </section>
+
+    <form id="stay-form" class="box dashed stack">
+      <h2>숙소 링크 올리기</h2>
+      <input type="url" id="stay-url" required placeholder="https://...">
+      <input type="text" id="stay-title" maxlength="200" placeholder="이름 (비우면 링크 제목을 가져와요)">
+      <fieldset>
+        <legend class="muted small">있는 조건을 체크해 주세요</legend>
+        <div id="stay-amenities" class="row wrap"></div>
+      </fieldset>
+      <button type="submit" id="btn-add" class="btn primary">올리기</button>
+    </form>
+  </main>
+</div>
+<script th:src="@{/js/stays.js}"></script>
+</body>
+</html>

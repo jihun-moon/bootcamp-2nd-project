@@ -67,5 +67,5 @@ git merge main
 ## 하지 말 것
 
 - `main` 에 바로 푸시, `git push --force`
-- 카카오 키·시크릿, `backend/secrets.properties` 올리기
+- 카카오 키·시크릿, `secrets.properties` 올리기
 - 남의 기능 파일을 말없이 고치기 (이슈나 PR 댓글로 먼저)

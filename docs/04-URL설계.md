@@ -2,8 +2,8 @@
 
 규칙: 주소는 명사(복수, 소문자, 하이픈), 행위는 HTTP 메서드. 한 개는 경로(`/trips/3`), 검색·페이지는 쿼리.
 
-- 화면 주소는 [2. 화면 설계](02-화면설계.md)에 있다(Next.js)
-- 데이터는 모두 Spring 의 `/api/**` 로 주고받는다(JSON). 브라우저는 같은 출처의 `/api` 로 부르고 Next 가 Spring 으로 넘긴다
+- 화면 주소(Thymeleaf, `@Controller`)는 [2. 화면 설계](02-화면설계.md)에 있다
+- 데이터는 모두 `/api/**`(JSON, `@RestController`)로 주고받는다. 화면의 jQuery `$.ajax` 가 부른다
 - 로그인 안 했으면 401, 그 방 참여자가 아니면 404(방이 있는지도 알려 주지 않는다), 본인·방장만 되는 일은 403
 - 각 Controller 메서드 위에 부르는 예 한 줄이 있다(`// PUT: /api/trips/1/members/2/survey`)
 
@@ -29,11 +29,11 @@
 
 | 요구사항 | 기능 | 메서드 | 주소 | 요청 본문 | 응답 | 코드 |
 |---|---|---|---|---|---|---|
-| REQ-07 | 설문 저장(처음·다시) | PUT | `/api/trips/{id}/members/{memberId}/survey` | `{"activity", "planning", "hasCar", "separateDeparture", "mobilityLimited", "avoid": [], "preferences": {}}` | 200 | `SurveyController` |
-| REQ-08 | 설문 보기 | GET | `/api/trips/{id}/members/{memberId}/survey` | | 200 (본인·방장 외에는 `mobilityLimited` 없음) | `SurveyController` |
-| REQ-09 | 역할 보드 | GET | `/api/trips/{id}/roles` | | 200 `{roles, assignments}` | `RoleController` |
-| REQ-09 | 역할 추천(방장) | POST | `/api/trips/{id}/roles/recommend` | | 200 보드 | `RoleController`, `RoleScorer`, `HungarianAssigner` |
-| REQ-10 | 카드 옮기기 | PATCH | `/api/trips/{id}/roles/assignments/{memberId}` | `{"roleId": 4, "version": 0}` | 200 보드 / 409 | `RoleController` |
+| REQ-07 | 설문 저장(처음·다시) | PUT | `/api/trips/{id}/members/{memberId}/survey` | `{"activity", "planning", "hasCar", "separateDeparture", "mobilityLimited", "avoid": [], "preferences": {}}` | 200 | `SurveyController`, `SurveyService` |
+| REQ-08 | 설문 보기 | GET | `/api/trips/{id}/members/{memberId}/survey` | | 200 (본인·방장 외에는 `mobilityLimited` 없음) | `SurveyController`, `SurveyService` |
+| REQ-09 | 역할 보드 | GET | `/api/trips/{id}/roles` | | 200 `{roles, assignments}` | `RoleController`, `RoleService` |
+| REQ-09 | 역할 추천(방장) | POST | `/api/trips/{id}/roles/recommend` | | 200 보드 | `RoleController`, `RoleService.recommend`, `RoleScorer`, `HungarianAssigner` |
+| REQ-10 | 카드 옮기기 | PATCH | `/api/trips/{id}/roles/assignments/{memberId}` | `{"roleId": 4, "version": 0}` | 200 보드 / 409 | `RoleController`, `RoleService.move` |
 | REQ-12 | 역할 더하기·고치기·지우기 *(남은 일)* | POST / PATCH / DELETE | `/api/trips/{id}/roles`, `/api/trips/{id}/roles/{roleId}` | | 201 / 200 / 204 | |
 
 ## 숙소·투표 — 김현수

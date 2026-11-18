@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- 모든 화면의 <head>. 쓰는 곳: <head th:replace="~{fragments/common :: head('제목')}"></head> -->
+<head th:fragment="head(title)">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="${title} + ' | TripMate'">TripMate</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script th:src="@{/js/common.js}"></script>
+</head>
+
+<!-- 방 화면(개요·설문·역할·숙소) 위쪽. 방 이름·인원은 common.js 의 loadTrip() 이 채운다 -->
+<header th:fragment="tripHeader" class="trip-header">
+  <div class="top">
+    <a th:href="@{/}" class="muted">TripMate</a>
+    <div class="user-menu">
+      <span id="me-name"></span>
+      <button type="button" id="btn-logout" class="link">로그아웃</button>
+    </div>
+  </div>
+  <h1 id="trip-title">불러오는 중…</h1>
+  <p id="trip-meta" class="muted"></p>
+  <nav class="tabs">
+    <a th:href="@{/trips/{id}(id=${tripId})}" th:classappend="${tab == 'overview'} ? 'active'">개요</a>
+    <a th:href="@{/trips/{id}/survey(id=${tripId})}" th:classappend="${tab == 'survey'} ? 'active'">설문</a>
+    <a th:href="@{/trips/{id}/roles(id=${tripId})}" th:classappend="${tab == 'roles'} ? 'active'">역할</a>
+    <a th:href="@{/trips/{id}/stays(id=${tripId})}" th:classappend="${tab == 'stays'} ? 'active'">숙소</a>
+  </nav>
+  <p id="notice" class="notice" hidden></p>
+</header>
+
+</body>
+</html>

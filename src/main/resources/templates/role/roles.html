@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head('역할 보드')}"></head>
+<body th:data-trip-id="${tripId}">
+<div class="page">
+  <header th:replace="~{fragments/common :: tripHeader}"></header>
+  <main class="stack">
+    <div class="between">
+      <p class="muted small">카드를 끌어 다른 역할로 옮길 수 있어요.</p>
+      <!-- 추천은 모두의 배정을 갈아엎으니 방장에게만 보인다(서버도 막는다) -->
+      <button type="button" id="btn-recommend" class="btn primary" hidden>설문으로 추천받기</button>
+    </div>
+    <!-- 역할 칸들. roles.js 가 그린다 -->
+    <div id="board" class="board"></div>
+  </main>
+</div>
+<script th:src="@{/js/roles.js}"></script>
+</body>
+</html>

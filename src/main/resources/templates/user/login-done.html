@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head('로그인하는 중')}"></head>
+<body>
+<p class="page muted">로그인하는 중…</p>
+<script>
+  // login.js 가 카카오로 떠나기 전에 맡겨 둔 곳으로 돌아간다
+  var next = sessionStorage.getItem('tripmate.next');
+  sessionStorage.removeItem('tripmate.next');
+  location.replace(safeNext(next));
+</script>
+</body>
+</html>

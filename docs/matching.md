@@ -1,7 +1,7 @@
 # 역할 배정 알고리즘
 
 `POST /api/trips/{id}/roles/recommend` 가 설문으로 역할을 처음부터 다시 짠다.
-코드: `backend/src/main/java/com/tripmate/role/` 의 `RoleScorer`, `HungarianAssigner`, `RoleController.recommend`.
+코드: `src/main/java/com/tripmate/role/` 의 `RoleScorer`(점수), `HungarianAssigner`(배정), `RoleService.recommend`(둘을 이어 저장).
 
 ## 1. 점수표 만들기
 

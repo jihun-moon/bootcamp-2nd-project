@@ -9,8 +9,8 @@ trim_trailing_whitespace = true
 indent_style = space
 indent_size = 4
 
-# 프론트(Next.js)와 문서는 2칸
-[*.{ts,tsx,js,mjs,json,css,html,yml,yaml,md}]
+# 화면(HTML·CSS·JS)과 문서는 2칸
+[*.{html,css,js,json,yml,yaml,md}]
 indent_size = 2
 
 # Spring Initializr 가 만든 그대로 탭을 쓴다

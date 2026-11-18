@@ -2,15 +2,20 @@ package com.tripmate.role;
 
 import com.tripmate.survey.SurveyAnswer;
 import com.tripmate.survey.SurveyAnswerRepository;
+import com.tripmate.trip.MemberRepository;
 import com.tripmate.trip.TripRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -22,16 +27,52 @@ public class RoleController {
     private static final int REQUIRED_BONUS = 100;
 
     private final TripRepository tripRepository;
+    private final MemberRepository memberRepository;
     private final RoleRepository roleRepository;
     private final AssignmentRepository assignmentRepository;
     private final SurveyAnswerRepository surveyAnswerRepository;
 
-    public RoleController(TripRepository tripRepository, RoleRepository roleRepository,
+    public RoleController(TripRepository tripRepository, MemberRepository memberRepository, RoleRepository roleRepository,
                           AssignmentRepository assignmentRepository, SurveyAnswerRepository surveyAnswerRepository) {
         this.tripRepository = tripRepository;
+        this.memberRepository = memberRepository;
         this.roleRepository = roleRepository;
         this.assignmentRepository = assignmentRepository;
         this.surveyAnswerRepository = surveyAnswerRepository;
+    }
+
+    // PATCH: /api/trips/1/roles/assignments/2  body = RoleDto.MoveRequest 위 주석의 JSON
+    // 클라이언트가 본 version 과 지금 version 이 다르면 그 사이 누가 옮긴 것이라 409 로 막는다
+    @PatchMapping("/assignments/{memberId}")
+    @Transactional
+    public ResponseEntity<RoleDto.Board> move(@PathVariable Long tripId, @PathVariable Long memberId,
+                                              @RequestBody RoleDto.MoveRequest req) {
+        var member = memberRepository.findByIdAndTripId(memberId, tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        var target = (req.roleId() == null) ? null : roleRepository.findByIdAndTripId(req.roleId(), tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        var current = assignmentRepository.findByMemberId(memberId);
+
+        if (!Objects.equals(current.map(Assignment::getVersion).orElse(null), req.version())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT);
+        }
+        if (current.isEmpty() && target != null) {
+            assignmentRepository.save(new Assignment(member, target, List.of()));
+        } else if (current.isPresent() && target == null) {
+            assignmentRepository.delete(current.get());
+        } else if (current.isPresent()) {
+            current.get().moveTo(target);
+        }
+        // version 이 올라간 값을 응답에 담으려면 먼저 DB 에 내보내야 한다
+        assignmentRepository.flush();
+        return ResponseEntity.ok(RoleDto.Board.of(roleRepository.findByTripIdOrderById(tripId),
+                assignmentRepository.findByRoleTripIdOrderById(tripId)));
+    }
+
+    // 위의 version 비교와 저장 사이에 다른 요청이 끼어들면 DB 단계에서 걸린다. 둘 다 "누가 먼저 옮김"이다
+    @ExceptionHandler({ObjectOptimisticLockingFailureException.class, DataIntegrityViolationException.class})
+    public ResponseEntity<Void> conflict() {
+        return ResponseEntity.status(HttpStatus.CONFLICT).build();
     }
 
     // GET: /api/trips/1/roles

@@ -12,6 +12,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -67,6 +68,44 @@ class RoleControllerTest {
         mvc.perform(get("/api/trips/1/roles"))
                 .andExpect(jsonPath("$.roles", hasSize(6)))
                 .andExpect(jsonPath("$.assignments", hasSize(6)));
+    }
+
+    private org.springframework.test.web.servlet.ResultActions move(int memberId, Integer roleId, Integer version) throws Exception {
+        var body = "{ \"roleId\": %s, \"version\": %s }".formatted(roleId, version);
+        return mvc.perform(patch("/api/trips/1/roles/assignments/" + memberId)
+                .contentType(MediaType.APPLICATION_JSON).content(body));
+    }
+
+    @Test
+    void 카드를_옮기면_version_이_오른다() throws Exception {
+        move(2, 4, null).andExpect(status().isOk())
+                .andExpect(jsonPath("$.assignments[?(@.memberId == 2)].version").value(hasItem(0)));
+        move(2, 5, 0).andExpect(status().isOk())
+                .andExpect(jsonPath("$.assignments[?(@.memberId == 2)].roleId").value(hasItem(5)))
+                .andExpect(jsonPath("$.assignments[?(@.memberId == 2)].version").value(hasItem(1)));
+    }
+
+    @Test
+    void 그사이_누가_옮겼으면_409() throws Exception {
+        move(2, 4, null).andExpect(status().isOk());
+        move(2, 5, 0).andExpect(status().isOk());
+        // 첫 화면의 version 0 을 그대로 들고 온 두 번째 사람
+        move(2, 6, 0).andExpect(status().isConflict());
+        // 미배정인 줄 알고 끌어온 사람
+        move(2, 6, null).andExpect(status().isConflict());
+    }
+
+    @Test
+    void 미배정으로_옮기면_배정이_사라진다() throws Exception {
+        move(2, 4, null).andExpect(status().isOk());
+        move(2, null, 0).andExpect(status().isOk())
+                .andExpect(jsonPath("$.assignments[?(@.memberId == 2)]", hasSize(0)));
+    }
+
+    @Test
+    void 다른_방_역할이나_참여자면_404() throws Exception {
+        move(2, 999, null).andExpect(status().isNotFound());
+        move(999, 4, null).andExpect(status().isNotFound());
     }
 
     @Test

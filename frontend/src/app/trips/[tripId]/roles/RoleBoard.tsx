@@ -19,6 +19,7 @@ export default function RoleBoard({ tripId, members, roles, initial }: Props) {
   const [board, setBoard] = useState(initial);
   const [dragging, setDragging] = useState<number | null>(null);
   const [recommending, setRecommending] = useState(false);
+  const [notice, setNotice] = useState("");
 
   const assigned = new Set(board.map((a) => a.memberId));
   const memberById = new Map(members.map((m) => [m.id, m]));
@@ -31,17 +32,38 @@ export default function RoleBoard({ tripId, members, roles, initial }: Props) {
     setRecommending(false);
   }
 
-  // 카드 이동 API(PATCH)가 생기면 여기서 보내고 version 이 어긋나면 되돌린다
-  function moveTo(roleId: number) {
+  // PATCH: /api/trips/1/roles/assignments/2  { "roleId": 4, "version": 0 }
+  async function moveTo(roleId: number) {
     if (dragging === null) return;
-    const rest = board.filter((a) => a.memberId !== dragging);
-    const prev = board.find((a) => a.memberId === dragging);
-    setBoard(
-      roleId === UNASSIGNED
-        ? rest
-        : [...rest, { roleId, memberId: dragging, reasons: [], version: (prev?.version ?? 0) + 1 }],
-    );
+    const memberId = dragging;
     setDragging(null);
+    const prev = board.find((a) => a.memberId === memberId);
+    if ((prev?.roleId ?? UNASSIGNED) === roleId) return;
+
+    // 서버 답을 기다리지 않고 먼저 옮겨 보인다. 안 되면 되돌린다
+    const before = board;
+    const rest = board.filter((a) => a.memberId !== memberId);
+    setBoard(roleId === UNASSIGNED ? rest : [...rest, { roleId, memberId, reasons: [], version: prev?.version ?? 0 }]);
+    setNotice("");
+
+    const res = await fetch(`/api/trips/${tripId}/roles/assignments/${memberId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ roleId: roleId === UNASSIGNED ? null : roleId, version: prev?.version ?? null }),
+    });
+    if (res.ok) {
+      setBoard((await res.json()).assignments);
+      return;
+    }
+    setBoard(before);
+    if (res.status === 409) {
+      // router.refresh 를 쓰면 보드가 새로 그려지며 안내 문구까지 사라져서 보드만 다시 읽는다
+      const latest = await fetch(`/api/trips/${tripId}/roles`);
+      if (latest.ok) setBoard((await latest.json()).assignments);
+      setNotice("다른 사람이 먼저 옮겼어요. 최신 보드로 바꿨으니 다시 옮겨 주세요.");
+    } else {
+      setNotice("옮기지 못했어요. 다시 해 주세요.");
+    }
   }
 
   const columns = [
@@ -52,7 +74,7 @@ export default function RoleBoard({ tripId, members, roles, initial }: Props) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-muted">카드를 끌어 다른 역할로 옮길 수 있어요. (아직 이 화면에서만 바뀝니다)</p>
+        <p className="text-sm text-muted">카드를 끌어 다른 역할로 옮길 수 있어요.</p>
         <button
           onClick={recommend}
           disabled={recommending}
@@ -61,6 +83,11 @@ export default function RoleBoard({ tripId, members, roles, initial }: Props) {
           {recommending ? "계산 중…" : board.length ? "다시 추천받기" : "설문으로 추천받기"}
         </button>
       </div>
+      {notice && (
+        <p role="status" className="rounded-lg border border-amber-400 px-3 py-2 text-sm">
+          {notice}
+        </p>
+      )}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {columns.map((col) => {
           const cards = col.id === UNASSIGNED

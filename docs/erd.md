@@ -90,4 +90,4 @@ erDiagram
 
 - `app_user` (카카오 로그인 때)
 - 실시간 알림 방식(STOMP 또는 SSE). 테이블은 필요 없다
-- 카드 이동 API(PATCH, 409), 숙소·투표 API
+- 숙소·투표 API

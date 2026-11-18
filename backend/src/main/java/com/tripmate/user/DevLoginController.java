@@ -42,7 +42,7 @@ public class DevLoginController {
     public ResponseEntity<Void> login(@Valid @RequestBody Request req, HttpServletRequest request, HttpServletResponse response) {
         var loginId = "dev:" + req.name();
         var user = appUserRepository.findByLoginId(loginId)
-                .orElseGet(() -> appUserRepository.save(new AppUser(loginId, req.name())));
+                .orElseGet(() -> appUserRepository.save(new AppUser(loginId, req.name(), null)));
         memberRepository.findByNameAndUserIsNull(req.name()).forEach(m -> m.linkTo(user));
 
         var context = SecurityContextHolder.createEmptyContext();

@@ -16,19 +16,26 @@ public class AppUser {
 
     private String nickname;
 
+    // 카카오 프로필 사진(선택 동의). 동의하지 않았거나 개발용 로그인이면 null
+    private String profileImageUrl;
+
     protected AppUser() {
     }
 
-    public AppUser(String loginId, String nickname) {
+    public AppUser(String loginId, String nickname, String profileImageUrl) {
         this.loginId = loginId;
         this.nickname = nickname;
+        this.profileImageUrl = profileImageUrl;
     }
 
-    public void rename(String nickname) {
+    // 카카오에서 이름이나 사진을 바꿨을 수 있어 로그인할 때마다 맞춘다
+    public void refresh(String nickname, String profileImageUrl) {
         this.nickname = nickname;
+        this.profileImageUrl = profileImageUrl;
     }
 
     public Long getId() { return id; }
     public String getLoginId() { return loginId; }
     public String getNickname() { return nickname; }
+    public String getProfileImageUrl() { return profileImageUrl; }
 }

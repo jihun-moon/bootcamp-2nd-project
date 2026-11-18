@@ -4,6 +4,8 @@ export type Member = {
   name: string;
   host: boolean;
   surveyDone: boolean;
+  // 카카오 프로필 사진(선택 동의). 없으면 null
+  imageUrl: string | null;
 };
 
 export type Trip = {

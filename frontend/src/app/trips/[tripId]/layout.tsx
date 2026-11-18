@@ -15,7 +15,7 @@ async function TripHeader({ params }: { params: Promise<{ tripId: string }> }) {
     <>
       <div className="flex items-center justify-between">
         <Link href="/" className="text-sm text-muted">TripMate</Link>
-        {me && <UserMenu name={me.name} />}
+        {me && <UserMenu name={me.name} imageUrl={me.imageUrl} />}
       </div>
       <h1 className="text-2xl font-bold">{trip.title}</h1>
       <p className="text-sm text-muted">

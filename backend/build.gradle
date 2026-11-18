@@ -7,10 +7,14 @@ plugins {
 group = 'com.tripmate'
 version = '0.0.1-SNAPSHOT'
 
+// 팀원 PC 의 JDK(17·21·25)가 달라도 같은 결과물이 나오게, 깔린 JDK 로 Java 17 에 맞춰 컴파일한다
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(25)
-	}
+	sourceCompatibility = JavaVersion.VERSION_17
+	targetCompatibility = JavaVersion.VERSION_17
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.release = 17
 }
 
 repositories {

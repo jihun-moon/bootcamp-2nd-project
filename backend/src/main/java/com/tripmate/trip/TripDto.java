@@ -27,10 +27,10 @@ public final class TripDto {
         }
     }
 
-    public record MemberResponse(Long id, String name, boolean host, boolean surveyDone) {
+    public record MemberResponse(Long id, String name, boolean host, boolean surveyDone, String imageUrl) {
 
         static MemberResponse from(Member m) {
-            return new MemberResponse(m.getId(), m.getName(), m.isHost(), m.isSurveyDone());
+            return new MemberResponse(m.getId(), m.getName(), m.isHost(), m.isSurveyDone(), m.getImageUrl());
         }
     }
 }

@@ -1,4 +1,5 @@
 import { getTrip } from "@/lib/api";
+import Avatar from "@/app/Avatar";
 import InviteButton from "./InviteButton";
 
 export default async function TripOverview({ params }: PageProps<"/trips/[tripId]">) {
@@ -25,9 +26,12 @@ export default async function TripOverview({ params }: PageProps<"/trips/[tripId
         </div>
         <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {trip.members.map((m) => (
-            <li key={m.id} className="rounded-lg border border-line px-3 py-2 text-sm">
-              <div className="font-medium">{m.name}{m.host && " · 방장"}</div>
-              <div className="text-muted">{m.surveyDone ? "설문 완료" : "설문 전"}</div>
+            <li key={m.id} className="flex items-center gap-2 rounded-lg border border-line px-3 py-2 text-sm">
+              <Avatar name={m.name} imageUrl={m.imageUrl} />
+              <div>
+                <div className="font-medium">{m.name}{m.host && " · 방장"}</div>
+                <div className="text-muted">{m.surveyDone ? "설문 완료" : "설문 전"}</div>
+              </div>
             </li>
           ))}
         </ul>

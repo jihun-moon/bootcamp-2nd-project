@@ -7,8 +7,8 @@ import java.util.Optional;
 
 public interface TripRepository extends JpaRepository<Trip, Long> {
 
-    // 참여자를 따로 부르면 사람 수만큼 쿼리가 나간다. 한 번에 같이 읽는다
-    @EntityGraph(attributePaths = "members")
+    // 참여자와 그 계정(프로필 사진)을 따로 부르면 사람 수만큼 쿼리가 나간다. 한 번에 같이 읽는다
+    @EntityGraph(attributePaths = {"members", "members.user"})
     Optional<Trip> findWithMembersById(Long id);
 
     @EntityGraph(attributePaths = "members")

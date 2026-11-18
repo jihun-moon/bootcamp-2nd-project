@@ -49,4 +49,5 @@ public class Member {
     public String getName() { return name; }
     public boolean isHost() { return host; }
     public boolean isSurveyDone() { return surveyDone; }
+    public String getImageUrl() { return user == null ? null : user.getProfileImageUrl(); }
 }

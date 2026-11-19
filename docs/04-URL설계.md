@@ -17,9 +17,9 @@
 | REQ-01 | 내 정보 | GET | `/api/me` | | 200 `{id, nickname}` | `AuthController` |
 | REQ-01 | 로그인 버튼 고르기 | GET | `/api/auth/options` | | 200 `{kakao, dev}` | `AuthController` |
 | REQ-01 | 로그아웃 | POST | `/api/logout` | | 204 | Spring Security |
-| REQ-02 | 방 만들기 | POST | `/api/trips` | `{"title", "destination", "startDate", "endDate"}` | 201 방 | `TripController` |
-| REQ-04 | 방 보기 | GET | `/api/trips/{id}` | | 200 방(참여자, `meId`, `inviteCode`) | `TripController` |
-| REQ-03 | 초대 링크로 참여 | POST | `/api/invites/{inviteCode}` | | 200 `{tripId}` | `TripController` |
+| REQ-02 | 방 만들기 | POST | `/api/trips` | `{"title", "destination", "startDate", "endDate"}` | 201 방 | `TripController`, `TripService` |
+| REQ-04 | 방 보기 | GET | `/api/trips/{id}` | | 200 방(참여자, `meId`, `inviteCode`) | `TripController`, `TripService` |
+| REQ-03 | 초대 링크로 참여 | POST | `/api/invites/{inviteCode}` | | 200 `{tripId}` | `TripController`, `TripService` |
 | REQ-11 | 바뀜 알림(SSE) | GET | `/api/trips/{id}/events` | | `event: change` / `ping` | `TripController`, `TripEvents` |
 | REQ-05 | 방 고치기 *(남은 일)* | PATCH | `/api/trips/{id}` | 바꿀 칸 | 200 | |
 | REQ-05 | 방 지우기 *(남은 일)* | DELETE | `/api/trips/{id}` | | 204 | |

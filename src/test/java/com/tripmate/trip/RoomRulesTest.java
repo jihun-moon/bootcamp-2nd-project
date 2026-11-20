@@ -10,6 +10,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -86,5 +87,26 @@ class RoomRulesTest {
                 .content(RULES)).andExpect(status().isOk());
         mvc.perform(put("/api/trips/1/host").session(TestLogin.as(mvc, "민지")).contentType(MediaType.APPLICATION_JSON)
                 .content("{ \"memberId\": 2 }")).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void 방_뽑기는_고르게_나누고_누가_몇_번째로_뽑았는지_남는다() throws Exception {
+        var body = mvc.perform(post("/api/trips/1/room-draw").session(TestLogin.as(mvc, "민지"))
+                        .contentType(MediaType.APPLICATION_JSON).content("{ \"rooms\": 3 }"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        var draw = tools.jackson.databind.json.JsonMapper.builder().build().readTree(body).get("roomDraw");
+        var names = new java.util.ArrayList<String>();
+        var sizes = new java.util.ArrayList<Integer>();
+        for (var room : draw.get("rooms")) { sizes.add(room.size()); room.forEach(n -> names.add(n.asString())); }
+        org.assertj.core.api.Assertions.assertThat(sizes).containsExactlyInAnyOrder(3, 3, 2);
+        org.assertj.core.api.Assertions.assertThat(names).hasSize(8).doesNotHaveDuplicates();
+        org.assertj.core.api.Assertions.assertThat(draw.get("by").asString()).isEqualTo("민지");
+
+        mvc.perform(post("/api/trips/1/room-draw").session(TestLogin.as(mvc, "도윤"))
+                        .contentType(MediaType.APPLICATION_JSON).content("{ \"rooms\": 2 }"))
+                .andExpect(jsonPath("$.roomDraw.count").value(2))
+                .andExpect(jsonPath("$.roomDraw.by").value("도윤"));
+        mvc.perform(post("/api/trips/1/room-draw").session(TestLogin.as(mvc, "도윤"))
+                .contentType(MediaType.APPLICATION_JSON).content("{ \"rooms\": 7 }")).andExpect(status().isBadRequest());
     }
 }

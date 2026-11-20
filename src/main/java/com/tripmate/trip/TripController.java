@@ -88,6 +88,13 @@ public class TripController {
         return ResponseEntity.ok(tripService.handOver(tripId, host, req.memberId()));
     }
 
+    // POST: /api/trips/1/room-draw  body = { "rooms": 2 }   방 사람 누구나(몇 번째로 누가 뽑았는지 남는다)
+    @PostMapping("/trips/{tripId}/room-draw")
+    public ResponseEntity<TripDto.Response> drawRooms(@PathVariable Long tripId, @Valid @RequestBody TripDto.DrawRequest req) {
+        var me = tripAccess.me(tripId);
+        return ResponseEntity.ok(tripService.drawRooms(tripId, me, req.rooms()));
+    }
+
     // PUT: /api/trips/1/meet  body = { "time": "08:00", "place": "합정역 2번 출구" }   방장만
     @PutMapping("/trips/{tripId}/meet")
     public ResponseEntity<TripDto.Response> meet(@PathVariable Long tripId, @Valid @RequestBody TripDto.Meet meet) {

@@ -66,6 +66,21 @@
         <button type="button" id="leave-trip" class="link small muted" hidden>방 나가기</button>
       </div>
     </section>
+    <!-- 방·침대 뽑기: 서버가 섞고(몰래 다시 뽑아도 몇 번째인지 보인다), 화면은 이름이 잠깐 돌다 멈춘다 -->
+    <section id="draw-card" class="ov-draw box stack" hidden>
+      <div class="between"><h2>방·침대 뽑기</h2><span id="draw-meta" class="muted small"></span></div>
+      <p class="muted small">누가 어느 방, 누가 침대인지 공평하게. 다시 뽑으면 몇 번째인지 모두에게 보여요.</p>
+      <div class="between draw-controls">
+        <div class="stepper" aria-label="방 수">
+          <button type="button" class="btn" id="draw-less" aria-label="방 하나 줄이기">−</button>
+          <b id="draw-count"></b>
+          <button type="button" class="btn" id="draw-more" aria-label="방 하나 늘리기">+</button>
+        </div>
+        <button type="button" id="btn-draw" class="btn primary">뽑기!</button>
+      </div>
+      <ol id="draw-result" class="draw-result"></ol>
+      <button type="button" id="btn-draw-share" class="btn block" hidden>결과 단톡방에 보내기</button>
+    </section>
     </div>
   </main>
 </div>

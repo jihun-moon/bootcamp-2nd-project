@@ -19,6 +19,7 @@ function render(t) {
   renderProgress(notYet);
   renderMeet(me);
   renderRename(me);
+  renderDraw();
   renderRules(me);
   renderDates(me);
 
@@ -294,6 +295,60 @@ function sendInvite() {
     '초대 글을 복사했어요. 단톡방에 붙여 넣어 주세요.');
 }
 
+// 방·침대 뽑기. POST /api/trips/1/room-draw { "rooms": 2 } -> 방 응답의 roomDraw { rooms: [["재현","민지"],…], count, by }
+var drawRooms = null;
+var drawing = false;
+function renderDraw() {
+  var n = trip.members.length;
+  $('#draw-card').prop('hidden', n < 2);
+  if (n < 2) return;
+  if (drawRooms === null) drawRooms = trip.roomDraw ? trip.roomDraw.rooms.length : Math.max(2, Math.ceil(n / 4));
+  drawRooms = Math.min(Math.max(2, drawRooms), Math.min(6, n));
+  $('#draw-count').text(drawRooms + '개 방');
+  if (drawing) return;
+  var d = trip.roomDraw;
+  $('#draw-meta').text(d ? withSubject(d.by) + ' 뽑음 · ' + d.count + '번째' : '');
+  $('#btn-draw').text(d ? '다시 뽑기' : '뽑기!');
+  $('#btn-draw-share').prop('hidden', !d);
+  paintRooms(d ? d.rooms : []);
+}
+
+function paintRooms(rooms) {
+  var list = $('#draw-result').empty();
+  rooms.forEach(function (names, i) {
+    $('<li class="draw-room">').append($('<b>').text((i + 1) + '번 방'),
+      $('<span>').append(names.map(function (n) { return $('<span class="chip">').text(n); }))).appendTo(list);
+  });
+}
+
+// 이름이 0.9초 동안 방 사이를 돌다가 서버 결과에서 멈춘다(움직임 줄이기면 바로)
+function spin(final) {
+  var names = trip.members.map(function (m) { return m.name; });
+  var started = Date.now();
+  drawing = true;
+  var tick = function () {
+    if (REDUCE_MOTION || Date.now() - started > 900) {
+      drawing = false;
+      renderDraw();
+      delight($('#draw-result')[0]);
+      return;
+    }
+    var shuffled = names.slice().sort(function () { return Math.random() - 0.5; });
+    var rooms = final.rooms.map(function () { return []; });
+    shuffled.forEach(function (name, i) { rooms[i % rooms.length].push(name); });
+    paintRooms(rooms);
+    setTimeout(tick, 80);
+  };
+  tick();
+}
+
+function shareDraw() {
+  var d = trip.roomDraw;
+  var lines = ['[' + trip.title + '] 방 뽑기 (' + d.count + '번째, ' + withSubject(d.by) + ' 뽑음)'];
+  d.rooms.forEach(function (names, i) { lines.push((i + 1) + '번 방: ' + names.join(', ')); });
+  shareText(lines.join('\n') + '\n' + location.origin + '/trips/' + tripId, '뽑기 결과를 복사했어요. 단톡방에 붙여 넣어 주세요.');
+}
+
 // PUT: /api/trips/1/host  { "memberId": 3 }   방장 넘기기. 넘기면 나는 참여자가 된다
 function handOver(m) {
   if (!window.confirm(m.name + ' 님에게 방장을 넘길까요? 날짜 정하기·규칙·빼기는 이제 ' + m.name + ' 님이 해요.')) return;
@@ -341,6 +396,16 @@ $(function () {
     $('#rename-title').trigger('focus');
   });
   $('#rename-cancel').click(function () { $('#rename-form').prop('hidden', true); });
+  $('#draw-less').click(function () { drawRooms--; renderDraw(); });
+  $('#draw-more').click(function () { drawRooms++; renderDraw(); });
+  $('#btn-draw-share').text(shareLabel('카톡으로 결과 보내기', '결과 복사하기')).click(shareDraw);
+  $('#btn-draw').click(function () {
+    var button = $(this).prop('disabled', true);
+    api('POST', '/api/trips/' + tripId + '/room-draw', { rooms: drawRooms }).done(function (t) {
+      trip = t;
+      spin(t.roomDraw);
+    }).always(function () { button.prop('disabled', false); });
+  });
   $('#rename-form').on('submit', function (e) {
     e.preventDefault();
     api('PUT', '/api/trips/' + tripId, { title: $('#rename-title').val().trim(), destination: $('#rename-destination').val().trim() || null })

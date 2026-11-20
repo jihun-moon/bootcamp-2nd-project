@@ -1,10 +1,14 @@
 package com.tripmate.trip;
 
 import com.tripmate.user.AppUser;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.util.stream.Collectors;
+import java.util.Arrays;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -35,7 +39,7 @@ public final class TripDto {
     // nextTripId 는 이 방에서 이어 만든 다음 여행 방(없으면 null). 개요가 "2탄 방이 열렸어요"를 띄운다
     public record Response(Long id, String title, String destination, LocalDate startDate, LocalDate endDate,
                            String inviteCode, Long meId, List<MemberResponse> members, Rules rules, Long nextTripId,
-                           Meet meet) {
+                           Meet meet, RoomDraw roomDraw) {
 
         static Response of(Trip trip, Member me) {
             return of(trip, me, null);
@@ -44,7 +48,8 @@ public final class TripDto {
         static Response of(Trip trip, Member me, Long nextTripId) {
             var members = trip.getMembers().stream().map(MemberResponse::from).toList();
             return new Response(trip.getId(), trip.getTitle(), trip.getDestination(), trip.getStartDate(), trip.getEndDate(),
-                    trip.getInviteCode(), me.getId(), members, Rules.of(trip), nextTripId, new Meet(trip.getMeetTime(), trip.getMeetPlace()));
+                    trip.getInviteCode(), me.getId(), members, Rules.of(trip), nextTripId, new Meet(trip.getMeetTime(), trip.getMeetPlace()),
+                    RoomDraw.of(trip));
         }
     }
 
@@ -103,6 +108,24 @@ public final class TripDto {
 
     // PUT /api/trips/1/host  { "memberId": 3 }   방장만. 넘기면 나는 참여자가 된다
     public record HostRequest(@NotNull Long memberId) {
+    }
+
+    // POST /api/trips/1/room-draw  { "rooms": 2 }   방 사람 누구나. 2~6개 방
+    public record DrawRequest(@Min(2) @Max(6) int rooms) {
+    }
+
+    // 뽑기 결과: 방마다 이름. 나간 사람은 빠진다. 아직 안 뽑았으면 null
+    public record RoomDraw(List<List<String>> rooms, int count, String by) {
+
+        static RoomDraw of(Trip trip) {
+            if (trip.getRoomDraw() == null) return null;
+            var names = trip.getMembers().stream().collect(Collectors.toMap(Member::getId, Member::getName));
+            var rooms = Arrays.stream(trip.getRoomDraw().split("\\|"))
+                    .map(r -> Arrays.stream(r.split(",")).filter(s -> !s.isBlank()).map(Long::valueOf)
+                            .filter(names::containsKey).map(names::get).toList())
+                    .toList();
+            return new RoomDraw(rooms, trip.getRoomDrawCount(), trip.getRoomDrawBy());
+        }
     }
 
     // PUT /api/trips/1/meet  { "time": "08:00", "place": "합정역 2번 출구" }   둘 다 null 이면 지운다

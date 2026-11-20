@@ -809,3 +809,12 @@ button.link::after { content: ""; position: absolute; inset: -12px -8px; } /* �
 @media (min-width: 960px) { .ov-rename { grid-column: 1 / -1; } }
 .meet-quick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; } /* 휴대폰에서도 네 개가 한 줄 */
 .meet-quick .toggle { padding-inline: 4px; justify-content: center; }
+
+/* 방 뽑기: 방마다 한 줄, 이름은 칩. 넓은 화면은 오른쪽 기둥(사람 아래) */
+.draw-result { display: grid; gap: 8px; }
+.draw-room { display: grid; grid-template-columns: 4.5em 1fr; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); }
+.draw-room > span { display: flex; flex-wrap: wrap; gap: 6px; }
+.draw-controls .stepper b { min-width: 4.5em; }
+/* 방장 도구(방장 주기·빼기)가 붙으면 두 칸에서는 글자가 한 자씩 꺾였다. 그때는 한 줄에 한 사람 */
+#members:has(.member-acts) { grid-template-columns: 1fr; }
+#members .member-acts .link, #members .chip { white-space: nowrap; }

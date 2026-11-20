@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Collections;
+import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -17,6 +19,8 @@ import java.util.TreeMap;
 
 @Service
 public class TripService {
+
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     private final TripRepository tripRepository;
     private final MemberRepository memberRepository;
@@ -156,6 +160,23 @@ public class TripService {
         trip.handOver(from, to);
         events.publishEvent(new TripChanged(tripId, "members"));
         return TripDto.Response.of(trip, from);
+    }
+
+    // 방·침대 자리 뽑기. 서버에서 섞어야(SecureRandom) 화면을 고쳐 원하는 자리를 고를 수 없다. 사람 수를 방 수로 고르게 나눈다
+    @Transactional
+    public TripDto.Response drawRooms(Long tripId, Member me, int rooms) {
+        var trip = tripRepository.findWithMembersById(tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        var ids = new ArrayList<>(trip.getMembers().stream().map(Member::getId).toList());
+        if (ids.size() < 2) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "두 명부터 뽑을 수 있어요");
+        Collections.shuffle(ids, RANDOM);
+        var count = Math.min(rooms, ids.size());
+        var result = new ArrayList<List<Long>>();
+        for (var i = 0; i < count; i++) result.add(new ArrayList<>());
+        for (var i = 0; i < ids.size(); i++) result.get(i % count).add(ids.get(i));
+        trip.drawRooms(result, me.getName());
+        events.publishEvent(new TripChanged(tripId, "trip"));
+        return TripDto.Response.of(trip, me);
     }
 
     // 모일 시간·장소. 방장이 적으면 모두의 방 머리(D-day 줄)에 뜬다

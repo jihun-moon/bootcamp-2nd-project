@@ -3,6 +3,7 @@ package com.tripmate.trip;
 import com.tripmate.user.AppUser;
 import jakarta.persistence.*;
 
+import java.util.stream.Collectors;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -34,6 +35,12 @@ public class Trip {
     // 모일 시간·장소(출발일 기준). 커뮤니티 불편 "지각·늦은 출발"(docs/17 8절). 방장이 한 번 적으면 D-day 줄에 뜬다
     private LocalTime meetTime;
     private String meetPlace;
+
+    // 방·침대 자리 뽑기 결과. "1,2,3|4,5,6" 처럼 방마다 참여자 id. 누가 몇 번째로 뽑았는지도 남겨
+    // 마음에 안 든다고 몰래 다시 뽑으면 다 보이게 한다(커뮤니티 불편 "침대 자리 다툼", docs/17 8절)
+    private String roomDraw;
+    private Integer roomDrawCount;
+    private String roomDrawBy;
 
     // 같은 멤버로 다음 여행을 만들면 지난 방 id 를 남긴다. 단톡방에서 두 사람이 같이 눌러도 다음 방이 하나만 생기게(unique)
     @Column(unique = true)
@@ -96,6 +103,13 @@ public class Trip {
         to.makeHost();
     }
 
+    void drawRooms(List<List<Long>> rooms, String by) {
+        roomDraw = rooms.stream().map(r -> r.stream().map(String::valueOf).collect(Collectors.joining(",")))
+                .collect(Collectors.joining("|"));
+        roomDrawCount = (roomDrawCount == null ? 0 : roomDrawCount) + 1;
+        roomDrawBy = by;
+    }
+
     public void updateMeet(LocalTime meetTime, String meetPlace) {
         this.meetTime = meetTime;
         this.meetPlace = meetPlace == null || meetPlace.isBlank() ? null : meetPlace.strip();
@@ -115,6 +129,9 @@ public class Trip {
     public Long getId() { return id; }
     public Long getPreviousTripId() { return previousTripId; }
     public LocalTime getMeetTime() { return meetTime; }
+    public String getRoomDraw() { return roomDraw; }
+    public Integer getRoomDrawCount() { return roomDrawCount; }
+    public String getRoomDrawBy() { return roomDrawBy; }
     public String getMeetPlace() { return meetPlace; }
     public String getInviteCode() { return inviteCode; }
     public String getTitle() { return title; }

@@ -22,6 +22,7 @@ function render(t) {
   renderGuestBand(me);
   renderDraw();
   renderRules(me);
+  renderDues(me);
   renderDates(me);
 
   var list = $('#members').empty();
@@ -289,6 +290,102 @@ function renderRules(me) {
       row.append(group);
     }
     list.append(row);
+  });
+}
+
+// 미리 걷는 회비. 정산 판(GET /settlement)의 dues 로 그린다. 없으면 방장에게만 정하는 칸이 보인다.
+// "냈어요"는 낸 사람 → 총무로 보낸 돈이 되어, 다녀와서 남은 회비는 총무가 돌려주는 줄로 정산에 저절로 나온다
+var DUES_QUICK = [50000, 100000, 150000, 200000];
+var duesEditing = false;
+function renderDues(me) {
+  api('GET', '/api/trips/' + tripId + '/settlement').done(function (b) { drawDues(me, b.dues); });
+}
+
+function drawDues(me, dues) {
+  var box = $('#dues-card').empty();
+  if (!dues && !me.host) { box.prop('hidden', true); return; }
+  box.prop('hidden', false).append($('<h2>').text('회비'));
+  var canEdit = me.host || (dues && dues.collectorId === me.id);
+  if (!dues || duesEditing) { drawDuesForm(dues, box); return; }
+
+  var paid = new Set(dues.paidIds);
+  var others = trip.members.filter(function (m) { return m.id !== dues.collectorId; });
+  var head = $('<div class="between">').append($('<span class="strong">').text('1인 ' + won(dues.amount) + ' · ' + dues.collectorName + '에게'));
+  if (canEdit) head.append($('<button type="button" class="link small">').text('고치기').click(function () { duesEditing = true; drawDues(me, dues); }));
+  box.append(head, $('<p class="muted small">').text(others.filter(function (m) { return paid.has(m.id); }).length + '/' + others.length
+    + '명 냈어요 · 모인 돈 ' + won(dues.collected + dues.amount) + '(총무 몫 포함)'));
+
+  if (!dues.pending) {
+    box.append($('<p class="small">').append('다녀왔으니 남은 회비는 ',
+      $('<a class="link">').attr('href', '/trips/' + tripId + '/receipt').text('정산'), '에서 저절로 나눠요.'));
+  }
+  // 내 차례: 총무가 아니면 "냈어요" 한 번
+  if (me.id !== dues.collectorId) {
+    if (paid.has(me.id)) {
+      box.append($('<div class="between">').append($('<span class="small">').text('✓ 나는 냈어요'),
+        $('<button type="button" class="link small">').text('되돌리기').click(function () { markDues(me, me.id, false); })));
+    } else {
+      box.append($('<p class="muted small">').text('토스·카카오페이로 ' + dues.collectorName + '에게 보낸 뒤 눌러요.'),
+        $('<button type="button" class="btn primary block">').text(won(dues.amount) + ' 냈어요').click(function () { markDues(me, me.id, true); }));
+    }
+  }
+  // 총무·방장: 사람마다 눌러서 받음 표시(돈이 들어온 걸 보는 사람은 총무라서)
+  if (canEdit && others.length) {
+    var group = $('<div class="toggles" role="group" aria-label="회비 받음 표시">');
+    others.forEach(function (m) {
+      $('<button type="button" class="toggle">').text(m.name).attr('aria-pressed', paid.has(m.id))
+        .click(function () { markDues(me, m.id, !paid.has(m.id)); }).appendTo(group);
+    });
+    box.append($('<p class="muted small">').text('받은 사람을 눌러 표시해요'), group);
+  }
+  // 콕 찌르기: 총무·방장, 아니면 내가 낸 뒤에만
+  var nudge = $('<p class="nudge" hidden>').appendTo(box);
+  if (dues.pending && (canEdit || paid.has(me.id))) {
+    renderNudge(nudge, trip, others.filter(function (m) { return m.id !== me.id && !paid.has(m.id); }).map(function (m) { return m.name; }),
+      '회비를 안 냈어요', '회비 ' + won(dues.amount) + ' ' + dues.collectorName + '에게 보내고 방에서 "냈어요" 눌러 줘요', '');
+  }
+}
+
+// 회비 정하기: 금액은 자주 쓰는 넷 중 하나를 누르거나 직접, 받는 사람은 총무 역할(없으면 방장)이 미리 골라져 있다
+function drawDuesForm(dues, box) {
+  var amount = dues ? dues.amount : 100000;
+  var quick = $('<div class="toggles meet-quick" role="group" aria-label="1인 회비">');
+  var input = $('<input type="number" inputmode="numeric" min="1000" max="10000000" step="1000" aria-label="1인 회비(원)">').val(amount);
+  var paint = function () { quick.children().each(function () { $(this).attr('aria-pressed', $(this).data('v') === Number(input.val())); }); };
+  DUES_QUICK.forEach(function (v) {
+    $('<button type="button" class="toggle">').text(v / 10000 + '만').data('v', v).click(function () { input.val(v); paint(); }).appendTo(quick);
+  });
+  input.on('input', paint);
+  var who = $('<select aria-label="누구에게 걷나">');
+  trip.members.forEach(function (m) { $('<option>').val(m.id).text(m.name).appendTo(who); });
+  var host = trip.members.find(function (m) { return m.host; });
+  who.val(dues ? dues.collectorId : host.id);
+  if (!dues) {
+    // 총무 역할에 정해진 사람이 있으면 그 사람이 기본
+    api('GET', '/api/trips/' + tripId + '/roles').done(function (r) {
+      var role = r.roles.find(function (x) { return x.title.indexOf('총무') >= 0; });
+      var a = role && r.assignments.find(function (x) { return x.roleId === role.id; });
+      if (a) who.val(a.memberId);
+    });
+  }
+  var save = $('<button type="button" class="btn primary">').text(dues ? '저장' : '이 금액으로 걷기').click(function () {
+    var button = $(this).prop('disabled', true);
+    api('PUT', '/api/trips/' + tripId + '/dues', { amount: Number(input.val()), collectorId: Number(who.val()) })
+      .done(function () { duesEditing = false; showToast('회비를 정했어요. 모두의 방 화면에 보여요.'); loadTrip(tripId).done(render); })
+      .fail(function (xhr) { button.prop('disabled', false); if (xhr.status === 400) showNotice('회비는 1천 원부터 1천만 원까지예요.'); });
+  });
+  var row = $('<div class="row">').append(save);
+  if (dues) row.append($('<button type="button" class="btn">').text('닫기').click(function () { duesEditing = false; loadTrip(tripId).done(render); }));
+  box.append($('<p class="muted small">').text(dues ? '' : '미리 걷어 두면 다녀와서 남은 돈만 돌려주면 끝이에요. 정산이 알아서 셈해요.'),
+    quick, $('<label class="small">').text('1인 (원)').append(input), $('<label class="small">').text('받는 사람').append(who), row);
+  paint();
+}
+
+// PUT·DELETE: /api/trips/1/dues/paid/2   본인·총무·방장. 판이 바뀌면 SSE(settle)로 모두 다시 그린다
+function markDues(me, memberId, on) {
+  api(on ? 'PUT' : 'DELETE', '/api/trips/' + tripId + '/dues/paid/' + memberId).done(function (b) {
+    drawDues(me, b.dues);
+    if (on && memberId === me.id) showToast('냈어요. 다녀와서 남은 회비는 정산이 돌려줘요.');
   });
 }
 

@@ -4,7 +4,6 @@ var tripId = $('body').data('trip-id');
 var trip = null;
 var board = null;
 
-function won(n) { return n.toLocaleString('ko-KR') + '원'; }
 function me() { return trip.members.find(function (m) { return m.id === trip.meId; }); }
 
 function render() {

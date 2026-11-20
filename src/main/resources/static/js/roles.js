@@ -326,10 +326,6 @@ function minutesText(minutes) {
   return (h ? h + '시간 ' : '') + (minutes % 60) + '분';
 }
 
-function won(n) {
-  return n.toLocaleString('ko-KR') + '원';
-}
-
 // 단톡방에 붙여 넣을 글. 링크는 방 주소 대신 초대 링크라 아직 안 들어온 사람도 눌러서 들어온다
 function resultText() {
   var lines = ['[' + trip.title + '] 역할'];

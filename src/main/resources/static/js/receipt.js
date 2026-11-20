@@ -3,7 +3,6 @@
 var tripId = $('body').data('trip-id');
 var lines = null; // 화면과 그림이 같이 쓰는 줄: { kind: 'title'|'meta'|'cut'|'row'|'total'|'note', left, right }
 
-function won(n) { return n.toLocaleString('ko-KR') + '원'; }
 function nightsOf(trip) {
   if (!trip.startDate || !trip.endDate) return null;
   return Math.max(0, Math.round((new Date(trip.endDate) - new Date(trip.startDate)) / 86400000));

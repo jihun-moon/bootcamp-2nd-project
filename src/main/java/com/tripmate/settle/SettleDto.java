@@ -23,15 +23,26 @@ public final class SettleDto {
     // GET /api/trips/1/settlement
     // { "total": 612000, "lines": [...], "balances": [...], "transfers": [ { "fromName": "민지", "toName": "준호", "amount": 32000 } ] }
     // transfers 는 아직 남은 보낼 줄, payments 는 "보냈어요/받았어요"로 끝난 줄
+    // dues 는 미리 걷는 회비(없으면 null)
     public record Board(int total, List<Line> lines, List<Balance> balances, List<Transfer> transfers,
-                        List<Paid> payments, Boolean driverPaysFuel, Boolean drinksSeparate, Boolean refundNoShow) {
+                        List<Paid> payments, Boolean driverPaysFuel, Boolean drinksSeparate, Boolean refundNoShow, Dues dues) {
+    }
+
+    // 회비: 1인 얼마를 누구에게, 낸 사람 id, 걷힌 돈(총무 몫은 빼고 센다).
+    // pending 은 여행이 아직 안 끝남. 그동안은 보낼 줄 대신 "다녀와서 남은 회비를 나눠요"로 보인다(걷자마자 돌려주라는 줄이 뜨지 않게)
+    public record Dues(int amount, Long collectorId, String collectorName, List<Long> paidIds, int collected, boolean pending) {
+    }
+
+    // PUT /api/trips/1/dues  { "amount": 100000, "collectorId": 3 }   방장이나 지금 총무
+    public record DuesRequest(@Positive @Max(10_000_000) int amount, @NotNull Long collectorId) {
     }
 
     // POST /api/trips/1/payments  { "fromId": 2, "toId": 1, "amount": 20000 }   보낸 사람·받은 사람·방장만
     public record PaymentRequest(@NotNull Long fromId, @NotNull Long toId, @Positive @Max(100_000_000) int amount) {
     }
 
-    public record Paid(Long id, Long fromId, String fromName, Long toId, String toName, int amount, Long markedById, String markedByName) {
+    public record Paid(Long id, Long fromId, String fromName, Long toId, String toName, int amount, Long markedById, String markedByName,
+                       boolean dues) {
     }
 
     // 낸 돈 한 줄. shopping 이 true 면 장보기 표에서 온 줄이라 여기서는 못 지운다(장보기 화면에서 고친다)
@@ -49,7 +60,7 @@ public final class SettleDto {
 
     // 로그인 없이 보는 정산(/s/{code}). 방 화면의 판에서 사람별 몫(balances)·규칙은 빼고 보낼 줄·낸 돈·끝난 줄만
     public record Shared(Long tripId, String title, String destination, LocalDate startDate, LocalDate endDate,
-                         int total, List<Line> lines, List<Transfer> transfers, List<Paid> payments) {
+                         int total, List<Line> lines, List<Transfer> transfers, List<Paid> payments, boolean duesPending) {
     }
 
     // PUT /api/trips/1/settlement/link -> { "code": "Qm9vdGNhbXAtMi10cmlw" }  주소는 /s/{code}

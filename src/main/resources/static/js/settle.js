@@ -12,7 +12,12 @@ function renderSettle(board, trip) {
   settle = board;
   $('#settle-total').text(board.total ? '모두 ' + won(board.total) : '');
   var list = $('#settle-transfers').empty();
-  if (!board.lines.length) {
+  // 회비를 걷는 중(여행 전·중)이면 "총무가 돌려줄 줄"이 미리 뜨지 않게 안내만
+  var duesPending = board.dues && board.dues.pending;
+  if (duesPending) {
+    list.append($('<li class="muted">').text('회비 ' + won(board.dues.collected + board.dues.amount) + ' 모이는 중. 다녀오면 남은 회비를 돌려주거나 모자란 만큼 더 걷는 줄이 여기 나와요. 회비로 쓴 돈은 '
+      + withSubject(board.dues.collectorName) + ' 아래에 적어요.'));
+  } else if (!board.lines.length) {
     list.append($('<li class="muted">').text('먼저 낸 돈을 적으면 누가 누구에게 얼마 보낼지 바로 나와요.'));
   } else if (!board.transfers.length) {
     list.append($('<li class="settled muted">').append($('<span>').text(board.payments.length
@@ -20,7 +25,7 @@ function renderSettle(board, trip) {
   }
   settledStamp(board.lines.length > 0 && !board.transfers.length);
   var me = trip.members.find(function (m) { return m.id === trip.meId; });
-  board.transfers.forEach(function (t) {
+  (duesPending ? [] : board.transfers).forEach(function (t) {
     var mine = t.fromId === trip.meId || t.toId === trip.meId;
     // 한 번만 누르면 된다: 보내는 사람은 "보냈어요", 받는 사람은 "받았어요". 방장은 대신 눌러 줄 수 있다
     var label = t.fromId === trip.meId ? '보냈어요' : t.toId === trip.meId ? '받았어요' : me && me.host ? '받음 표시' : null;
@@ -42,7 +47,7 @@ function renderSettle(board, trip) {
   var paid = $('#settle-paid').empty().prop('hidden', !board.payments.length);
   if (board.payments.length) paid.append($('<li class="muted">').text('끝난 송금'));
   board.payments.forEach(function (p) {
-    var row = $('<li class="between">').append($('<span>').text('✓ ' + p.fromName + ' → ' + p.toName + ' ' + won(p.amount)
+    var row = $('<li class="between">').append($('<span>').text('✓ ' + (p.dues ? '회비 ' : '') + p.fromName + ' → ' + p.toName + ' ' + won(p.amount)
       + ' · ' + withSubject(p.markedByName) + (p.markedById === p.toId ? ' 받았어요' : p.markedById === p.fromId ? ' 보냈어요' : ' 표시했어요')));
     var can = [p.fromId, p.toId, p.markedById].indexOf(trip.meId) >= 0 || (me && me.host);
     if (can) {
@@ -52,7 +57,8 @@ function renderSettle(board, trip) {
     }
     paid.append(row);
   });
-  $('#btn-settle-share').prop('hidden', !board.transfers.length);
+  // 회비를 걷는 중에는 보낼 글도 숨긴다(돌려줄 줄이 미리 나가지 않게)
+  $('#btn-settle-share').prop('hidden', duesPending || !board.transfers.length);
 
   var lines = $('#settle-lines').empty();
   board.lines.forEach(function (l) {

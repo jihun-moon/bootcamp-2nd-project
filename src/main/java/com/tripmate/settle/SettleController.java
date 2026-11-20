@@ -34,6 +34,27 @@ public class SettleController {
         return ResponseEntity.ok(new SettleDto.Link(settleService.linkCode(tripId)));
     }
 
+    // PUT: /api/trips/1/dues  body = { "amount": 100000, "collectorId": 3 }   방장이나 지금 총무
+    @PutMapping("/dues")
+    public ResponseEntity<SettleDto.Board> setDues(@PathVariable Long tripId, @Valid @RequestBody SettleDto.DuesRequest req) {
+        var me = tripAccess.me(tripId);
+        return ResponseEntity.ok(settleService.setDues(tripId, me, req));
+    }
+
+    // PUT: /api/trips/1/dues/paid/2   회비 냈어요(본인·총무·방장). 몇 번 눌러도 한 번
+    @PutMapping("/dues/paid/{memberId}")
+    public ResponseEntity<SettleDto.Board> markDues(@PathVariable Long tripId, @PathVariable Long memberId) {
+        var me = tripAccess.me(tripId);
+        return ResponseEntity.ok(settleService.markDues(tripId, me, memberId));
+    }
+
+    // DELETE: /api/trips/1/dues/paid/2   잘못 누른 것 되돌리기
+    @DeleteMapping("/dues/paid/{memberId}")
+    public ResponseEntity<SettleDto.Board> unmarkDues(@PathVariable Long tripId, @PathVariable Long memberId) {
+        var me = tripAccess.me(tripId);
+        return ResponseEntity.ok(settleService.unmarkDues(tripId, me, memberId));
+    }
+
     // POST: /api/trips/1/expenses  body = { "kind": "FUEL", "memo": "주유 + 톨비", "amount": 64000 }   낸 사람은 본인
     @PostMapping("/expenses")
     public ResponseEntity<SettleDto.Board> add(@PathVariable Long tripId, @Valid @RequestBody SettleDto.ExpenseRequest req) {

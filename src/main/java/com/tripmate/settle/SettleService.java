@@ -4,6 +4,7 @@ import org.springframework.context.event.EventListener;
 import com.tripmate.trip.TripDeleting;
 import com.tripmate.shopping.ShoppingClaimRepository;
 import com.tripmate.trip.Member;
+import com.tripmate.trip.MemberLeaving;
 import com.tripmate.trip.TripChanged;
 import com.tripmate.trip.TripRepository;
 import org.springframework.context.ApplicationEventPublisher;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -34,16 +36,18 @@ public class SettleService {
     private final ShoppingClaimRepository claimRepository;
     private final PaymentRepository paymentRepository;
     private final SettleLinkRepository linkRepository;
+    private final DuesRepository duesRepository;
     private final ApplicationEventPublisher events;
 
     public SettleService(TripRepository tripRepository, ExpenseRepository expenseRepository,
                          ShoppingClaimRepository claimRepository, PaymentRepository paymentRepository,
-                         SettleLinkRepository linkRepository, ApplicationEventPublisher events) {
+                         SettleLinkRepository linkRepository, DuesRepository duesRepository, ApplicationEventPublisher events) {
         this.tripRepository = tripRepository;
         this.expenseRepository = expenseRepository;
         this.claimRepository = claimRepository;
         this.paymentRepository = paymentRepository;
         this.linkRepository = linkRepository;
+        this.duesRepository = duesRepository;
         this.events = events;
     }
 
@@ -62,7 +66,7 @@ public class SettleService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)).getTrip();
         var b = board(trip.getId());
         return new SettleDto.Shared(trip.getId(), trip.getTitle(), trip.getDestination(), trip.getStartDate(), trip.getEndDate(),
-                b.total(), b.lines(), b.transfers(), b.payments());
+                b.total(), b.lines(), b.transfers(), b.payments(), b.dues() != null && b.dues().pending());
     }
 
     @Transactional(readOnly = true)
@@ -122,8 +126,15 @@ public class SettleService {
             paid.merge(p.getSender().getId(), (double) p.getAmount(), Double::sum);
             owed.merge(p.getReceiver().getId(), (double) p.getAmount(), Double::sum);
             paidRows.add(new SettleDto.Paid(p.getId(), p.getSender().getId(), nameOf(p.getSender()), p.getReceiver().getId(),
-                    nameOf(p.getReceiver()), p.getAmount(), p.getMarkedBy().getId(), nameOf(p.getMarkedBy())));
+                    nameOf(p.getReceiver()), p.getAmount(), p.getMarkedBy().getId(), nameOf(p.getMarkedBy()), p.isDues()));
         }
+        var dues = duesRepository.findByTripId(tripId).map(d -> {
+            var duesPaid = paidRows.stream().filter(p -> p.dues() && p.toId().equals(d.getCollector().getId())).toList();
+            var end = trip.getEndDate();
+            return new SettleDto.Dues(d.getAmount(), d.getCollector().getId(), nameOf(d.getCollector()),
+                    duesPaid.stream().map(SettleDto.Paid::fromId).toList(), duesPaid.stream().mapToInt(SettleDto.Paid::amount).sum(),
+                    end == null || end.isAfter(LocalDate.now()));
+        }).orElse(null);
 
         // 정산에 나오는 사람: 지금 있는 사람 + 돈이 걸린 나간 사람
         var parties = new ArrayList<>(members);
@@ -135,7 +146,7 @@ public class SettleService {
         }).toList();
         var total = lines.stream().mapToInt(SettleDto.Line::amount).sum();
         return new SettleDto.Board(total, lines, balances, transfers(parties, paid, owed), paidRows, trip.getDriverPaysFuel(),
-                trip.getDrinksSeparate(), trip.getRefundNoShow());
+                trip.getDrinksSeparate(), trip.getRefundNoShow(), dues);
     }
 
     private static String nameOf(Member m) {
@@ -213,9 +224,78 @@ public class SettleService {
     // 방을 지우면 그 방의 보냈어요 표시와 먼저 낸 돈도 지운다
     @EventListener
     public void onTripDeleting(TripDeleting e) {
+        duesRepository.findByTripId(e.tripId()).ifPresent(duesRepository::delete);
         linkRepository.findByTripId(e.tripId()).ifPresent(linkRepository::delete);
         paymentRepository.deleteAll(paymentRepository.findByTripIdOrderById(e.tripId()));
         expenseRepository.deleteAll(expenseRepository.findByTripIdOrderById(e.tripId()));
+    }
+
+    // 회비 정하기·고치기: 방장이나 지금 총무. 총무는 이 방에 있는 사람만.
+    // shortcut: 낸 뒤 금액을 바꾸면 이미 낸 사람은 옛 금액으로 남는다(차액은 다녀와서 정산이 맞춘다). 차액 알림이 필요해지면 그때
+    @Transactional
+    public SettleDto.Board setDues(Long tripId, Member me, SettleDto.DuesRequest req) {
+        var trip = tripRepository.findWithMembersById(tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        var current = duesRepository.findByTripId(tripId);
+        var isCollector = current.map(d -> d.getCollector().getId().equals(me.getId())).orElse(false);
+        if (!me.isHost() && !isCollector) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        var collector = trip.getMembers().stream().filter(m -> m.getId().equals(req.collectorId())).findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "이 방 사람에게만 걷을 수 있어요"));
+        current.ifPresentOrElse(d -> d.change(collector, req.amount()),
+                () -> duesRepository.save(new Dues(trip, collector, req.amount())));
+        events.publishEvent(new TripChanged(tripId, "settle"));
+        return board(tripId);
+    }
+
+    // 회비 냈어요: 낸 사람 본인, 총무, 방장. 두 번 눌러도 한 번(이미 있으면 그대로)
+    @Transactional
+    public SettleDto.Board markDues(Long tripId, Member me, Long memberId) {
+        var trip = tripRepository.findWithMembersById(tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        var dues = duesRepository.findByTripId(tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        var collector = dues.getCollector();
+        checkDuesHand(me, memberId, collector);
+        var payer = trip.getMembers().stream().filter(m -> m.getId().equals(memberId)).findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "이 방 사람만 돼요"));
+        if (payer == collector) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "총무 몫은 이미 총무에게 있어요");
+        var already = paymentRepository.findByTripIdOrderById(tripId).stream()
+                .anyMatch(p -> p.isDues() && p.getSender() == payer && p.getReceiver() == collector);
+        if (!already) {
+            var marker = trip.getMembers().stream().filter(m -> m.getId().equals(me.getId())).findFirst().orElseThrow();
+            paymentRepository.save(Payment.dues(trip, payer, collector, marker, dues.getAmount()));
+            events.publishEvent(new TripChanged(tripId, "settle"));
+        }
+        return board(tripId);
+    }
+
+    // 잘못 누른 회비 되돌리기: 같은 사람들(본인, 총무, 방장)
+    @Transactional
+    public SettleDto.Board unmarkDues(Long tripId, Member me, Long memberId) {
+        var dues = duesRepository.findByTripId(tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        checkDuesHand(me, memberId, dues.getCollector());
+        paymentRepository.findByTripIdOrderById(tripId).stream()
+                .filter(p -> p.isDues() && p.getSender().getId().equals(memberId)
+                        && p.getReceiver().getId().equals(dues.getCollector().getId()))
+                .forEach(paymentRepository::delete);
+        events.publishEvent(new TripChanged(tripId, "settle"));
+        return board(tripId);
+    }
+
+    private static void checkDuesHand(Member me, Long memberId, Member collector) {
+        if (!me.isHost() && !me.getId().equals(memberId) && !me.getId().equals(collector.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+    }
+
+    // 총무가 방을 나가면 회비 설정만 지운다(방장이 새 총무로 다시 정한다). 이미 낸 회비는 보낸 돈으로 남아
+    // 정산에서 나간 총무가 돌려줄 줄로 나온다
+    @EventListener
+    public void onMemberLeaving(MemberLeaving e) {
+        duesRepository.findByTripId(e.tripId())
+                .filter(d -> d.getCollector().getId().equals(e.memberId()))
+                .ifPresent(duesRepository::delete);
     }
 
     // 보냈어요/받았어요. 보낸 사람·받은 사람이 한 번 누르면 된다(방장은 대신 눌러 줄 수 있다)

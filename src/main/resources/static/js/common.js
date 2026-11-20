@@ -78,6 +78,11 @@ function formatPeriod(start, end) {
 }
 
 // 단추 글을 기기에 맞춘다. 휴대폰 "카톡으로 보내기", PC "복사해서 단톡방에 붙이기"
+// 12000 -> "12,000원"
+function won(n) {
+  return n.toLocaleString('ko-KR') + '원';
+}
+
 function shareLabel(phone, pc) {
   return CAN_SHARE ? phone : pc;
 }

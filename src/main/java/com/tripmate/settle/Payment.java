@@ -28,7 +28,16 @@ public class Payment {
 
     private int amount;
 
+    // 미리 걷은 회비(낸 사람 → 총무). 셈은 보냈어요와 같고, 화면에 "회비"로 따로 보인다. 옛 행은 null = 아님
+    private Boolean dues;
+
     protected Payment() {
+    }
+
+    static Payment dues(Trip trip, Member payer, Member collector, Member markedBy, int amount) {
+        var p = new Payment(trip, payer, collector, markedBy, amount);
+        p.dues = true;
+        return p;
     }
 
     public Payment(Trip trip, Member sender, Member receiver, Member markedBy, int amount) {
@@ -44,4 +53,5 @@ public class Payment {
     public Member getReceiver() { return receiver; }
     public Member getMarkedBy() { return markedBy; }
     public int getAmount() { return amount; }
+    public boolean isDues() { return Boolean.TRUE.equals(dues); }
 }

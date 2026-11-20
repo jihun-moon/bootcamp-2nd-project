@@ -845,3 +845,7 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
 .shared-settle .settle-list:has(.mine) .settle-row:not(.mine) { opacity: .45; }
 .shared-settle details summary { cursor: pointer; }
 .shared-settle details[open] summary { margin-bottom: 12px; }
+
+/* 회비 카드: 받는 사람 고르기 select 를 다른 입력칸과 같은 꼴로 */
+.ov-dues select, .ov-dues input[type=number] { width: 100%; min-height: var(--tap); padding: 8px 12px; border: 1px solid var(--line);
+  border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); font: inherit; margin-top: 4px; }

@@ -19,7 +19,7 @@ public class AuthController {
         this.kakaoReady = !"unset".equals(kakaoClientId);
     }
 
-    public record Me(Long id, String nickname) {
+    public record Me(Long id, String nickname, boolean guest) {
     }
 
     public record Options(boolean kakao) {
@@ -29,7 +29,7 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<Me> me() {
         var user = currentUser.get();
-        return ResponseEntity.ok(new Me(user.getId(), user.getNickname()));
+        return ResponseEntity.ok(new Me(user.getId(), user.getNickname(), user.isGuest()));
     }
 
     // GET: /api/auth/options   로그인 화면이 어떤 버튼을 보여 줄지 고른다

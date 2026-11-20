@@ -818,3 +818,8 @@ button.link::after { content: ""; position: absolute; inset: -12px -8px; } /* �
 /* 방장 도구(방장 주기·빼기)가 붙으면 두 칸에서는 글자가 한 자씩 꺾였다. 그때는 한 줄에 한 사람 */
 #members:has(.member-acts) { grid-template-columns: 1fr; }
 #members .member-acts .link, #members .chip { white-space: nowrap; }
+
+/* 초대 화면 손님 칸, 방 안 손님 띠 */
+.guest-form { width: 100%; max-width: 360px; margin-inline: auto; text-align: left; }
+.guest-band { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 16px; padding: 12px 16px; border: 1px solid var(--accent); border-radius: var(--radius); background: var(--accent-soft); font-size: var(--fs-sm); }
+.guest-band > span { flex: 1 1 220px; }

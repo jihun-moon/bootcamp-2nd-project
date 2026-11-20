@@ -18,6 +18,7 @@
 | REQ-01 | 로그아웃 | POST | `/api/logout` | | 204 | Spring Security |
 | REQ-02 | 방 만들기 | POST | `/api/trips` | `{"title", "destination", "startDate", "endDate"}` | 201 방 | `TripController`, `TripService` |
 | REQ-04 | 방 보기 | GET | `/api/trips/{id}` | | 200 방(참여자, `meId`, `inviteCode`) | `TripController`, `TripService` |
+| REQ-03 | 손님으로 참여(로그인 없이) | POST | `/api/invites/{inviteCode}/guest` | `{"name": "민재"}` | 200 `{tripId}` + 로그인·기억 쿠키 / 400 / 404 / 415 / 429 | `TripController.joinAsGuest`, `GuestService`, docs/19 |
 | REQ-03 | 초대 링크로 참여 | POST | `/api/invites/{inviteCode}` | | 200 `{tripId}` | `TripController`, `TripService` |
 | REQ-02 | 내 여행방 | GET | `/api/me/trips` | | 200 `[{id, title, destination, startDate, memberCount, surveyDone, host, todo}]` 최근 50개 / 401 | `TripController`, `TripService.myTrips` |
 | REQ-11 | 바뀜 알림(SSE) | GET | `/api/trips/{id}/events` | | `event: change` / `ping` | `TripController`, `TripEvents` |

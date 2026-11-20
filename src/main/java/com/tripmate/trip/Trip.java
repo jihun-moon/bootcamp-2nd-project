@@ -88,7 +88,8 @@ public class Trip {
         var wasHost = member.isHost();
         member.depart();
         var rest = getMembers();
-        if (wasHost && !rest.isEmpty()) rest.get(0).makeHost();
+        // 방장은 카카오 계정인 사람 중 먼저 들어온 사람이 잇는다(손님은 다시 찾아올 수 없을 수 있다). 다 손님이면 먼저 들어온 손님
+        if (wasHost && !rest.isEmpty()) rest.stream().filter(m -> !m.isGuest()).findFirst().orElse(rest.get(0)).makeHost();
     }
 
     // 방 이름·지역 고치기(방장). 이름이 비면 그대로 둔다

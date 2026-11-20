@@ -3,6 +3,9 @@ package com.tripmate.trip;
 import com.tripmate.role.Role;
 import com.tripmate.role.RoleRepository;
 import com.tripmate.user.AppUser;
+import com.tripmate.user.AppUserRepository;
+import com.tripmate.user.GuestUpgraded;
+import org.springframework.context.event.EventListener;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -16,22 +19,26 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 @Service
 public class TripService {
 
     private static final SecureRandom RANDOM = new SecureRandom();
+    private static final int MAX_GUESTS = 30;
 
     private final TripRepository tripRepository;
     private final MemberRepository memberRepository;
     private final RoleRepository roleRepository;
+    private final AppUserRepository appUserRepository;
     private final ApplicationEventPublisher events;
 
     public TripService(TripRepository tripRepository, MemberRepository memberRepository, RoleRepository roleRepository,
-                       ApplicationEventPublisher events) {
+                       AppUserRepository appUserRepository, ApplicationEventPublisher events) {
         this.tripRepository = tripRepository;
         this.memberRepository = memberRepository;
         this.roleRepository = roleRepository;
+        this.appUserRepository = appUserRepository;
         this.events = events;
     }
 
@@ -47,6 +54,7 @@ public class TripService {
     // 이미 누가 만들었으면 새로 만들지 않고 그 방으로 보낸다(그 사이 들어온 사람이면 그 방에 넣어 준다)
     @Transactional
     public TripDto.Next next(Long tripId, AppUser user) {
+        if (user.isGuest()) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "카카오로 시작하면 다음 여행을 열 수 있어요");
         var existing = tripRepository.findByPreviousTripId(tripId);
         if (existing.isPresent()) {
             var next = existing.get();
@@ -85,9 +93,10 @@ public class TripService {
                 .toList();
     }
 
-    // 만든 사람이 방장이 되고, 기본 역할(총무·운전…)이 같이 생긴다
+    // 만든 사람이 방장이 되고, 기본 역할(총무·운전…)이 같이 생긴다. 손님은 못 만든다(방에는 다시 찾아올 주인이 있어야 한다)
     @Transactional
     public TripDto.Response create(AppUser user, TripDto.CreateRequest req) {
+        if (user.isGuest()) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "카카오로 시작하면 방을 만들 수 있어요");
         var trip = new Trip(req.title(), req.destination(), req.startDate(), req.endDate());
         var me = trip.addMember(user, user.getNickname(), true);
         tripRepository.save(trip);
@@ -157,6 +166,7 @@ public class TripService {
         var to = members.stream().filter(m -> m.getId().equals(memberId)).findFirst()
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         if (from == to) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미 방장이에요");
+        if (to.isGuest()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "손님은 방장이 될 수 없어요. 카카오로 이어 둔 사람에게 넘겨 주세요");
         trip.handOver(from, to);
         events.publishEvent(new TripChanged(tripId, "members"));
         return TripDto.Response.of(trip, from);
@@ -230,6 +240,46 @@ public class TripService {
         return TripDto.Response.of(trip, me);
     }
 
+    // 손님 참여 전에 방이 있는지, 손님 상한(30명)을 넘지 않는지 먼저 본다. 계정을 만든 뒤에 막히면 빈 손님 계정이 남는다
+    @Transactional(readOnly = true)
+    public void checkGuestRoom(String inviteCode) {
+        var trip = tripRepository.findByInviteCode(inviteCode)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (trip.getMembers().stream().filter(Member::isGuest).count() >= MAX_GUESTS) {
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "이 방은 손님이 너무 많아요. 카카오로 들어와 주세요");
+        }
+    }
+
+    // 같은 이름이 이미 있으면 "민재(2)"처럼 붙인다. 손님이 남의 이름을 골라 그 사람인 척할 수 없게(새 자리로만 들어온다)
+    private static String uniqueName(Trip trip, String name) {
+        var taken = trip.getMembers().stream().map(Member::getName).collect(Collectors.toSet());
+        if (!taken.contains(name)) return name;
+        var n = 2;
+        while (taken.contains(name + "(" + n + ")")) n++;
+        return name + "(" + n + ")";
+    }
+
+    // 손님이던 브라우저가 카카오로 로그인했다: 손님 참여 자리를 카카오 계정으로 옮긴다.
+    // 그 방에 카카오 계정이 이미 있으면 손님 자리는 나감 처리(한 방에 한 사람 한 행)
+    @EventListener
+    @Transactional
+    public void onGuestUpgraded(GuestUpgraded e) {
+        var guest = appUserRepository.findByLoginId(e.guestLoginId()).orElse(null);
+        var account = appUserRepository.findByLoginId(e.userLoginId()).orElse(null);
+        if (guest == null || account == null || !guest.isGuest()) return;
+        for (var m : memberRepository.findByUserId(guest.getId())) {
+            var trip = m.getTrip();
+            var existing = trip.getEveryone().stream().filter(x -> x.belongsTo(account)).findFirst();
+            if (existing.isEmpty()) {
+                m.reassign(account);
+            } else {
+                if (existing.get().isDeparted() && !m.isDeparted()) existing.get().rejoin();
+                if (!m.isDeparted()) trip.removeMember(m);
+            }
+            events.publishEvent(new TripChanged(trip.getId(), "members"));
+        }
+    }
+
     // 초대 링크를 두 번 눌러도 참여자는 한 번만 들어간다
     @Transactional
     public TripDto.Joined join(AppUser user, String inviteCode) {
@@ -238,7 +288,7 @@ public class TripService {
         // 나갔던 사람이 초대 링크로 다시 오면 그 행을 되살린다(방마다 한 사람 한 행)
         var before = trip.getEveryone().stream().filter(m -> m.belongsTo(user)).findFirst();
         if (before.isEmpty()) {
-            trip.addMember(user, user.getNickname(), false);
+            trip.addMember(user, uniqueName(trip, user.getNickname()), false);
             events.publishEvent(new TripChanged(trip.getId(), "members"));
         } else if (before.get().isDeparted()) {
             before.get().rejoin();

@@ -19,6 +19,7 @@ function render(t) {
   renderProgress(notYet);
   renderMeet(me);
   renderRename(me);
+  renderGuestBand(me);
   renderDraw();
   renderRules(me);
   renderDates(me);
@@ -34,7 +35,7 @@ function render(t) {
     // 방장은 못 오게 된 사람을 뺄 수 있다(빠진 사람이 남아 있으면 1인 금액이 다 틀린다)
     if (me.host && m.id !== me.id) {
       row.append($('<span class="member-acts">').append(
-        $('<button type="button" class="link small">').text('방장 주기').attr('aria-label', m.name + ' 님에게 방장 넘기기')
+        m.guest ? null : $('<button type="button" class="link small">').text('방장 주기').attr('aria-label', m.name + ' 님에게 방장 넘기기')
           .click(function () { handOver(m); }),
         $('<button type="button" class="link small">').text('빼기').attr('aria-label', m.name + ' 님 빼기')
           .click(function () { leaveTrip(m, false); })));
@@ -349,6 +350,13 @@ function shareDraw() {
   shareText(lines.join('\n') + '\n' + location.origin + '/trips/' + tripId, '뽑기 결과를 복사했어요. 단톡방에 붙여 넣어 주세요.');
 }
 
+// 손님 띠: 카카오로 이으면 손님으로 한 것이 그대로 옮겨진다(GuestUpgraded). 닫은 것은 이 휴대폰에 기억
+function renderGuestBand(me) {
+  var closed = false;
+  try { closed = localStorage.getItem('tripmate.guest-band') === '1'; } catch (e) { /* 막혀 있으면 매번 보인다 */ }
+  $('#guest-band').prop('hidden', !me.guest || closed);
+}
+
 // PUT: /api/trips/1/host  { "memberId": 3 }   방장 넘기기. 넘기면 나는 참여자가 된다
 function handOver(m) {
   if (!window.confirm(m.name + ' 님에게 방장을 넘길까요? 날짜 정하기·규칙·빼기는 이제 ' + m.name + ' 님이 해요.')) return;
@@ -396,6 +404,13 @@ $(function () {
     $('#rename-title').trigger('focus');
   });
   $('#rename-cancel').click(function () { $('#rename-form').prop('hidden', true); });
+  $('#guest-link').click(function () {
+    try { sessionStorage.setItem('tripmate.next', location.pathname); } catch (e) { /* 로그인은 된다 */ }
+  });
+  $('#guest-band-close').click(function () {
+    try { localStorage.setItem('tripmate.guest-band', '1'); } catch (e) { /* 이번만 닫힌다 */ }
+    $('#guest-band').prop('hidden', true);
+  });
   $('#draw-less').click(function () { drawRooms--; renderDraw(); });
   $('#draw-more').click(function () { drawRooms++; renderDraw(); });
   $('#btn-draw-share').text(shareLabel('카톡으로 결과 보내기', '결과 복사하기')).click(shareDraw);

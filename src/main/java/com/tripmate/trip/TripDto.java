@@ -95,11 +95,16 @@ public final class TripDto {
     public record Joined(Long tripId) {
     }
 
-    public record MemberResponse(Long id, String name, boolean host, boolean surveyDone, String imageUrl, boolean drinks) {
+    public record MemberResponse(Long id, String name, boolean host, boolean surveyDone, String imageUrl, boolean drinks,
+                                 boolean guest) {
 
         static MemberResponse from(Member m) {
-            return new MemberResponse(m.getId(), m.getName(), m.isHost(), m.isSurveyDone(), m.getImageUrl(), m.drinks());
+            return new MemberResponse(m.getId(), m.getName(), m.isHost(), m.isSurveyDone(), m.getImageUrl(), m.drinks(), m.isGuest());
         }
+    }
+
+    // POST /api/invites/3f9a1c2b7d4e/guest  { "name": "민재" }   로그인 없이 이름만
+    public record GuestRequest(@NotBlank @Size(max = 20) String name) {
     }
 
     // PUT /api/trips/1  { "title": "강릉 우정 여행", "destination": "강릉" }   방장만

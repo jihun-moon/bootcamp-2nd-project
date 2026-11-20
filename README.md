@@ -34,10 +34,11 @@ JDK 17 이상만 있으면 된다. DB 는 메모리 H2 라 설치할 것이 없�
 | 기능 | HTTP 메소드 | 경로(URI) | 응답 | 실패조건 | 담당 |
 |---|---|---|---|---|---|
 | 로그인 버튼 고르기 | GET | `/api/auth/options` | 200 `{"kakao": true}` | | 박재현 |
-| 내 정보 | GET | `/api/me` | 200 `{"id": 2, "nickname": "민지"}` | 로그인 안 했으면 401 | 박재현 |
+| 내 정보 | GET | `/api/me` | 200 `{"id": 2, "nickname": "민지", "guest": false}` | 로그인 안 했으면 401 | 박재현 |
 | 로그아웃 | POST | `/api/logout` | 204 | | 박재현 |
 | 여행방 만들기 | POST | `/api/trips` | 201 방 JSON(만든 사람이 방장)<br>요청 `{"title": "겨울 펜션", "destination": "가평", "startDate": "2027-01-15", "endDate": "2027-01-17"}` | 여행 이름이 비면 400 | 박재현 |
 | 여행방 보기 | GET | `/api/trips/{id}` | 200 `{"id": 1, "title": "...", "inviteCode": "...", "meId": 2, "members": [...]}` | | 박재현 |
+| 손님으로 참여(로그인 없이) | POST | `/api/invites/{inviteCode}/guest` | 200 `{"tripId": 1}`, 손님 계정이 생기고 로그인·기억 쿠키(`tm_remember`, 60일)<br>요청 `{"name": "민재"}` | 이름 비거나 20자 넘음 400, 코드 틀림 404, form 전송 415, 한 방 손님 30명·같은 곳 한 시간 10번 넘음 429 | 박재현(설계 docs/19) |
 | 초대 링크로 참여 | POST | `/api/invites/{inviteCode}` | 200 `{"tripId": 1}` (이미 있으면 그대로) | 코드가 틀리면 404 | 박재현 |
 | 바뀜 알림 (SSE) | GET | `/api/trips/{id}/events` | `event: change` `data: roles` \| `members` \| `stays` \| `dates` \| `trip` \| `shopping` \| `settle`, 15초마다 `ping` | | 박재현 |
 | 설문 저장 | PUT | `/api/trips/{id}/members/{memberId}/survey` | 200 저장한 설문<br>요청 `{"activity": "INDOOR", "planning": "PLANNER", "hasCar": true, ..., "preferences": {"DETACHED": 5}}` | activity·planning 이 없거나 점수가 1~5 밖이면 400<br>남의 설문이면 403 | 문지훈 |

@@ -14,4 +14,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     // 첫 화면 "내 여행방". 오래된 방까지 끝없이 읽지 않게 최근 50개만
     List<Member> findTop50ByUserIdOrderByIdDesc(Long userId);
+
+    List<Member> findByUserId(Long userId);
 }

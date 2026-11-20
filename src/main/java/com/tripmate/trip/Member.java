@@ -66,6 +66,14 @@ public class Member {
         host = false;
     }
 
+    // 손님이 카카오로 로그인하면 이 참여 자리(설문·표·장보기·정산이 걸린 행)를 카카오 계정으로 옮긴다
+    void reassign(AppUser account) {
+        this.user = account;
+    }
+
+    // 이름만 쓰고 들어온 손님. 방장이 될 수 없다
+    public boolean isGuest() { return user != null && user.isGuest(); }
+
     void depart() {
         departed = true;
         host = false;

@@ -1,6 +1,9 @@
 package com.tripmate.trip;
 
 import com.tripmate.user.CurrentUser;
+import com.tripmate.user.GuestService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
@@ -21,12 +24,15 @@ public class TripController {
     private final TripEvents tripEvents;
     private final TripAccess tripAccess;
     private final CurrentUser currentUser;
+    private final GuestService guestService;
 
-    public TripController(TripService tripService, TripEvents tripEvents, TripAccess tripAccess, CurrentUser currentUser) {
+    public TripController(TripService tripService, TripEvents tripEvents, TripAccess tripAccess, CurrentUser currentUser,
+                          GuestService guestService) {
         this.tripService = tripService;
         this.tripEvents = tripEvents;
         this.tripAccess = tripAccess;
         this.currentUser = currentUser;
+        this.guestService = guestService;
     }
 
     // GET: /api/trips/1
@@ -134,6 +140,16 @@ public class TripController {
     @PostMapping("/trips")
     public ResponseEntity<TripDto.Response> createTrip(@Valid @RequestBody TripDto.CreateRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED).body(tripService.create(currentUser.get(), req));
+    }
+
+    // POST: /api/invites/3f9a1c2b7d4e/guest  body = { "name": "민재" }   로그인 없이 이름만(docs/19).
+    // 손님 계정을 만들어 이 브라우저를 로그인시키고(기억 쿠키 포함) 방에 넣는다
+    @PostMapping("/invites/{inviteCode}/guest")
+    public ResponseEntity<TripDto.Joined> joinAsGuest(@PathVariable String inviteCode, @Valid @RequestBody TripDto.GuestRequest req,
+                                                      HttpServletRequest request, HttpServletResponse response) {
+        tripService.checkGuestRoom(inviteCode);
+        var user = guestService.signIn(req.name(), request, response);
+        return ResponseEntity.ok(tripService.join(user, inviteCode));
     }
 
     // POST: /api/invites/3f9a1c2b7d4e

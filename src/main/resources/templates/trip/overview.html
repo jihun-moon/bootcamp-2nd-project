@@ -4,6 +4,12 @@
 <body th:data-trip-id="${tripId}">
 <div class="page">
   <header th:replace="~{fragments/common :: tripHeader}"></header>
+  <!-- 손님에게만: 카카오로 이어 두면 다른 기기에서도 나로. 닫으면 이 휴대폰에서는 다시 안 뜬다 -->
+  <div id="guest-band" class="guest-band" hidden>
+    <span>카카오로 이어 두면 다른 기기에서도 나로 들어오고, 다음 여행 방도 만들 수 있어요.</span>
+    <a id="guest-link" href="/oauth2/authorization/kakao" class="btn small">카카오로 잇기</a>
+    <button type="button" id="guest-band-close" class="link small" aria-label="닫기">닫기</button>
+  </div>
   <main class="stack ov-grid">
     <!-- 휴대폰은 위아래 한 줄(지금 할 일이 맨 위). 넓은 화면은 왼쪽 할 일 / 오른쪽 사람·규칙 두 기둥.
          기둥으로 묶은 까닭: 칸 격자로 두면 왼쪽 날짜 달력 높이에 오른쪽이 끌려가 빈자리가 350px 생겼다 -->

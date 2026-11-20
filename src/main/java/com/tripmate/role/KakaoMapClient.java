@@ -10,7 +10,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 // 카카오 로컬(동네 이름 → 좌표)과 카카오모빌리티 길찾기(좌표 → 거리·시간·통행료).
@@ -58,6 +61,16 @@ public class KakaoMapClient {
     record Fare(int toll) {
     }
 
+    // "가평", "서울 마포구" 같은 이름의 좌표는 바뀌지 않는다. 계산하기를 누를 때마다 다시 부르면 쿼터만 줄어서
+    // 최근 것만 기억한다. 가장 오래 안 쓴 것부터 버려(access order) 메모리는 항목 수만큼만 든다
+    private static final int CACHE_SIZE = 500;
+    private final Map<String, Point> places = Collections.synchronizedMap(new LinkedHashMap<>(16, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, Point> eldest) {
+            return size() > CACHE_SIZE;
+        }
+    });
+
     private final RestTemplate restTemplate;
     private final String restKey;
 
@@ -71,12 +84,18 @@ public class KakaoMapClient {
     }
 
     // 방 지역("가평")·출발 동네("서울 마포구")는 주소로 먼저 찾고, "강남역"처럼 주소가 아니면 장소 이름으로 찾는다
+    // 못 찾은 것은 기억하지 않는다. 키를 막 켠 직후처럼 잠깐 실패한 것이 굳지 않게
     public Optional<Point> find(String query) {
+        var key = query.strip();
+        var cached = places.get(key);
+        if (cached != null) return Optional.of(cached);
         for (var url : List.of(ADDRESS_URL, KEYWORD_URL)) {
-            var places = get(url, Places.class, query);
-            if (places.isPresent() && places.get().documents() != null && !places.get().documents().isEmpty()) {
-                var first = places.get().documents().get(0);
-                return Optional.of(new Point(Double.parseDouble(first.x()), Double.parseDouble(first.y())));
+            var found = get(url, Places.class, key);
+            if (found.isPresent() && found.get().documents() != null && !found.get().documents().isEmpty()) {
+                var first = found.get().documents().get(0);
+                var point = new Point(Double.parseDouble(first.x()), Double.parseDouble(first.y()));
+                places.put(key, point);
+                return Optional.of(point);
             }
         }
         return Optional.empty();

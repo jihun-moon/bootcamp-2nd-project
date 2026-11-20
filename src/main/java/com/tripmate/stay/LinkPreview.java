@@ -10,6 +10,11 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 
 // 숙소 링크의 og:title, og:image 를 읽는다. 크롤링은 하지 않고 공개 메타 태그 두 개만 본다.
@@ -26,6 +31,9 @@ public class LinkPreview {
     private static final int MAX_REDIRECTS = 3;
     private static final Pattern META = Pattern.compile("<meta\\b[^>]*>", Pattern.CASE_INSENSITIVE);
     private static final Pattern TITLE = Pattern.compile("<title[^>]*>([^<]{1,300})</title>", Pattern.CASE_INSENSITIVE);
+    // 메타 태그마다 정규식을 새로 만들면 숙소 하나에 수백 개가 생긴다. 쓰는 속성 셋만 미리 만들어 둔다
+    private static final Map<String, Pattern> ATTRS = Map.of(
+            "property", attrPattern("property"), "name", attrPattern("name"), "content", attrPattern("content"));
 
     // 리다이렉트는 직접 따라간다. 자동으로 따라가면 공개 주소가 내부 주소로 넘겨도 검사를 건너뛴다
     private final HttpClient client = HttpClient.newBuilder()
@@ -49,7 +57,8 @@ public class LinkPreview {
                         continue;
                     }
                     if (response.statusCode() != 200) return Result.EMPTY;
-                    return parse(new String(body.readNBytes(MAX_BYTES), StandardCharsets.UTF_8), uri);
+                    var html = readWithin(body);
+                    return html == null ? Result.EMPTY : parse(html, uri);
                 }
             }
         } catch (IOException | IllegalArgumentException e) {
@@ -60,15 +69,40 @@ public class LinkPreview {
         return Result.EMPTY;
     }
 
+    // HttpRequest.timeout 은 응답 머리까지만 잰다. 본문을 1바이트씩 천천히 보내는 서버면 readNBytes 가 끝없이 붙잡혀
+    // 요청 스레드가 하나씩 묶인다. 읽기를 따로 돌려 TIMEOUT 이 지나면 버리고, 호출한 쪽 try 가 스트림을 닫아 읽기도 풀린다
+    private static String readWithin(java.io.InputStream body) {
+        var read = CompletableFuture.supplyAsync(() -> {
+            try {
+                return new String(body.readNBytes(MAX_BYTES), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                return null;
+            }
+        });
+        try {
+            return read.get(TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (TimeoutException | ExecutionException e) {
+            return null;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return null;
+        }
+    }
+
     // shortcut: 검사한 뒤 HttpClient 가 DNS 를 다시 찾으므로 DNS 리바인딩은 못 막는다. 공개 서비스로 열면 검사한 IP 로 직접 붙게 바꾼다
     static void requirePublic(URI uri) throws IOException {
         var scheme = uri.getScheme();
         if (!"http".equals(scheme) && !"https".equals(scheme)) throw new IllegalArgumentException("http(s) 만");
         if (uri.getHost() == null) throw new IllegalArgumentException("호스트 없음");
+        // 내부 관리 포트(8080, 6379 등)를 두드리는 데 쓰이지 않게 웹 기본 포트만
+        if (uri.getPort() != -1 && uri.getPort() != 80 && uri.getPort() != 443) throw new IllegalArgumentException("포트");
         for (var address : InetAddress.getAllByName(uri.getHost())) {
-            var ipv6UniqueLocal = address.getAddress().length == 16 && (address.getAddress()[0] & 0xFE) == 0xFC;
+            var bytes = address.getAddress();
+            var ipv6UniqueLocal = bytes.length == 16 && (bytes[0] & 0xFE) == 0xFC;
+            // 100.64.0.0/10 공유 주소. 일부 클라우드는 여기에 메타데이터 서버를 둔다(100.100.100.200)
+            var sharedAddress = bytes.length == 4 && (bytes[0] & 0xFF) == 100 && (bytes[1] & 0xC0) == 64;
             if (address.isLoopbackAddress() || address.isSiteLocalAddress() || address.isLinkLocalAddress()
-                    || address.isAnyLocalAddress() || address.isMulticastAddress() || ipv6UniqueLocal) {
+                    || address.isAnyLocalAddress() || address.isMulticastAddress() || ipv6UniqueLocal || sharedAddress) {
                 throw new IllegalArgumentException("내부 주소");
             }
         }
@@ -93,8 +127,12 @@ public class LinkPreview {
         return new Result(clean(title), absoluteHttp(image, base));
     }
 
+    private static Pattern attrPattern(String name) {
+        return Pattern.compile("\\b" + name + "\\s*=\\s*(\"([^\"]*)\"|'([^']*)')", Pattern.CASE_INSENSITIVE);
+    }
+
     private static String attr(String tag, String name) {
-        var m = Pattern.compile("\\b" + name + "\\s*=\\s*(\"([^\"]*)\"|'([^']*)')", Pattern.CASE_INSENSITIVE).matcher(tag);
+        var m = ATTRS.get(name).matcher(tag);
         if (!m.find()) return null;
         return m.group(2) != null ? m.group(2) : m.group(3);
     }

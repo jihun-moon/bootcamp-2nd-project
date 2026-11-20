@@ -8,7 +8,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title th:text="${title} + ' | TripMate'">TripMate</title>
   <link rel="stylesheet" th:href="@{/css/style.css}">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <!-- integrity: CDN 파일이 바뀌어 들어와도 브라우저가 실행하지 않게 해시를 박아 둔다 -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+          integrity="sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs" crossorigin="anonymous"></script>
   <script th:src="@{/js/common.js}"></script>
 </head>
 

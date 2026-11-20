@@ -21,7 +21,12 @@ public class Stay {
     private Member addedBy;
 
     private String title;
+
+    // 예약 사이트 링크는 추적 값이 붙어 255자를 쉽게 넘는다. 요청 검사(StayDto, 2000자)와 길이를 맞춘다
+    @Column(length = 2000)
     private String url;
+
+    @Column(length = 2000)
     private String imageUrl;
 
     // 크롤링 대신 올린 사람이 체크한다. 그래서 정해진 목록(enum) 안에서만 고른다
@@ -45,7 +50,6 @@ public class Stay {
 
     public Long getId() { return id; }
     public Trip getTrip() { return trip; }
-    public Member getAddedBy() { return addedBy; }
     public String getTitle() { return title; }
     public String getUrl() { return url; }
     public String getImageUrl() { return imageUrl; }

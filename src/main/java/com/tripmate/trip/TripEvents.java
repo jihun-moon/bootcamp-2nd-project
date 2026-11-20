@@ -19,12 +19,15 @@ public class TripEvents {
 
     // 끊긴 연결이 계속 남지 않게 시간을 둔다. 브라우저 EventSource 는 끊기면 알아서 다시 붙는다
     private static final long TIMEOUT = Duration.ofMinutes(30).toMillis();
+    // 8명 방이면 사람마다 탭 몇 개라도 이 안이다. 새로고침을 반복해 연결을 쌓아도 가장 오래된 것부터 닫는다
+    private static final int MAX_PER_TRIP = 40;
 
     private final Map<Long, Set<SseEmitter>> emitters = new ConcurrentHashMap<>();
 
     SseEmitter subscribe(Long tripId) throws IOException {
         var emitter = new SseEmitter(TIMEOUT);
         var set = emitters.computeIfAbsent(tripId, id -> new CopyOnWriteArraySet<>());
+        if (set.size() >= MAX_PER_TRIP) set.iterator().next().complete();
         set.add(emitter);
         emitter.onCompletion(() -> set.remove(emitter));
         emitter.onTimeout(emitter::complete);

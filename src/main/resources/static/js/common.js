@@ -1,9 +1,16 @@
 // 모든 화면이 같이 쓰는 것: API 부르기, 방 머리 채우기, 실시간 알림 받기
 
-// 로그인 뒤 돌아올 곳. 다른 사이트로 튀지 않게 우리 주소(/로 시작, //는 안 됨)만 받는다
+// 로그인 뒤 돌아올 곳. 다른 사이트로 튀지 않게 우리 주소만 받는다.
+// "/\evil.com" 이나 "/<탭>/evil.com" 은 / 로 시작해도 브라우저가 "//evil.com" 으로 읽는다. 그래서 글자로 보지 않고
+// 브라우저와 같은 방식(URL)으로 풀어 본 뒤 origin 이 우리 것인지 본다
 function safeNext(path) {
-  if (!path || !path.startsWith('/') || path.startsWith('//')) return '/';
-  return path;
+  if (!path) return '/';
+  try {
+    var url = new URL(path, location.origin);
+    return url.origin === location.origin ? url.pathname + url.search + url.hash : '/';
+  } catch (e) {
+    return '/';
+  }
 }
 
 function goLogin() {

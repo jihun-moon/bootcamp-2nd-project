@@ -45,6 +45,9 @@ public class DevLoginController {
                 .orElseGet(() -> appUserRepository.save(new AppUser(loginId, req.name(), null)));
         memberRepository.findByNameAndUserIsNull(req.name()).forEach(m -> m.linkTo(user));
 
+        // 로그인 전 세션 id 를 그대로 쓰면 남이 심어 둔 id 로 로그인 세션을 가로챌 수 있다(세션 고정). 카카오 쪽은 Spring Security 가 바꿔 준다
+        request.getSession(true);
+        request.changeSessionId();
         var context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(new UsernamePasswordAuthenticationToken(loginId, null, AuthorityUtils.createAuthorityList("ROLE_USER")));
         SecurityContextHolder.setContext(context);

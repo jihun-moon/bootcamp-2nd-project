@@ -27,6 +27,9 @@ function api(method, url, body) {
     data: body === undefined ? undefined : JSON.stringify(body)
   }).fail(function (xhr) {
     if (xhr.status === 401) goLogin();
+    // 화면마다 따로 쓰지 않아도 되게 공통으로. 화면이 더 맞는 말을 쓰면 그 말이 뒤에 덮는다
+    else if (xhr.status === 0) showNotice('인터넷 연결이 끊긴 것 같아요. 연결되면 다시 눌러 주세요.');
+    else if (xhr.status >= 500) showNotice('잠시 문제가 생겼어요. 조금 뒤 다시 눌러 주세요.');
   });
 }
 

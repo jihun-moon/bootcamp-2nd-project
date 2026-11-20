@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head('잠시 문제가 생겼어요')}"></head>
+<body>
+<header th:replace="~{fragments/common :: siteHeader(false)}"></header>
+<!-- 오류 번호·영어 메시지·서버 이름은 보이지 않는다. 무엇이 일어났는지와 갈 곳 하나만 -->
+<main class="page narrow stack loose">
+  <div class="stack">
+    <h1>잠시 문제가 생겼어요</h1>
+    <p class="muted">저희 쪽 문제예요. 조금 뒤 다시 열어 주세요. 계속 안 되면 단톡방의 방장에게 알려 주세요.</p>
+  </div>
+  <a th:href="@{/}" class="btn primary big block">처음 화면으로</a>
+</main>
+</body>
+</html>

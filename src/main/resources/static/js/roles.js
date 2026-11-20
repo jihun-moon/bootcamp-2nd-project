@@ -28,6 +28,7 @@ function columns() {
 function render() {
   var box = $('#board').empty();
   var isHost = memberById(trip.meId).host;
+  renderShortage(isHost);
 
   columns().forEach(function (col) {
     var role = col.role;
@@ -214,10 +215,43 @@ function moveTo(memberId, roleId) {
   });
 }
 
+var MAX_ROLES = 12; // 서버 RoleService.MAX_ROLES 와 같다
+
+// 역할 자리(정원 합)보다 사람이 많으면 남는 사람이 생긴다. 방장에게만 한 번에 채우는 단추를 보인다
+function renderShortage(isHost) {
+  var slots = board.roles.reduce(function (sum, r) { return sum + r.capacity; }, 0);
+  var short = trip.members.length - slots;
+  var show = isHost && short > 0 && board.roles.length + 2 <= MAX_ROLES;
+  $('#roles-short').prop('hidden', !show);
+  if (show) $('#roles-short-text').text(short + '명 자리가 모자라요. 역할을 두 개 더하면 모두에게 역할이 생겨요.');
+}
+
+// 남는 사람 수만큼 '설거지'와 '방 정리'를 반씩 나눠 더하고(정원은 칸마다 8명까지) 다시 추천받는다. 이미 있는 이름은 뒤에 번호
+function fillShortage() {
+  var slots = board.roles.reduce(function (sum, r) { return sum + r.capacity; }, 0);
+  var short = trip.members.length - slots;
+  if (short <= 0) return;
+  var names = board.roles.map(function (r) { return r.title; });
+  var unique = function (t) { var n = t, i = 2; while (names.indexOf(n) >= 0) n = t + ' ' + i++; names.push(n); return n; };
+  var first = Math.min(8, Math.ceil(short / 2)), second = Math.min(8, short - first);
+  var add = [{ title: unique('설거지'), capacity: first }];
+  if (second > 0) add.push({ title: unique('방 정리'), capacity: second });
+  $('#btn-roles-fill').prop('disabled', true).text('나누는 중…');
+  var chain = $.when();
+  add.forEach(function (r) {
+    chain = chain.then(function () {
+      return api('POST', '/api/trips/' + tripId + '/roles', { title: r.title, required: false, capacity: r.capacity, tasks: [] });
+    });
+  });
+  chain.then(recommend).always(function () {
+    $('#btn-roles-fill').prop('disabled', false).text('설거지·방 정리 더하고 다시 나누기');
+  });
+}
+
 // POST: /api/trips/1/roles/recommend   방장만. 손으로 옮긴 것까지 지우고 설문으로 다시 짠다
 function recommend() {
   $('#btn-recommend').prop('disabled', true).text('계산 중…');
-  api('POST', '/api/trips/' + tripId + '/roles/recommend')
+  return api('POST', '/api/trips/' + tripId + '/roles/recommend')
     .done(function (res) {
       board = res;
       render();
@@ -311,6 +345,7 @@ function copyResult() {
 
 $(function () {
   $('#btn-recommend').click(recommend);
+  $('#btn-roles-fill').click(fillShortage);
   $('#btn-copy').text(shareLabel('카톡으로 결과 보내기', '결과 복사해서 단톡방에 붙이기')).click(copyResult);
   $('#btn-travel').click(loadTravel);
   $('#btn-add-role').click(function () { openEditor(null); });

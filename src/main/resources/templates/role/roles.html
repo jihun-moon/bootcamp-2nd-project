@@ -15,10 +15,15 @@
         <button type="button" id="btn-recommend" class="btn primary" hidden>설문으로 추천받기</button>
       </div>
     </div>
+    <!-- 사람이 역할 자리보다 많을 때(15명 방이면 7명이 남는다). 방장은 한 번 눌러 역할을 더하고 다시 나눈다 -->
+    <div id="roles-short" class="box stack" hidden>
+      <p id="roles-short-text" class="strong"></p>
+      <button type="button" id="btn-roles-fill" class="btn primary">설거지·방 정리 더하고 다시 나누기</button>
+    </div>
     <!-- 역할 칸들. roles.js 가 그린다 -->
     <div id="board" class="board"></div>
 
-    <!-- 이동·회비 근거. 카카오를 부르니 누를 때만 센다 -->
+    <!-- 이동·회비 근거. 배정이 있으면 저절로 세고, 역할이 바뀌면 1.5초 모았다 다시 센다(카카오 길찾기를 부르니 연달아 부르지 않게) -->
     <section class="box stack">
       <div class="between wrap">
         <h2>이동·회비 근거</h2>

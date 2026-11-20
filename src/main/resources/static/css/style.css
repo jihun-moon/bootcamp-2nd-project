@@ -813,6 +813,25 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
   .tour-step h3 { font-size: var(--fs-xl); }
   .tour-inline { display: none; }
   .tour-stage { display: block; }
+  .tour-nav { display: none; }
+}
+/* 휴대폰·태블릿: 단계마다 카드 한 장, 옆으로 넘긴다. 다음 카드가 오른쪽에 살짝 보여 넘길 수 있다는 걸 알린다.
+   양옆은 화면 끝까지(.page 여백 20px 만큼 밖으로) 넓혀 카드가 테두리에서 잘려 보이지 않게 */
+@media (max-width: 959.98px) {
+  .tour-steps { display: flex; gap: 12px; margin: 24px -20px 0; padding: 2px 20px 6px; overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory; scroll-padding-inline: 20px; scrollbar-width: none; }
+  .tour-steps::-webkit-scrollbar { display: none; }
+  .tour-step { flex: 0 0 min(300px, 80%); scroll-snap-align: start; align-content: start; gap: 6px; padding: 16px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+  .tour-step h3 { font-size: var(--fs-md); }
+  .tour-step > p { min-height: 4.6em; font-size: var(--fs-sm); } /* 글 길이가 달라도 휴대폰 그림 높이를 맞춘다 */
+  .tour-no { width: 28px; height: 28px; font-size: var(--fs-sm); }
+  .tour-inline { width: min(190px, 72%); margin-top: 4px; } /* 카드 + ‹ › 가 한 화면(아래 붙는 단추 빼고)에 들어오게 */
+  .tour-nav { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 12px; }
+  .tour-nav .btn { width: 44px; min-height: 44px; padding: 0; font-size: var(--fs-lg); }
+  .tour-nav .btn:disabled { opacity: 0.35; }
+  .tour-count b { color: var(--ink); }
+  .tour-cta { margin-top: 24px; }
 }
 
 /* 차 나누기: 차마다 얇은 상자, 내가 탄 차는 테두리로 */

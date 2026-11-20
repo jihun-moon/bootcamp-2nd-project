@@ -208,6 +208,38 @@ function tourScroll() {
   show(steps[0]);
 }
 
+// 휴대폰 둘러보기: 옆으로 넘기는 카드 열 장. 몇 번째인지 세고, ‹ › 단추로도 한 장씩(넘기기를 모르는 사람, 마우스)
+function tourSwipe() {
+  var list = document.querySelector('.tour-steps');
+  var nav = document.querySelector('.tour-nav');
+  if (!list || !nav) return;
+  var cards = list.children;
+  var prev = nav.querySelector('[data-tour-go="-1"]');
+  var next = nav.querySelector('[data-tour-go="1"]');
+  var count = nav.querySelector('.tour-count');
+  var step = function () { return cards[1] ? cards[1].offsetLeft - cards[0].offsetLeft : list.clientWidth; };
+  var current = 0;
+  var update = function () {
+    var i = Math.min(cards.length - 1, Math.round(list.scrollLeft / step()));
+    if (list.scrollLeft + list.clientWidth >= list.scrollWidth - 4) i = cards.length - 1; // 마지막 카드는 끝까지 못 밀려도 10 으로
+    if (i === current && count.dataset.ready) return;
+    current = i; count.dataset.ready = '1';
+    count.innerHTML = '<b>' + (i + 1) + '</b> / ' + cards.length + (i === 0 ? ' · 옆으로 넘겨 보세요' : '');
+    prev.disabled = i === 0;
+    next.disabled = i === cards.length - 1;
+  };
+  var ticking = false;
+  list.addEventListener('scroll', function () {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () { ticking = false; update(); });
+  }, { passive: true });
+  $(nav).on('click', '[data-tour-go]', function () {
+    list.scrollBy({ left: Number(this.dataset.tourGo) * step(), behavior: reduceMotion ? 'auto' : 'smooth' });
+  });
+  update();
+}
+
 // 실제 앱 영상: 화면에 들어오면 그때 받아 소리 없이 틀고, 나가면 멈춘다(데이터·배터리).
 // 움직임 줄이기면 저절로 틀지 않고 첫 장면 그림 + 재생 단추(사용자가 누를 때만)
 function lazyVideos() {
@@ -375,6 +407,7 @@ $(function () {
   rotateHero();
   lazyVideos();
   tourScroll(); // 움직임 줄이기여도 화면은 바뀌어야 한다(바꾸는 것은 내용, 움직임은 CSS 가 끈다)
+  tourSwipe();
   if (reduceMotion || !('IntersectionObserver' in window)) return;
   var phone = document.querySelector('.phone');
   if (phone) {

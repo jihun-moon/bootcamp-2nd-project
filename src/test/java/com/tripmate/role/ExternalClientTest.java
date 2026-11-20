@@ -6,6 +6,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Optional;
 
@@ -79,17 +80,18 @@ class ExternalClientTest {
     }
 
     @Test
-    void 오피넷에서_휘발유_값만_꺼내고_실패하면_어림값() {
+    void 오피넷은_text_html_로_와도_휘발유_값만_꺼내고_실패하면_어림값() {
         server.expect(requestTo(startsWith("https://www.opinet.co.kr/api/avgAllPrice.do")))
                 .andRespond(withSuccess("""
                         { "RESULT": { "OIL": [
                           { "TRADE_DT": "20261120", "PRODCD": "B034", "PRODNM": "고급휘발유", "PRICE": "1950.10" },
-                          { "TRADE_DT": "20261120", "PRODCD": "B027", "PRODNM": "휘발유", "PRICE": "1690.52" } ] } }
-                        """, MediaType.APPLICATION_JSON));
-        var client = new FuelPriceClient(restTemplate, "test-key", 1700);
+                          { "TRADE_DT": "20261120", "PRODCD": "B027", "PRODNM": "휘발유", "PRICE": "1854.46" } ] } }
+                        """, MediaType.TEXT_HTML));
+        var mapper = JsonMapper.builder().build();
+        var client = new FuelPriceClient(restTemplate, mapper, "test-key", 1700);
 
-        assertThat(client.gasoline()).isEqualTo(new FuelPriceClient.Price(1691, "오피넷 전국 평균"));
-        assertThat(new FuelPriceClient(restTemplate, "unset", 1700).gasoline())
+        assertThat(client.gasoline()).isEqualTo(new FuelPriceClient.Price(1854, "오피넷 전국 평균"));
+        assertThat(new FuelPriceClient(restTemplate, mapper, "unset", 1700).gasoline())
                 .isEqualTo(new FuelPriceClient.Price(1700, "어림값"));
     }
 }

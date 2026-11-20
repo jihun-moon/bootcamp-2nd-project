@@ -171,14 +171,12 @@ p > a.link, li > p a.link { text-decoration-color: var(--line-strong); }
   .kakao-login:hover { filter: brightness(0.96); }
   .link:hover { text-decoration-color: currentColor; }
   .choice:hover, label.chip:hover { border-color: var(--line-strong); }
-  .trip-item, .mini-phone, .stay { transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease); }
+  .trip-item, .stay { transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease); }
   .trip-item:hover, .stay:hover { border-color: var(--line-strong); transform: translateY(-2px); }
   .tabs a:hover { color: var(--ink); }
   .toggle:hover:not([aria-pressed="true"]) { border-color: var(--line-strong); background: var(--surface-2); }
   .segmented button:hover:not([aria-pressed="true"]) { color: var(--ink); background: var(--surface-2); }
   .faq summary:hover, .faq summary:hover::after { color: var(--accent); }
-  .mini-phone:hover { transform: translateY(-4px); } /* 테두리가 휴대폰 몸체라 색은 그대로, 뜨기만 */
-  .mini-phone:hover .mini-go { text-decoration: underline; text-underline-offset: 3px; }
 }
 .choice {
   min-height: 52px; padding: 12px 16px; border: 1px solid var(--line); border-radius: var(--radius-sm);
@@ -385,18 +383,6 @@ tr:last-child td { border-bottom: 0; }
 .phone.playing.on-board .board-scene { opacity: 1; transform: none; transition-delay: 0.25s; }
 .phone:not(.playing) .chat-scene { display: none; }
 
-/* 단계 설명: 한 줄 요약 → 하는 일 셋 → 안심시키는 한 줄. 줄 머리표 대신 왼쪽 선 하나로 묶는다 */
-.step-text { display: grid; gap: 12px; }
-
-.mini-phone {
-  display: flex; flex-direction: column; gap: 8px; padding: 16px; border-radius: 24px;
-  border: 6px solid #111418; background: var(--bg); font-size: var(--fs-sm); color: inherit;
-}
-.mini-phone .choice { min-height: 40px; padding: 8px 12px; }
-.mini-phone .bar { margin-bottom: 4px; }
-/* 단톡방에 실제로 올라가는 초대 글. 카톡 말풍선 색(노랑)이라 "이게 단톡방에 간다"가 바로 보인다 */
-.mini-bubble { align-self: flex-end; max-width: 88%; padding: 8px 12px; border-radius: 12px 2px 12px 12px; background: var(--kakao); color: #191919; font-size: var(--fs-xs); line-height: 1.45; }
-.mini-bubble span { display: block; margin-top: 2px; text-decoration: underline; opacity: 0.75; }
 
 /* 스크롤 등장: 내용은 기본으로 보이고(움직임이 실패해도 읽힌다) JS 가 .will-reveal 을 붙였을 때만 짧게 올라온다 */
 .will-reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.5s var(--ease), transform 0.5s var(--ease); }
@@ -420,12 +406,6 @@ tr:last-child td { border-bottom: 0; }
 .bubble.me { justify-self: end; background: var(--kakao); color: #191600; border-color: transparent; }
 .bubble .who { display: block; font-size: var(--fs-xs); color: var(--muted); }
 
-.steps { display: grid; gap: 56px; counter-reset: step; }
-.steps > li { counter-increment: step; display: grid; gap: 12px; align-content: start; }
-.steps > li::before {
-  content: counter(step); width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
-  border: 1px solid var(--line); color: var(--ink); font-weight: 600;
-}
 
 /* 핵심 둘은 크게(설명 + 실제 화면 조각), 나머지는 한 줄 목록. 같은 크기 카드를 늘어놓으면 모두 같은 무게로 읽힌다 */
 .core { display: grid; gap: 16px; }
@@ -480,13 +460,6 @@ body:has(.sticky-cta) .site-header .btn { display: none; } /* 아래 붙은 버�
   .core { grid-template-columns: 1fr 1fr; }
   .core .box { padding: 24px; } /* 넓은 화면에서 16 은 판에 비해 빽빽하다 */
   .more { grid-template-columns: 1fr 1fr; }
-  /* 세 단계는 토스처럼 한 단계에 화면 하나: 휴대폰이 왼쪽에 붙어 있고(sticky) 설명이 지나가면 다음 단계 휴대폰이 올라온다 */
-  .steps { gap: 0; }
-  .steps > li { grid-template-columns: 300px 1fr; grid-template-rows: auto 1fr; column-gap: 48px; min-height: 64vh; align-items: start; }
-  .steps > li::before { grid-column: 2; grid-row: 1; margin-top: 96px; }
-  .steps > li > .mini-phone { grid-column: 1; grid-row: 1 / 3; position: sticky; top: 96px; }
-  .steps > li > .step-text { grid-column: 2; grid-row: 2; align-self: start; max-width: 480px; }
-  .steps > li > .step-text h3 { font-size: var(--fs-xl); }
   .tabs { margin: 12px 0; padding: 0; }
   .sticky-cta { display: none; }
   body:has(.sticky-cta) .site-footer { padding-bottom: 24px; }
@@ -516,7 +489,6 @@ body:has(.sticky-cta) .site-header .btn { display: none; } /* 아래 붙은 버�
 .caption { margin-top: 8px; margin-left: auto; text-align: right; font-size: var(--fs-xs); color: var(--muted); }
 /* 마지막 권유도 다른 절 제목과 같은 크기 */
 /* 단계 그림의 단추는 그림이라 눌러도 안 됐다. 그림 전체를 체험 방 링크로 두고, 누를 수 있다는 걸 아래 한 줄로 알린다 */
-.mini-phone .mini-go { margin-top: auto; padding-top: 4px; font-size: var(--fs-sm); font-weight: 600; color: var(--accent); }
 .split p.chosen { border-color: var(--accent); background: var(--accent-soft); }
 .split p.chosen span { color: var(--accent); font-weight: 600; }
 /* 화면 폭 전체로 펼치는 띠(사진 띠, 마지막 권유). 가로 스크롤은 html 의 overflow-x: clip 이 막는다 */
@@ -849,3 +821,32 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
 /* 회비 카드: 받는 사람 고르기 select 를 다른 입력칸과 같은 꼴로 */
 .ov-dues select, .ov-dues input[type=number] { width: 100%; min-height: var(--tap); padding: 8px 12px; border: 1px solid var(--line);
   border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); font: inherit; margin-top: 4px; }
+
+/* 이렇게 굴러가요(실제 화면). 휴대폰: 단락마다 그 화면 한 장. PC(960~): 오른쪽 휴대폰이 붙어 있고 글이 지나가면 화면이 바뀐다 */
+.tour-steps { display: grid; gap: 56px; }
+.tour-step { display: grid; gap: 8px; }
+.tour-step h3 { font-size: var(--fs-lg); }
+.tour-no { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line); font-weight: 600; }
+.tour-inline { position: relative; justify-self: center; width: min(250px, 72%); margin-top: 8px; border-radius: 28px; overflow: hidden;
+  border: 8px solid #0d0f12; box-shadow: 0 20px 40px rgb(16 24 40 / 0.18); }
+.tour-inline img { display: block; width: 100%; height: auto; }
+.tour-stage { display: none; }
+.tour-cta { margin-top: 40px; text-align: center; }
+/* 누르는 곳: 퍼지는 동그라미. 자리는 장면마다 --x --y(그림 위 %) */
+.tap-ring { position: absolute; left: var(--x, 50%); top: var(--y, 50%); width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%;
+  border: 3px solid rgb(14 124 114 / 0.95); background: rgb(14 124 114 / 0.16); pointer-events: none; animation: tap-pulse 1.8s var(--ease) infinite; }
+@keyframes tap-pulse { 0% { transform: scale(0.55); opacity: 0; } 25% { opacity: 1; } 100% { transform: scale(1.35); opacity: 0; } }
+@media (min-width: 960px) {
+  .tour-grid { display: grid; grid-template-columns: 1fr 340px; column-gap: 64px; }
+  .tour-steps { gap: 0; }
+  .tour-step { min-height: 62vh; align-content: center; max-width: 440px; opacity: 0.35; transition: opacity var(--dur) var(--ease); }
+  .tour-step.on { opacity: 1; }
+  .tour-step h3 { font-size: var(--fs-xl); }
+  .tour-inline { display: none; }
+  .tour-stage { display: block; }
+  /* 낮은 창(노트북 768px 높이)에서도 휴대폰이 다 보이게 높이에 맞춰 폭을 줄인다. 화면 비율 390:844 + 틀 20px */
+  .tour-phone { position: sticky; top: max(76px, calc(50vh - 360px)); width: min(340px, calc((100vh - 112px) * 390 / 844 + 20px)); justify-self: end; }
+  .tour-phone .phone-screen { height: auto; aspect-ratio: 390 / 844; }
+  .tour-shot { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.35s var(--ease); }
+  .tour-shot.on { opacity: 1; }
+}

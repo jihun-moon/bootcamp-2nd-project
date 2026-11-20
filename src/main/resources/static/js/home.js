@@ -183,6 +183,27 @@ function revealOnScroll() {
   });
 }
 
+// 이렇게 굴러가요: 화면 가운데를 지나는 단락의 실제 화면을 오른쪽 휴대폰에 띄우고, 누르는 곳에 동그라미를 옮긴다(PC 만, 휴대폰은 단락마다 그림이 있다)
+function tourScroll() {
+  var stage = document.querySelector('.tour-stage .phone-screen');
+  if (!stage || !('IntersectionObserver' in window)) return;
+  var ring = stage.querySelector('.tap-ring');
+  var steps = document.querySelectorAll('.tour-step');
+  var show = function (step) {
+    steps.forEach(function (s) { s.classList.toggle('on', s === step); });
+    stage.querySelectorAll('.tour-shot').forEach(function (img) { img.classList.toggle('on', img.dataset.shot === step.dataset.shot); });
+    ring.style.setProperty('--x', step.style.getPropertyValue('--x'));
+    ring.style.setProperty('--y', step.style.getPropertyValue('--y'));
+    // 새 장면마다 동그라미를 처음부터 다시 퍼지게
+    ring.style.animation = 'none'; void ring.offsetWidth; ring.style.animation = '';
+  };
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) { if (e.isIntersecting) show(e.target); });
+  }, { rootMargin: '-45% 0px -45% 0px' });
+  steps.forEach(function (s) { observer.observe(s); });
+  show(steps[0]);
+}
+
 // 아래에 붙은 시작 단추는 첫 화면의 같은 단추가 화면 밖으로 나간 뒤에만 올라온다
 function stickyAfterHero() {
   var sticky = document.querySelector('.sticky-cta');
@@ -303,6 +324,7 @@ $(function () {
   });
   loadMyTrips();
   stickyAfterHero();
+  tourScroll(); // 움직임 줄이기여도 화면은 바뀌어야 한다(바꾸는 것은 내용, 움직임은 CSS 가 끈다)
   if (reduceMotion || !('IntersectionObserver' in window)) return;
   var phone = document.querySelector('.phone');
   if (phone) {

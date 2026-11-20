@@ -6,6 +6,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -49,5 +50,14 @@ class PageTest {
     void 정적_파일() throws Exception {
         mvc.perform(get("/css/style.css")).andExpect(status().isOk());
         mvc.perform(get("/js/common.js")).andExpect(status().isOk());
+    }
+
+    @Test
+    void 첫_화면_이렇게_굴러가요는_실제_화면_아홉_장() throws Exception {
+        var html = mvc.perform(get("/")).andReturn().getResponse().getContentAsString();
+        for (var shot : new String[]{"join", "dates", "roles", "stays", "shopping", "dues", "receipt", "settle", "next"}) {
+            assertThat(html).contains("/img/tour/" + shot + "-"); // 파일 이름 뒤에 내용 해시가 붙는다(캐시 깨기)
+            mvc.perform(get("/img/tour/" + shot + ".webp")).andExpect(status().isOk());
+        }
     }
 }

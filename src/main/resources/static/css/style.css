@@ -411,6 +411,9 @@ body:has(.sticky-cta) .toast { bottom: calc(96px + env(safe-area-inset-bottom));
   background: var(--bg); border-top: 1px solid var(--line);
 }
 body:has(.sticky-cta) .site-footer { padding-bottom: 96px; }
+/* 첫 화면 단추가 보이는 동안은 숨겨 둔다(같은 단추 두 번은 광고처럼 보인다). JS 가 없으면 그냥 보인다 */
+.sticky-cta.waiting { transform: translateY(110%); }
+.sticky-cta { transition: transform var(--dur-slow) var(--ease); }
 body:has(.sticky-cta) .site-header .btn { display: none; } /* 아래 붙은 버튼과 같은 버튼이 두 번 보이지 않게 */
 
 /* 넓은 화면 */

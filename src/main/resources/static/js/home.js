@@ -112,8 +112,20 @@ function revealOnScroll() {
   });
 }
 
+// 아래에 붙은 시작 단추는 첫 화면의 같은 단추가 화면 밖으로 나간 뒤에만 올라온다
+function stickyAfterHero() {
+  var sticky = document.querySelector('.sticky-cta');
+  var heroCta = document.querySelector('.hero .btn.primary');
+  if (!sticky || !heroCta || !('IntersectionObserver' in window)) return;
+  sticky.classList.add('waiting');
+  new IntersectionObserver(function (entries) {
+    sticky.classList.toggle('waiting', entries[0].isIntersecting);
+  }).observe(heroCta);
+}
+
 $(function () {
   loadMyTrips();
+  stickyAfterHero();
   if (reduceMotion || !('IntersectionObserver' in window)) return;
   var phone = document.querySelector('.phone');
   if (phone) {

@@ -62,8 +62,8 @@ public class TravelService {
         } else {
             var total = driving.stream().mapToInt(l -> (l.fuel() + l.toll()) * ROUND_TRIP).sum();
             perPerson = roundUp((double) total / plan.memberCount());
-            // shortcut: 차가 2대면 두 차 기름값을 합쳐 운전자 아닌 사람 모두가 나눈다(A차 기름값을 B차 사람도 낸다).
-            //   누가 어느 차에 탔는지 설문에 없어서다. "누구 차 타요" 칸이 생기면 차마다 나눈다
+            // shortcut: 여기는 미리 보는 어림값이라 두 차 기름값을 합쳐 운전자 아닌 사람 모두로 나눈다.
+            //   다녀와서 실제 정산은 차 나누기(CarService)대로 그 차에 탄 사람끼리 나눈다. 어림값도 차마다 보이려면 legs 에 탄 사람 수를 붙인다
             var passengers = plan.memberCount() - driving.size();
             if (passengers > 0) perPassenger = roundUp((double) total / passengers);
         }

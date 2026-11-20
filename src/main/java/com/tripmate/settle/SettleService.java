@@ -3,6 +3,7 @@ package com.tripmate.settle;
 import org.springframework.context.event.EventListener;
 import com.tripmate.trip.TripDeleting;
 import com.tripmate.shopping.ShoppingClaimRepository;
+import com.tripmate.role.CarService;
 import com.tripmate.trip.Member;
 import com.tripmate.trip.MemberLeaving;
 import com.tripmate.trip.TripChanged;
@@ -19,6 +20,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -37,17 +39,20 @@ public class SettleService {
     private final PaymentRepository paymentRepository;
     private final SettleLinkRepository linkRepository;
     private final DuesRepository duesRepository;
+    private final CarService carService;
     private final ApplicationEventPublisher events;
 
     public SettleService(TripRepository tripRepository, ExpenseRepository expenseRepository,
                          ShoppingClaimRepository claimRepository, PaymentRepository paymentRepository,
-                         SettleLinkRepository linkRepository, DuesRepository duesRepository, ApplicationEventPublisher events) {
+                         SettleLinkRepository linkRepository, DuesRepository duesRepository, CarService carService,
+                         ApplicationEventPublisher events) {
         this.tripRepository = tripRepository;
         this.expenseRepository = expenseRepository;
         this.claimRepository = claimRepository;
         this.paymentRepository = paymentRepository;
         this.linkRepository = linkRepository;
         this.duesRepository = duesRepository;
+        this.carService = carService;
         this.events = events;
     }
 
@@ -84,12 +89,14 @@ public class SettleService {
                 .filter(c -> c.getAmount() != null && c.getAmount() > 0).toList();
 
         // 기름값을 낸 사람 = 운전한 사람. 규칙이 "운전자는 안 냄"이면 기름값 몫에서 뺀다(다 빠지면 모두가 낸다).
-        // shortcut: 차가 2대면 A차 기름값을 B차에 탄 사람도 같이 낸다(누가 어느 차에 탔는지 아직 모른다).
-        //   차마다 나누려면 "누구 차 탔어요"를 받아야 해서, 그 칸이 생기면 차별로 나눈다. 그 전엔 "나눌 사람"으로 직접 고른다
+        // 차 나누기(CarService)가 있으면 그 운전자 차에 탄 사람끼리만 나눈다. 차가 두 대면 A차 기름값을 B차 사람이 내지 않고,
+        // 기차로 따로 간 사람은 기름값을 내지 않는다. 운전 칸이 비어 차가 없으면 예전처럼 모두(운전자 빼고)
         var driverIds = expenses.stream().filter(e -> e.getKind() == ExpenseKind.FUEL)
                 .map(e -> e.getPayer().getId()).collect(Collectors.toSet());
         var driversExempt = Boolean.FALSE.equals(trip.getDriverPaysFuel());
-        var fuelSharers = members.stream().filter(m -> !driversExempt || !driverIds.contains(m.getId())).toList();
+        var seating = carService.seating(tripId);
+        var fuelSharers = members.stream().filter(m -> !seating.separate().contains(m.getId()))
+                .filter(m -> !driversExempt || !driverIds.contains(m.getId())).toList();
         if (fuelSharers.isEmpty()) fuelSharers = members;
         // 술: 규칙을 켰을 때만 마시는 사람끼리(아무도 안 마시면 모두). 전에는 규칙을 켜도 결과가 같아 오해를 샀다(docs/17 8절)
         var drinksOnly = Boolean.TRUE.equals(trip.getDrinksSeparate());
@@ -100,8 +107,9 @@ public class SettleService {
         var owed = new HashMap<Long, Double>();
         var lines = new ArrayList<SettleDto.Line>();
         for (var e : expenses) {
+            var car = seating.cars().get(e.getPayer().getId());
             var sharers = switch (e.getKind()) {
-                case FUEL -> fuelSharers;
+                case FUEL -> car == null ? fuelSharers : carSharers(members, car, e.getPayer().getId(), driversExempt);
                 case DRINK -> drinkers;
                 case STAY -> staySharers;
                 default -> members;
@@ -147,6 +155,13 @@ public class SettleService {
         var total = lines.stream().mapToInt(SettleDto.Line::amount).sum();
         return new SettleDto.Board(total, lines, balances, transfers(parties, paid, owed), paidRows, trip.getDriverPaysFuel(),
                 trip.getDrinksSeparate(), trip.getRefundNoShow(), dues);
+    }
+
+    // 그 차에 탄 사람(운전자 빼기 규칙이면 운전자 빼고). 혼자 탄 차면 운전자 혼자
+    private static List<Member> carSharers(List<Member> members, Set<Long> car, Long driverId, boolean driversExempt) {
+        var riders = members.stream().filter(m -> car.contains(m.getId()))
+                .filter(m -> !driversExempt || !m.getId().equals(driverId)).toList();
+        return riders.isEmpty() ? members.stream().filter(m -> m.getId().equals(driverId)).toList() : riders;
     }
 
     private static String nameOf(Member m) {

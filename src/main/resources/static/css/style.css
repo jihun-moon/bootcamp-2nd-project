@@ -850,3 +850,8 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
   .tour-shot { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.35s var(--ease); }
   .tour-shot.on { opacity: 1; }
 }
+
+/* 차 나누기: 차마다 얇은 상자, 내가 탄 차는 테두리로 */
+.ov-cars .car { padding: 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); gap: 8px; }
+.ov-cars .car.mine { border-color: var(--accent); }
+.ov-cars input[type=text] { margin-top: 4px; }

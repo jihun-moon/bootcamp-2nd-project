@@ -517,3 +517,29 @@ body:has(.sticky-cta) .site-header .btn { display: none; } /* 아래 붙은 버�
 }
 .split p.chosen { border-color: var(--accent); background: var(--accent-soft); }
 .split p.chosen span { color: var(--accent); font-weight: 600; }
+/* 화면 폭 전체로 펼치는 띠(사진 띠, 마지막 권유). 가로 스크롤은 html 의 overflow-x: clip 이 막는다 */
+html { overflow-x: clip; }
+.photo-band, .cta { width: 100vw; margin-left: calc(50% - 50vw); }
+
+/* 사진 띠: 사진 위 아래쪽을 어둡게 깔고 흰 글씨 한 줄. 사진이 늦게 와도 글이 읽히게 바탕색을 둔다 */
+.photo-band { position: relative; margin-top: 64px; background: #1b1f24; }
+.photo-band img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
+.photo-band p { position: absolute; inset: auto 0 0; max-width: none; padding: 64px 24px 32px;
+  background: linear-gradient(transparent, rgb(0 0 0 / 0.65)); color: #fff; font-size: var(--fs-xl); font-weight: 700; line-height: 1.35; }
+
+/* 마지막 권유: 친구들이 모인 모닥불 사진 위에 어둡게 한 겹, 흰 글씨. 단추만 브랜드 색 */
+.cta { margin-top: 96px; padding: 96px 16px; color: #fff;
+  background: linear-gradient(rgb(0 0 0 / 0.55), rgb(0 0 0 / 0.55)), url("/img/photo/bonfire.jpg") center / cover, #2a1a10; }
+.cta h2 { font-size: var(--fs-2xl); letter-spacing: -0.02em; }
+.cta .muted { color: inherit; opacity: 0.85; }
+body:has(.cta) .site-footer { margin-top: 0; }
+@media (min-width: 720px) {
+  .cta { margin-top: 128px; padding: 144px 24px; }
+  .photo-band { margin-top: 96px; }
+  .photo-band img { aspect-ratio: 21 / 8; }
+  .photo-band p { padding: 96px max(24px, calc(50vw - 496px)) 48px; font-size: var(--fs-2xl); }
+  /* 자주 묻는 것: 왼쪽 제목, 오른쪽 질문 목록 */
+  .faq { display: grid; grid-template-columns: 1fr 2fr; column-gap: 48px; align-items: start; }
+  .faq > h2 { grid-row: 1 / span 20; position: sticky; top: 96px; }
+  .faq > details { grid-column: 2; }
+}

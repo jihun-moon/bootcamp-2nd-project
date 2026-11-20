@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/common :: head('단체 여행, 눈치 싸움 없이 정하기')}"></head>
+<head th:replace="~{fragments/common :: head('운전 누가 해? 1분이면 정해지는 단체 여행')}"></head>
 <body>
 <header th:replace="~{fragments/common :: siteHeader(true)}"></header>
 
@@ -18,7 +18,7 @@
   <section class="hero">
     <div class="stack loose">
       <h1>"운전 누가 해?"<br>이제 단톡방에서 안 싸워요.</h1>
-      <p class="lead">친구들은 1분 설문만. 운전·총무는 <b>근거와 함께</b>, 숙소는 <b>1인 가격까지</b> 정해져요.</p>
+      <p class="lead">친구들은 링크 누르고 1분. 운전·총무는 <b>"왜 나야?"까지</b>, 숙소는 <b>1인 얼마까지</b> 딱 나와요.</p>
       <div class="stack">
         <div class="row wrap">
           <a th:href="@{/trips/new}" class="btn primary big">우리 방 만들기 (30초)</a>
@@ -104,6 +104,12 @@
     </div>
   </section>
 
+  <!-- 사진 띠: 첫 화면 다음에 여행 기분을 한 장으로. Unsplash 무료 사진(unsplash.com/photos/Y5F1JAbo6IU) -->
+  <section class="photo-band">
+    <img th:src="@{/img/photo/road-trip.jpg}" alt="햇살 드는 차 안, 친구들이 함께 떠나는 길" width="1600" height="800" loading="lazy">
+    <p>"운전은 누가?" 1분이면 정해지고,<br>남은 건 출발뿐.</p>
+  </section>
+
   <!-- 30초 미리 보기: 질문 셋으로 "나는 무슨 역할형?"을 바로 보여 준다. 공유하고 싶은 결과 한 줄이 목적.
        실제 추천(RoleScorer + 헝가리안)은 8명 설문으로 하고, 여기는 같은 점수 규칙 일부로 혼자 보는 미리 보기다 -->
   <section class="section" id="quiz" data-reveal>
@@ -173,7 +179,7 @@
     <div class="core">
       <article class="box">
         <div>
-          <h3>근거 있는 역할 추천</h3>
+          <h3>"왜 나야?"에 답이 붙어요</h3>
           <p class="muted">"차 있음 +4"처럼 왜 그 사람인지 보여요.</p>
         </div>
         <ul class="rows small">
@@ -183,7 +189,7 @@
       </article>
       <article class="box">
         <div>
-          <h3>"의견 갈림"이 보이는 숙소 투표</h3>
+          <h3>다수결에 묻힌 "난 싫어"까지</h3>
           <p class="muted">다수결에 묻히는 한 사람의 "이건 꼭"까지.</p>
         </div>
         <ul class="rows small">
@@ -201,7 +207,7 @@
   </section>
 
   <section class="section" data-reveal>
-    <h2>한눈에 비교</h2>
+    <h2>다른 데랑 뭐가 달라요?</h2>
     <div class="box scroll">
       <table class="compare">
         <thead><tr><th></th><th>카톡 투표</th><th>토스·카카오페이 정산</th><th>NOL·마이리얼트립</th><th class="us">TripMate</th></tr></thead>
@@ -228,9 +234,10 @@
     <details><summary>추천이 마음에 안 들면요?</summary><p>역할 카드를 눌러 바로 옮길 수 있어요. 방장은 "설거지" 같은 역할을 더하거나 고칠 수 있어요.</p></details>
   </section>
 
+  <!-- 마지막 권유: 모닥불 사진 위. Unsplash 무료 사진(unsplash.com/photos/_P-O42qV68I) -->
   <section class="cta stack">
-    <h2>이번 여행은 정하는 것부터 즐겁게</h2>
-    <p class="muted">방 만들기 30초, 친구들 설문 1분. 무료예요.</p>
+    <h2>정하다 지치는 여행, 여기서 끝</h2>
+    <p class="muted">방 만들기 30초, 친구들은 다섯 번 탭. 무료예요.</p>
     <div><a th:href="@{/trips/new}" class="btn primary big">우리 방 만들기 (30초)</a></div>
   </section>
 

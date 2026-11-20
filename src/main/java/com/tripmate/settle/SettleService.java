@@ -66,14 +66,18 @@ public class SettleService {
         var lines = new ArrayList<SettleDto.Line>();
         for (var e : expenses) {
             var sharers = e.getKind() == ExpenseKind.FUEL ? fuelSharers : e.getKind() == ExpenseKind.DRINK ? drinkers : members;
+            // 직접 고른 사람이 있으면 그 사람들끼리(나간 사람은 빠진다). 다 빠졌으면 기본대로
+            var picked = members.stream().filter(m -> e.getSharerIds().contains(m.getId())).toList();
+            if (!picked.isEmpty()) sharers = picked;
             add(paid, owed, e.getPayer(), e.getAmount(), sharers);
             var label = e.getMemo() == null || e.getMemo().isBlank() ? e.getKind().getLabel() : e.getKind().getLabel() + " · " + e.getMemo();
-            lines.add(new SettleDto.Line(e.getId(), e.getPayer().getId(), e.getPayer().getName(), e.getKind().name(), label, e.getAmount(), false));
+            lines.add(new SettleDto.Line(e.getId(), e.getPayer().getId(), e.getPayer().getName(), e.getKind().name(), label,
+                    e.getAmount(), false, picked.isEmpty() ? null : picked.size()));
         }
         for (var c : claims) {
             add(paid, owed, c.getMember(), c.getAmount(), c.getItem().isDrink() ? drinkers : members);
             lines.add(new SettleDto.Line(null, c.getMember().getId(), c.getMember().getName(), "SHOPPING",
-                    "장보기 · " + c.getItem().getLabel(), c.getAmount(), true));
+                    "장보기 · " + c.getItem().getLabel(), c.getAmount(), true, null));
         }
 
         var balances = members.stream().map(m -> {
@@ -128,7 +132,12 @@ public class SettleService {
         var trip = tripRepository.findWithMembersById(tripId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         var memo = req.memo() == null ? null : req.memo().strip();
-        expenseRepository.save(new Expense(trip, me, req.kind(), memo, req.amount()));
+        // 나눌 사람은 이 방 사람만. 남의 방 사람 id 를 넣으면 400
+        var memberIds = trip.getMembers().stream().map(Member::getId).collect(Collectors.toSet());
+        if (req.sharerIds() != null && !memberIds.containsAll(req.sharerIds())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이 방 사람만 고를 수 있어요");
+        }
+        expenseRepository.save(new Expense(trip, me, req.kind(), memo, req.amount(), req.sharerIds()));
         events.publishEvent(new TripChanged(tripId, "settle"));
         return board(tripId);
     }

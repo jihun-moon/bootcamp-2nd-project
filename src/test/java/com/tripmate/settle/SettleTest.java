@@ -146,4 +146,21 @@ class SettleTest {
         mvc.perform(put("/api/trips/1/members/8/drinks").session(TestLogin.as(mvc, "민지"))
                 .contentType(MediaType.APPLICATION_JSON).content("{ \"drinks\": false }")).andExpect(status().isForbidden());
     }
+
+    @Test
+    void 고른_사람끼리만_나누는_돈은_그_사람들만_낸다() throws Exception {
+        // 재현·민지 커플 저녁 40,000 → 둘이 20,000씩. 나머지 여섯은 이 돈과 상관없다
+        var b = JSON.readTree(pay("재현", "{ \"kind\": \"FOOD\", \"memo\": \"둘이 저녁\", \"amount\": 40000, \"sharerIds\": [1, 2] }")
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString());
+        assertThat(b.get("lines").get(0).get("sharedBy").asInt()).isEqualTo(2);
+        assertThat(b.get("transfers").size()).isEqualTo(1);
+        var t = b.get("transfers").get(0);
+        assertThat(t.get("fromName").asString() + "→" + t.get("toName").asString() + " " + t.get("amount").asInt()).isEqualTo("민지→재현 20000");
+        for (var bal : b.get("balances")) if (bal.get("name").asString().equals("시우")) assertThat(bal.get("share").asInt()).isZero();
+    }
+
+    @Test
+    void 방에_없는_사람은_나눌_사람으로_못_고른다() throws Exception {
+        pay("재현", "{ \"kind\": \"FOOD\", \"amount\": 10000, \"sharerIds\": [1, 9999] }").andExpect(status().isBadRequest());
+    }
 }

@@ -781,3 +781,7 @@ button.link::after { content: ""; position: absolute; inset: -12px -8px; } /* �
 /* 술 마신 사람: 정산 칸 안 고르기 줄. 보낼 줄과 적기 사이에 선 하나로 나눈다 */
 .settle-drinkers { padding-top: 16px; border-top: 1px solid var(--line); }
 .settle-drinkers .muted { font-weight: 400; margin-left: 4px; }
+
+/* 나눌 사람 접힘 줄: 왼쪽 정렬 글자 단추 하나(평소엔 이 줄만 보인다) */
+.settle-who { justify-self: start; color: var(--muted); }
+.settle-who[aria-expanded="true"] { color: var(--accent); }

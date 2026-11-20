@@ -26,7 +26,8 @@ function renderSettle(board, trip) {
 
   var lines = $('#settle-lines').empty();
   board.lines.forEach(function (l) {
-    var row = $('<li class="between">').append($('<span>').text(l.payerName + ' · ' + l.label), $('<span>').text(won(l.amount)));
+    var row = $('<li class="between">').append($('<span>').text(l.payerName + ' · ' + l.label + (l.sharedBy ? ' · ' + l.sharedBy + '명만' : '')),
+      $('<span>').text(won(l.amount)));
     // 장보기 줄은 장보기 화면에서 고친다. 내가 적은 줄과 방장은 지울 수 있다
     var me = trip.members.find(function (m) { return m.id === trip.meId; });
     if (!l.shopping && (l.payerId === trip.meId || me.host)) {
@@ -99,15 +100,44 @@ function initSettle(trip) {
       $(this).attr('aria-pressed', true);
     }).appendTo(kinds);
   });
+  // 나눌 사람: null 이면 모두(규칙대로). 펼치면 모두 눌린 채로 시작하고, 뺄 사람만 누른다
+  var sharers = null;
+  var whoLabel = function () {
+    var all = !sharers || sharers.size === trip.members.length;
+    $('#settle-who').text('나눌 사람: ' + (all ? '모두' : sharers.size + '명만'));
+  };
+  var drawSharers = function () {
+    var box = $('#settle-sharers').empty();
+    trip.members.forEach(function (m) {
+      $('<button type="button" class="toggle">').text(m.name).attr('aria-pressed', sharers.has(m.id)).click(function () {
+        if (sharers.has(m.id) && sharers.size > 1) sharers.delete(m.id); else sharers.add(m.id);
+        $(this).attr('aria-pressed', sharers.has(m.id));
+        whoLabel();
+      }).appendTo(box);
+    });
+  };
+  $('#settle-who').click(function () {
+    var open = $('#settle-sharers').prop('hidden');
+    if (open && !sharers) sharers = new Set(trip.members.map(function (m) { return m.id; }));
+    if (open) drawSharers();
+    $('#settle-sharers').prop('hidden', !open);
+    $(this).attr('aria-expanded', open);
+  });
+
   $('#settle-form').on('submit', function (e) {
     e.preventDefault();
     var amount = Number($('#settle-amount').val());
     if (!amount || amount < 1) { $('#settle-amount').focus(); return; }
     var button = $(this).find('button[type="submit"]').prop('disabled', true);
-    api('POST', '/api/trips/' + tripId + '/expenses', { kind: settleKind, memo: $('#settle-memo').val() || null, amount: amount })
+    var picked = sharers && sharers.size < trip.members.length ? Array.from(sharers) : null;
+    api('POST', '/api/trips/' + tripId + '/expenses', { kind: settleKind, memo: $('#settle-memo').val() || null, amount: amount, sharerIds: picked })
       .done(function (b) {
         renderSettle(b, trip);
         $('#settle-amount, #settle-memo').val('');
+        sharers = null;   // 다음 돈은 다시 모두로
+        $('#settle-sharers').prop('hidden', true);
+        $('#settle-who').attr('aria-expanded', false);
+        whoLabel();
         delight($('#settle-transfers')[0]);
         showToast('적었어요. 보낼 돈을 다시 셌어요.');
       })

@@ -37,6 +37,9 @@
           <button type="submit" class="btn">적기</button>
         </div>
         <input id="settle-memo" type="text" maxlength="40" placeholder="메모(예: 숲속 독채 잔금, 주유 + 톨비)" aria-label="메모">
+        <!-- 나눌 사람: 기본은 모두(규칙대로). 커플 저녁·개인 간식처럼 일부만일 때만 펼쳐 뺀다 -->
+        <button type="button" id="settle-who" class="link small settle-who" aria-expanded="false">나눌 사람: 모두</button>
+        <div id="settle-sharers" class="toggles" hidden></div>
       </form>
       <ul id="settle-lines" class="stack small settle-lines"></ul>
       <p id="settle-rule" class="muted small"></p>

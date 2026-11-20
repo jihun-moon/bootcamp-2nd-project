@@ -9,7 +9,7 @@ import java.util.Optional;
 public interface ExpenseRepository extends JpaRepository<Expense, Long> {
 
     // 줄마다 낸 사람 이름이 필요하다(N+1 막기)
-    @EntityGraph(attributePaths = "payer")
+    @EntityGraph(attributePaths = {"payer", "sharerIds"})
     List<Expense> findByTripIdOrderById(Long tripId);
 
     Optional<Expense> findByIdAndTripId(Long id, Long tripId);

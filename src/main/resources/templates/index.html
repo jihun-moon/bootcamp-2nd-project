@@ -26,7 +26,7 @@
       <span style="background-image:url('/img/photo/sea.jpg')"></span>
     </div>
     <div class="stack loose">
-      <h1>"운전 누가 해?"<br>이제 단톡방에서 안 싸워요.</h1>
+      <h1 id="hero-title">"운전 누가 해?"<br>이제 단톡방에서 안 싸워요.</h1>
       <p class="lead">친구들은 링크 누르고 1분. 운전·총무는 <b>"왜 나야?"까지</b>, 숙소는 <b>1인 얼마까지</b> 딱 나와요.</p>
       <div class="stack">
         <div class="row wrap">
@@ -130,9 +130,24 @@
   </section>
 
   <!-- 사진 띠: 첫 화면 다음에 여행 기분을 한 장으로. Unsplash 무료 사진(unsplash.com/photos/Y5F1JAbo6IU) -->
-  <section class="photo-band">
-    <img th:src="@{/img/photo/road-trip.jpg}" alt="햇살 드는 차 안, 친구들이 함께 떠나는 길" width="1600" height="800" loading="lazy">
-    <p>"운전은 누가?" 1분이면 정해지고,<br>남은 건 출발뿐.</p>
+  <!-- 영상 띠: 뒤는 차 안 사진이 천천히 다가오고 빛이 지나가며 영화처럼(AI 영상이 생기면 band-media 안 img 를 video 로 바꾼다, docs/21),
+       앞은 실제 앱을 24초 동안 눌러 가는 영상(build/promo/walk.mjs, 가짜 이름). 영상은 화면에 보일 때만 받고 틀어 준다 -->
+  <section class="photo-band film">
+    <div class="band-media" aria-hidden="true">
+      <img th:src="@{/img/photo/road-trip.jpg}" alt="" width="1600" height="800" loading="lazy">
+      <span class="band-light"></span><span class="band-grain"></span>
+    </div>
+    <div class="band-inner">
+      <div class="band-copy">
+        <p class="band-kicker">실제 화면 그대로, 24초</p>
+        <p class="band-line">"운전은 누가?" 1분이면 정해지고,<br>남은 건 출발뿐.</p>
+        <p class="band-sub">링크 열기 → 되는 날 → 설문 → 역할·차 → 숙소 표 → 영수증까지 진짜로 눌러 봤어요.</p>
+      </div>
+      <div class="device-phone band-phone"><div class="device-screen"><span class="device-status" aria-hidden="true"><b>9:41</b><i></i></span><div class="device-view">
+        <video class="walk-video" muted loop playsinline preload="none" th:poster="@{/video/walk-poster.jpg}" th:attr="data-src=@{/video/walk.mp4}"
+               aria-label="TripMate 를 실제로 쓰는 24초 영상: 초대 링크로 들어와 날짜·설문·역할·차·숙소 표·영수증까지"></video>
+      </div></div></div>
+    </div>
   </section>
 
   <!-- 공감 숫자: 아직 우리 사용자 수가 없어서, 출처 있는 조사 숫자로 "나만 그런 게 아니구나"를 먼저 보인다.
@@ -266,27 +281,30 @@
 
   <section class="section" data-reveal>
     <h2>그냥 카톡 투표 하면 안 돼요?</h2>
-    <p class="muted">투표는 표만 세요. TripMate 는 이유까지 보여요.</p>
-    <div class="core">
-      <article class="box">
-        <div>
-          <h3>"왜 나야?"에 답이 붙어요</h3>
-          <p class="muted">"차 있음 +4"처럼 왜 그 사람인지 보여요.</p>
+    <p class="muted">같은 질문, 다른 결과.</p>
+    <!-- 왼쪽은 카톡 투표가 실제로 끝나는 모습(표만 있고 이유는 없음), 오른쪽은 같은 방의 TripMate 결과. 들어오면 왼쪽 막대가 차고 오른쪽 줄이 하나씩 -->
+    <div class="duel" data-reveal>
+      <article class="duel-card kakao-side">
+        <p class="duel-label">카톡 투표</p>
+        <div class="kvote">
+          <p class="kvote-title">운전 누가 할래? 🚗</p>
+          <div class="kvote-row"><span>재현</span><i style="--w:38%"></i><b>3</b></div>
+          <div class="kvote-row"><span>민지</span><i style="--w:25%"></i><b>2</b></div>
+          <div class="kvote-row"><span>아무나 ㅋㅋ</span><i style="--w:38%"></i><b>3</b></div>
+          <p class="kvote-foot">8명 중 3명 안 읽음 · 마감 없음</p>
         </div>
-        <ul class="rows small">
-          <li class="between"><span><b>운전</b> 재현</span><span class="muted">차 있음 +4 · 따로 출발 −2</span></li>
-          <li class="between"><span><b>총무</b> 도윤</span><span class="muted">계획형 +3</span></li>
-        </ul>
+        <p class="duel-verdict">표는 셌는데 <b>왜 재현인지</b>는 아무도 몰라요. 결국 "그냥 재현이 해".</p>
       </article>
-      <article class="box">
-        <div>
-          <h3>다수결에 묻힌 "난 싫어"까지</h3>
-          <p class="muted">다수결에 묻히는 한 사람의 "이건 꼭"까지.</p>
-        </div>
-        <ul class="rows small">
-          <li class="between"><span><b>1위</b> 숲속 독채</span><span class="chip">개별 바베큐</span></li>
-          <li class="between"><span><b>2위</b> 바다뷰 풀빌라</span><span class="chip warn">독채 없음</span></li>
+      <span class="duel-vs" aria-hidden="true">VS</span>
+      <article class="duel-card tm-side">
+        <p class="duel-label">TripMate</p>
+        <ul class="tm-result">
+          <li><span><b>운전</b> 재현·민지</span><em>차 있음 +4</em></li>
+          <li><span><b>총무</b> 도윤</span><em>계획형 +3</em></li>
+          <li><span><b>숙소</b> 숲속 독채</span><em>"독채 없음" 2위로</em></li>
+          <li class="tm-total"><span>1인 합계</span><strong>143,000원</strong></li>
         </ul>
+        <p class="duel-verdict"><b>근거가 붙어서</b> "왜 나야?"가 없어요. 8명 모두 1분.</p>
       </article>
     </div>
     <!-- 숙소 붙여 넣기·교통비·장보기·콕 찌르기는 위 "실제 화면 열 장"에 있어 여기서 또 말하지 않는다(같은 말 두 번은 길이만 늘린다) -->
@@ -301,6 +319,14 @@
     <p class="muted">카톡, 토스·카카오뱅크, 예약 앱(NOL·여기어때·마이리얼트립), 정산·약속 앱(넛지·엔빵·트랩플랜)과 견줬어요.</p>
     <!-- 다섯 칸 표는 휴대폰에서 옆으로 밀려 읽히지 않았다. 기능 한 줄 + 우리 값 + 다른 곳 한 줄로 바꿨다.
          근거는 docs/11·12 의 조사 주소. 지는 칸도 숨기지 않는다 -->
+    <!-- 큰 세 가지만 크게 먼저. 아홉 줄 표는 궁금한 사람만 펼친다(전부 펼쳐 두면 스크롤만 길어졌다) -->
+    <ol class="big3">
+      <li><span class="big3-no">01</span><b>왜 그 사람인지</b><p>역할마다 근거("차 있음 +4"). 카톡 투표엔 이유가 없어요.</p></li>
+      <li><span class="big3-no">02</span><b>우리 규칙대로 1인 얼마</b><p>운전자 기름값·술값·불참까지 미리 정한 대로. N빵 앱은 다녀와서 똑같이 나눠요.</p></li>
+      <li><span class="big3-no">03</span><b>정하기부터 나누기까지 한 방</b><p>날짜·역할·숙소·장보기·회비·정산·2탄. 앱 다섯 개를 오가지 않아요.</p></li>
+    </ol>
+    <details class="compare-more">
+      <summary>카톡·예약 앱·정산 앱과 아홉 가지 다 비교해 보기</summary>
     <ul class="vs">
       <li><div class="vs-head"><b>날짜, 몇 박이면 누가 빠지는지까지</b><span class="vs-us win">✓</span></div><p class="vs-others">카톡 투표·넛지는 되는 날 표만 · 숙박 길이 계산은 없음</p></li>
       <li><div class="vs-head"><b>운전·총무 역할을 근거와 함께</b><span class="vs-us win">✓</span></div><p class="vs-others">카톡 — · 토스·카뱅 총무만 · 정산 앱 총무만 · 예약 앱 —</p></li>
@@ -318,6 +344,7 @@
       <li><div class="vs-head"><b>숙소 예약·결제</b><span class="vs-us">—</span></div><p class="vs-others">NOL·여기어때에서 해요</p></li>
     </ul>
     <p class="caption">2026년 11월 공개 페이지·앱스토어 설명 기준</p>
+    </details>
   </section>
 
   <!-- 여행 끝나면 이 한 장: 가장 퍼지기 좋은 그림(단톡방에 그대로 던짐). 체험 방과 같은 예시 값, 화면에 들어오면 프린터에서 뽑혀 나온다 -->

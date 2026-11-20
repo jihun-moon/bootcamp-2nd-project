@@ -496,8 +496,8 @@ body:has(.sticky-cta) .site-header .btn { display: none; } /* 아래 붙은 버�
 
 /* 사진 띠: 사진 위 아래쪽을 어둡게 깔고 흰 글씨 한 줄. 사진이 늦게 와도 글이 읽히게 바탕색을 둔다 */
 .photo-band { position: relative; margin-top: 64px; background: #1b1f24; overflow: hidden; } /* 스크롤 움직임(band-pan)으로 사진을 키워 움직여도 띠 밖으로 삐져나오지 않게 */
-.photo-band img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; filter: brightness(0.82); } /* 앞유리 햇빛이 너무 밝아 글씨가 묻혀서 사진을 살짝 눌러 둔다 */
-.photo-band p { position: absolute; inset: auto 0 0; max-width: none; padding: 64px 24px 32px;
+.photo-band > img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; filter: brightness(0.82); } /* 앞유리 햇빛이 너무 밝아 글씨가 묻혀서 사진을 살짝 눌러 둔다 */
+.photo-band > p { position: absolute; inset: auto 0 0; max-width: none; padding: 64px 24px 32px;
   background: linear-gradient(rgb(0 0 0 / 0), rgb(0 0 0 / 0.55) 40%, rgb(0 0 0 / 0.8)); color: #fff; font-size: var(--fs-xl); font-weight: 700; line-height: 1.35;
   text-shadow: 0 1px 12px rgb(0 0 0 / 0.45); } /* 앞유리 햇빛 위에서도 흰 글씨가 읽히게 진하게 깔고 그림자 */
 
@@ -511,8 +511,8 @@ body:has(.cta) .site-footer { margin-top: 0; }
 @media (min-width: 720px) {
   .cta { margin-top: 128px; padding: 144px 24px; }
   .photo-band { margin-top: 96px; }
-  .photo-band img { aspect-ratio: 21 / 8; }
-  .photo-band p { padding: 96px max(24px, calc(50vw - 496px)) 48px; font-size: var(--fs-2xl); }
+  .photo-band > img { aspect-ratio: 21 / 8; }
+  .photo-band > p { padding: 96px max(24px, calc(50vw - 496px)) 48px; font-size: var(--fs-2xl); }
   /* 자주 묻는 것: 왼쪽 제목, 오른쪽 질문 목록 */
 
   .faq > details { grid-column: 2; }
@@ -944,7 +944,7 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
       .hero .phone-wrap { animation: hero-lift linear both; animation-timeline: view(); animation-range: exit 0% exit 100%; }
       @keyframes hero-leave { to { opacity: 0.15; transform: translateY(-40px) scale(0.96); } }
       @keyframes hero-lift { to { opacity: 0.4; transform: translateY(80px) scale(0.97); } }
-      .photo-band img { animation: band-pan linear both; animation-timeline: view(); }
+      .photo-band > img { animation: band-pan linear both; animation-timeline: view(); }
       @keyframes band-pan { from { transform: scale(1.12) translateY(-4%); } to { transform: scale(1.12) translateY(4%); } }
       /* 흐름 절 제목·각 절 제목이 들어올 때 아래에서 살짝 */
       .section > h2 { animation: rise-in linear both; animation-timeline: view(); animation-range: entry 0% entry 60%; }
@@ -979,3 +979,75 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
   .receipt-page > main > :not(.receipt-left) + :not(.receipt-left) { margin-top: 0; }
   .receipt-page > main { row-gap: 24px; }
 }
+
+/* 영상 띠: 뒤 사진은 천천히 다가오고(켄 번스) 빛 한 줄이 지나가며 아주 옅은 필름 알갱이 → 멈춘 사진보다 영상처럼.
+   앞은 왼쪽 문구 · 오른쪽 실제 앱 영상(휴대폰). 휴대폰 폭에서는 문구 아래 휴대폰 */
+.photo-band.film { display: grid; isolation: isolate; color: #fff; }
+.band-media { position: absolute; inset: 0; overflow: hidden; z-index: -1; }
+.band-media img { width: 100%; height: 100%; aspect-ratio: auto; object-fit: cover; filter: brightness(0.5) saturate(1.05); animation: band-kb 26s ease-in-out infinite alternate; }
+.band-media::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgb(0 0 0 / 0.55), rgb(0 0 0 / 0.15) 60%, rgb(0 0 0 / 0.35)); }
+.band-light { position: absolute; inset: -20% -40%; background: linear-gradient(105deg, transparent 40%, rgb(255 236 200 / 0.18) 50%, transparent 60%); animation: band-sweep 9s ease-in-out infinite; }
+.band-grain { position: absolute; inset: 0; opacity: 0.08; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+@keyframes band-kb { from { transform: scale(1.04) translate(0, 0); } to { transform: scale(1.16) translate(-2.5%, -1.5%); } }
+@keyframes band-sweep { 0%, 55% { transform: translateX(-60%); } 100% { transform: translateX(60%); } }
+.band-inner { position: relative; max-width: 1040px; margin: 0 auto; padding: 56px 24px; display: grid; gap: 32px; justify-items: center; }
+.band-copy { display: grid; gap: 12px; max-width: 520px; text-shadow: 0 2px 16px rgb(0 0 0 / 0.5); }
+.band-kicker { font-size: var(--fs-sm); font-weight: 700; letter-spacing: 0.04em; color: #6ee7d8; }
+.band-line { font-size: var(--fs-xl); font-weight: 800; line-height: 1.35; letter-spacing: -0.02em; }
+.band-sub { font-size: var(--fs-sm); opacity: 0.88; }
+.band-phone { width: min(260px, 70vw); }
+.photo-band.film .walk-video { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; background: #fff; }
+@media (min-width: 960px) {
+  .band-inner { grid-template-columns: 1fr 300px; align-items: center; justify-items: start; padding: 80px 24px; column-gap: 64px; }
+  .band-line { font-size: var(--fs-2xl); }
+  .band-phone { width: 300px; justify-self: end; }
+}
+@media (prefers-reduced-motion: reduce) { .band-media img, .band-light { animation: none; } }
+
+/* 같은 질문, 다른 결과: 카톡 투표(회색·표만) VS TripMate(청록·근거·1인 얼마) */
+.duel { display: grid; gap: 16px; align-items: stretch; }
+.duel-card { display: grid; gap: 14px; align-content: start; padding: 20px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--surface); }
+.duel-label { font-size: var(--fs-sm); font-weight: 700; color: var(--muted); }
+.duel-verdict { font-size: var(--fs-sm); color: var(--muted); }
+.duel-verdict b { color: var(--ink); }
+.duel-vs { justify-self: center; align-self: center; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%;
+  background: var(--accent); color: var(--accent-ink); font-weight: 800; letter-spacing: 0.02em; box-shadow: 0 8px 24px rgb(14 124 114 / 0.35); }
+.kakao-side .kvote { padding: 14px; border-radius: 12px; background: #b2c7d9; color: #191919; display: grid; gap: 8px; }
+.kvote-title { font-weight: 700; }
+.kvote-row { display: grid; grid-template-columns: 76px 1fr 20px; align-items: center; gap: 8px; font-size: var(--fs-sm); }
+.kvote-row i { height: 10px; border-radius: 5px; background: rgb(255 255 255 / 0.65); position: relative; overflow: hidden; }
+.kvote-row i::after { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--w); background: #fee500; border-radius: 5px; transition: width 0.9s var(--ease); }
+.kvote-foot { font-size: var(--fs-xs); opacity: 0.7; }
+.tm-side { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset, 0 18px 40px rgb(14 124 114 / 0.18); }
+.tm-side .duel-label { color: var(--accent); }
+.tm-result { display: grid; gap: 0; }
+.tm-result li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: var(--fs-sm); }
+.tm-result em { font-style: normal; color: var(--accent); font-weight: 600; white-space: nowrap; }
+.tm-result .tm-total { border-bottom: 0; padding-top: 14px; align-items: baseline; }
+.tm-result .tm-total strong { font-size: var(--fs-xl); color: var(--accent); }
+/* 들어올 때: 왼쪽 막대가 0 에서 차고, 오른쪽 줄이 하나씩 */
+.duel.will-reveal .kvote-row i::after { width: 0; }
+.duel.will-reveal .tm-result li { opacity: 0; transform: translateY(8px); transition: opacity 0.4s var(--ease), transform 0.4s var(--ease); }
+.duel.revealed .kvote-row i::after { width: var(--w); }
+.duel.revealed .tm-result li { opacity: 1; transform: none; }
+.duel.revealed .tm-result li:nth-child(2) { transition-delay: 0.15s; }
+.duel.revealed .tm-result li:nth-child(3) { transition-delay: 0.3s; }
+.duel.revealed .tm-result li:nth-child(4) { transition-delay: 0.5s; }
+@media (min-width: 960px) {
+  .duel { grid-template-columns: 1fr auto 1fr; column-gap: 20px; }
+  .duel-card { padding: 28px; }
+}
+
+/* 큰 세 가지 */
+.big3 { display: grid; gap: 12px; margin-bottom: 20px; }
+.big3 li { display: grid; gap: 6px; padding: 20px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); }
+.big3 b { font-size: var(--fs-lg); }
+.big3 p { color: var(--muted); font-size: var(--fs-sm); }
+.big3-no { font-size: var(--fs-sm); font-weight: 800; color: var(--accent); letter-spacing: 0.06em; }
+@media (min-width: 960px) { .big3 { grid-template-columns: repeat(3, 1fr); gap: 16px; } .big3 li { padding: 24px; } }
+.compare-more > summary { cursor: pointer; list-style: none; display: inline-flex; align-items: center; gap: 8px; min-height: var(--tap); font-weight: 600; color: var(--accent); }
+.compare-more > summary::-webkit-details-marker { display: none; }
+.compare-more > summary::after { content: "+"; font-size: var(--fs-lg); transition: transform var(--dur) var(--ease); }
+.compare-more[open] > summary::after { transform: rotate(45deg); }
+.compare-more[open] > summary { margin-bottom: 12px; }

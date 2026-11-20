@@ -204,6 +204,48 @@ function tourScroll() {
   show(steps[0]);
 }
 
+// 실제 앱 영상: 화면에 들어오면 그때 받아 소리 없이 틀고, 나가면 멈춘다(데이터·배터리).
+// 움직임 줄이기면 저절로 틀지 않고 첫 장면 그림 + 재생 단추(사용자가 누를 때만)
+function lazyVideos() {
+  var videos = document.querySelectorAll('video[data-src]');
+  if (!videos.length) return;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var load = function (v) { if (!v.src) { v.src = v.dataset.src; v.load(); } };
+  if (reduce || !('IntersectionObserver' in window)) {
+    videos.forEach(function (v) { v.controls = true; v.addEventListener('play', function () { load(v); }, { once: true }); v.preload = 'none'; v.src = v.dataset.src; });
+    return;
+  }
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      var v = e.target;
+      if (e.isIntersecting) { load(v); var p = v.play(); if (p && p.catch) p.catch(function () { v.controls = true; }); }
+      else if (!v.paused) v.pause();
+    });
+  }, { rootMargin: '200px 0px' });
+  videos.forEach(function (v) { observer.observe(v); });
+}
+
+// 첫 문구는 새로고침할 때마다 다른 말(바로 앞과 같은 말은 피한다). 서버가 그린 첫 문구가 기본이라 스크립트가 없어도 읽힌다
+var HERO_LINES = [
+  '"운전 누가 해?"<br>이제 단톡방에서 안 싸워요.',
+  '"언제 돼?" 무한 루프,<br>링크 하나로 끝.',
+  'N빵 말고 우리 규칙빵.<br>운전자 기름값은 빼고.',
+  '"나만 또 계획 짜?"<br>이번엔 다 같이, 1분이면.',
+  '총무 혼자 다 하던 시대 끝.<br>역할은 근거까지 1분.',
+  '여행 가기 전에 싸우지 말고,<br>가서 놀아요.',
+  '단톡방 공지 말고,<br>링크 하나 던지면 끝.'
+];
+function rotateHero() {
+  var h = document.getElementById('hero-title');
+  if (!h) return;
+  var last = -1;
+  try { last = Number(sessionStorage.getItem('tripmate.hero') || -1); } catch (e) { /* 저장 못 해도 고르기만 */ }
+  var i = Math.floor(Math.random() * HERO_LINES.length);
+  if (i === last) i = (i + 1) % HERO_LINES.length;
+  try { sessionStorage.setItem('tripmate.hero', String(i)); } catch (e) { /* 바로 앞 문구 기억만 못 한다 */ }
+  h.innerHTML = HERO_LINES[i];   // 고정 문자열만 넣는다(사용자 값 아님)
+}
+
 // 아래에 붙은 시작 단추는 첫 화면의 같은 단추가 화면 밖으로 나간 뒤에만 올라온다
 function stickyAfterHero() {
   var sticky = document.querySelector('.sticky-cta');
@@ -324,6 +366,8 @@ $(function () {
   });
   loadMyTrips();
   stickyAfterHero();
+  rotateHero();
+  lazyVideos();
   tourScroll(); // 움직임 줄이기여도 화면은 바뀌어야 한다(바꾸는 것은 내용, 움직임은 CSS 가 끈다)
   if (reduceMotion || !('IntersectionObserver' in window)) return;
   var phone = document.querySelector('.phone');

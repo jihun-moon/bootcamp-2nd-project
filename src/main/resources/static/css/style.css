@@ -145,7 +145,10 @@ button { font: inherit; cursor: pointer; }
 /* 누르는 순간 살짝 들어간다(실제 단추처럼). 휴대폰에도 보이도록 hover 와 따로 둔다 */
 .btn:active:not(:disabled), .choice:active, .score:active, .member-card:active { transform: scale(0.97); }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-.btn.kakao { background: var(--kakao); border-color: var(--kakao); color: rgb(0 0 0 / 0.85); border-radius: 12px; } /* 카카오 로그인 디자인 가이드 값 */
+/* 카카오 로그인: 공식 그림을 가운데 두고 같은 노랑 바탕만 좌우로 늘린다(가이드의 확장 규칙). 둥글기는 공식 그림과 같은 8 */
+.kakao-login { display: flex; justify-content: center; align-items: center; height: 46px; border-radius: 8px; background: var(--kakao); }
+.kakao-login img { display: block; max-width: 100%; height: 46px; }
+.kakao-login:active { transform: scale(0.97); }
 .btn.plain { border-color: transparent; background: none; color: var(--muted); }
 .btn.danger { color: var(--error); }
 .btn.big { min-height: 52px; padding: 12px 24px; font-size: var(--fs-md); }
@@ -158,7 +161,7 @@ button { font: inherit; cursor: pointer; }
 @media (hover: hover) {
   .btn:hover { border-color: var(--line-strong); background: var(--surface-2); }
   .btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
-  .btn.kakao:hover { background: var(--kakao); filter: brightness(0.96); }
+  .kakao-login:hover { filter: brightness(0.96); }
   .link:hover { text-decoration-color: currentColor; }
   .choice:hover, label.chip:hover { border-color: var(--line-strong); }
   .trip-item, .core .box, .mini-phone, .stay { transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease); }

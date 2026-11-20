@@ -2,11 +2,13 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/common :: head('우리 여행 영수증')}"></head>
 <body th:data-trip-id="${tripId}">
-<div class="page narrow">
+<div class="page narrow receipt-page">
   <header th:replace="~{fragments/common :: tripHeader}"></header>
   <!-- 우리 여행 영수증: 이미 모인 것(역할·숙소 표·교통비·규칙)만으로 한 장. 단톡방에 그림으로 던지라고 만든 화면 -->
   <main class="stack loose">
     <!-- 영수증 프린터: 투입구 막대 아래로 종이가 한 칸씩 끊겨 나온다(receipt.js 가 다 그린 뒤 .printing 을 붙인다) -->
+    <!-- PC(960~)는 왼쪽에 영수증과 보내기, 오른쪽에 정산·2탄. 휴대폰은 위에서 아래로 그대로 -->
+    <div class="receipt-left stack">
     <div class="receipt-box">
       <div class="receipt-printer" aria-hidden="true"></div>
       <div class="receipt-feed">
@@ -18,6 +20,7 @@
     <div class="stack">
       <button type="button" id="btn-receipt-share" class="btn primary big block">카톡으로 영수증 보내기</button>
       <p class="muted small center">휴대폰은 그림으로 바로 보내고, PC 는 그림을 저장해요.</p>
+    </div>
     </div>
     <!-- 다녀와서 정산: 먼저 낸 돈을 적으면 누가 누구에게 얼마 보낼지가 바로 나온다. 송금은 각자 토스·카카오페이로(우리는 돈을 만지지 않는다) -->
     <section class="settle box stack" aria-labelledby="settle-title">

@@ -495,7 +495,7 @@ body:has(.sticky-cta) .site-header .btn { display: none; } /* 아래 붙은 버�
 .photo-band, .cta { width: 100vw; margin-left: calc(50% - 50vw); }
 
 /* 사진 띠: 사진 위 아래쪽을 어둡게 깔고 흰 글씨 한 줄. 사진이 늦게 와도 글이 읽히게 바탕색을 둔다 */
-.photo-band { position: relative; margin-top: 64px; background: #1b1f24; }
+.photo-band { position: relative; margin-top: 64px; background: #1b1f24; overflow: hidden; } /* 스크롤 움직임(band-pan)으로 사진을 키워 움직여도 띠 밖으로 삐져나오지 않게 */
 .photo-band img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; filter: brightness(0.82); } /* 앞유리 햇빛이 너무 밝아 글씨가 묻혀서 사진을 살짝 눌러 둔다 */
 .photo-band p { position: absolute; inset: auto 0 0; max-width: none; padding: 64px 24px 32px;
   background: linear-gradient(rgb(0 0 0 / 0), rgb(0 0 0 / 0.55) 40%, rgb(0 0 0 / 0.8)); color: #fff; font-size: var(--fs-xl); font-weight: 700; line-height: 1.35;
@@ -514,8 +514,7 @@ body:has(.cta) .site-footer { margin-top: 0; }
   .photo-band img { aspect-ratio: 21 / 8; }
   .photo-band p { padding: 96px max(24px, calc(50vw - 496px)) 48px; font-size: var(--fs-2xl); }
   /* 자주 묻는 것: 왼쪽 제목, 오른쪽 질문 목록 */
-  .faq { display: grid; grid-template-columns: 1fr 2fr; column-gap: 48px; align-items: start; }
-  .faq > h2 { grid-row: 1 / span 20; position: sticky; top: 96px; }
+
   .faq > details { grid-column: 2; }
 }
 
@@ -828,7 +827,7 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
 .tour-step h3 { font-size: var(--fs-lg); }
 .tour-no { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line); font-weight: 600; }
 .tour-stage { display: none; }
-.tour-cta { margin-top: 40px; text-align: center; }
+.tour-cta { max-width: none; margin-top: 40px; text-align: center; } /* 본문 줄 길이 제한(68ch)에 묶이면 단추가 왼쪽으로 치우쳤다 */
 /* 누르는 곳: 퍼지는 동그라미. 자리는 장면마다 --x --y(그림 위 %) */
 .tap-ring { position: absolute; left: var(--x, 50%); top: var(--y, 50%); width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%;
   border: 3px solid rgb(14 124 114 / 0.95); background: rgb(14 124 114 / 0.16); pointer-events: none; animation: tap-pulse 1.8s var(--ease) infinite; }
@@ -866,7 +865,9 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
 @media (prefers-reduced-motion: reduce) { .hero-bg span:first-child { opacity: 0.4; } }
 
 /* 마지막 권유: 휴대폰은 가운데 한 줄, PC 는 왼쪽 말 · 오른쪽 노트북+휴대폰으로 양쪽을 맞춘다 */
-.cta { position: relative; overflow: hidden; text-align: left; }
+/* 가운데 정렬은 그대로 두고(체험 방 끝 절 등), 첫 화면의 두 칸짜리 끝 절만 왼쪽 정렬. .cta 에 left 를 걸었더니 체험 방 끝 절 제목·단추만 왼쪽으로 가고 설명은 가운데에 남았다 */
+.cta { position: relative; overflow: hidden; }
+.cta-inner { text-align: left; }
 .cta-inner { position: relative; max-width: 1040px; margin: 0 auto; display: grid; gap: 40px; }
 .cta-copy { justify-items: start; }
 .cta-copy p { margin-inline: 0; }
@@ -958,3 +959,23 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
 
 /* 한 줄에 놓인 글자 단추("고치기", "되돌리기")는 글씨를 크게 키운 휴대폰에서 두 줄로 꺾였다(소개 화면을 1.35배로 찍다 찾음) */
 .between > .link, .between > button.link { white-space: nowrap; flex-shrink: 0; }
+
+/* 자주 묻는 것: 왼쪽에 제목만 있고 오른쪽에 목록이면 PC 에서 왼쪽이 통째로 비었다. 가운데 한 기둥(720px), 질문은 한 단계 크게 */
+.faq { max-width: 720px; margin-inline: auto; }
+.faq > h2, .faq-lead { text-align: center; }
+.faq-lead { margin-inline: auto; }
+@media (min-width: 960px) {
+  .faq > h2 { font-size: var(--fs-2xl); }
+  .faq summary { min-height: 68px; font-size: var(--fs-lg); }
+  .faq details p { font-size: var(--fs-md); }
+}
+
+/* 영수증 화면 PC: 왼쪽 영수증(스크롤해도 붙어 있음) · 오른쪽 정산·2탄 */
+@media (min-width: 960px) {
+  .receipt-page { max-width: 1040px; }
+  .receipt-page > main { display: grid; grid-template-columns: 420px 1fr; column-gap: 48px; align-items: start; }
+  .receipt-page > main > .receipt-left { grid-row: 1 / span 6; position: sticky; top: 24px; }
+  .receipt-page > main > :not(.receipt-left) { grid-column: 2; margin-top: 0; }
+  .receipt-page > main > :not(.receipt-left) + :not(.receipt-left) { margin-top: 0; }
+  .receipt-page > main { row-gap: 24px; }
+}

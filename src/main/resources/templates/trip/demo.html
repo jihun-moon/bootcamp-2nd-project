@@ -76,7 +76,8 @@
     </section>
 
     <!-- 숙소: 실제 숙소 화면과 같은 칸. 평균·최솟값은 예시 설문 8명 기준.
-         실제 방은 링크의 og:image 사진이 붙는다. 체험 방 사진은 쓸 수 있는 사진을 받으면 넣는다 -->
+         실제 방은 링크의 og:image 사진이 붙는다. 체험 방 사진은 Unsplash 무료 사진(Unsplash License, 상업 사용 가능)을 960×540 으로 받아 둔 것:
+         unsplash.com/photos/PYkX4ruvXXs, unsplash.com/photos/jetnF4Xv4h8, unsplash.com/photos/lHwRHlzzCTg -->
     <section class="stack" data-panel="stays" hidden>
       <div class="box stack">
         <h2>우리 그룹이 중요하게 보는 것</h2>
@@ -91,18 +92,21 @@
       <div class="between"><h2>숙소 후보</h2><span class="muted small">3곳</span></div>
       <ul class="stay-list">
         <li class="box stay best">
+          <img class="photo" th:src="@{/img/demo/stay-forest.jpg}" alt="해 질 녘 숲속 통나무집" width="960" height="540" loading="lazy">
           <div class="between"><span class="strong">숲속 독채 펜션</span><span class="rank">1위 · 11.9점</span></div>
           <p class="price">1박 32만원 <small>2박 8명이면 1인 약 8만원</small></p>
           <div class="row wrap"><span class="chip on">독채</span><span class="chip on">개별 바베큐</span><span class="chip on">방 3개 이상</span></div>
           <div class="between"><span class="muted small">재현, 도윤, 서연, 하준, 예린</span><button type="button" class="btn primary" data-demo-action>투표 5</button></div>
         </li>
         <li class="box stay">
+          <img class="photo" th:src="@{/img/demo/stay-sea.jpg}" alt="바다 앞 수영장이 있는 빌라" width="960" height="540" loading="lazy">
           <div class="between"><span class="strong">바다뷰 풀빌라</span><span class="rank">2위 · 6.3점</span></div>
           <p class="price">1박 41만원 <small>2박 8명이면 1인 약 10.3만원</small></p>
           <div class="row wrap"><span class="chip on">온수풀</span><span class="chip on">방 3개 이상</span><span class="chip warn">독채 없음</span></div>
           <div class="between"><span class="muted small">민지, 지우</span><button type="button" class="btn" data-demo-action>투표 2</button></div>
         </li>
         <li class="box stay">
+          <img class="photo" th:src="@{/img/demo/stay-valley.jpg}" alt="계곡 개울가의 작은 집" width="960" height="540" loading="lazy">
           <div class="between"><span class="strong">계곡 앞 민박</span><span class="rank">3위 · 4.0점</span></div>
           <p class="price">1박 18만원 <small>2박 8명이면 1인 약 4.5만원</small></p>
           <div class="row wrap"><span class="chip on">개별 바베큐</span><span class="chip warn">독채 없음</span></div>

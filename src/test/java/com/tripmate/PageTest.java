@@ -50,12 +50,15 @@ class PageTest {
     void 정적_파일() throws Exception {
         mvc.perform(get("/css/style.css")).andExpect(status().isOk());
         mvc.perform(get("/js/common.js")).andExpect(status().isOk());
+        // 홈 화면에 추가(웹앱): 이름·아이콘·standalone
+        mvc.perform(get("/manifest.json")).andExpect(status().isOk()).andExpect(content().string(containsString("\"standalone\"")));
+        mvc.perform(get("/img/icon-512.png")).andExpect(status().isOk());
     }
 
     @Test
-    void 첫_화면_이렇게_굴러가요는_실제_화면_아홉_장() throws Exception {
+    void 첫_화면_이렇게_굴러가요는_실제_화면_열_장() throws Exception {
         var html = mvc.perform(get("/")).andReturn().getResponse().getContentAsString();
-        for (var shot : new String[]{"join", "dates", "roles", "stays", "shopping", "dues", "receipt", "settle", "next"}) {
+        for (var shot : new String[]{"join", "dates", "roles", "cars", "stays", "shopping", "dues", "receipt", "settle", "next"}) {
             assertThat(html).contains("/img/tour/" + shot + "-"); // 파일 이름 뒤에 내용 해시가 붙는다(캐시 깨기)
             mvc.perform(get("/img/tour/" + shot + ".webp")).andExpect(status().isOk());
         }

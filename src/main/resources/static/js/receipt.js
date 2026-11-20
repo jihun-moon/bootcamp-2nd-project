@@ -48,13 +48,17 @@ function buildLines(trip, board, stays, travel, shopping) {
   // 교통: 차를 나눴으면 내가 탄 차 값, 따로 가면 빠진다. 안 나눴으면 모두 나눈 값
   var carLegs = travel ? travel.legs.filter(function (l) { return l.perRider !== null; }) : [];
   var myCar = carLegs.find(function (l) { return l.memberId === trip.meId || l.riderIds.indexOf(trip.meId) >= 0; });
-  if (myCar) {
-    var carExempt = trip.rules.driverPaysFuel === false && myCar.perPassenger !== null;
-    var mine = carExempt ? (myCar.memberId === trip.meId ? 0 : myCar.perPassenger) : myCar.perRider;
-    out.push({ kind: 'row', left: '교통  ' + myCar.name + ' 차' + (carExempt ? '(운전자 빼고)' : ''), right: won(mine) });
+  if (carLegs.length) {
+    // 영수증은 단톡방에 그대로 올라가는 한 장이라 운전자 본인 몫(0원)이 아니라 차마다 "탄 사람 1인"을 줄로 적는다.
+    // 1인 합계에는 내가 탄 차 값(운전자 빼기 규칙이면 운전자는 0, 따로 가면 0)을 더한다
+    var exemptRule = trip.rules.driverPaysFuel === false;
+    carLegs.forEach(function (l) {
+      var each = exemptRule && l.perPassenger !== null ? l.perPassenger : l.perRider;
+      out.push({ kind: 'row', left: '교통  ' + l.name + ' 차 ' + (l.riderIds.length + 1) + '명' + (exemptRule ? '(운전자 빼고)' : ''), right: won(each) });
+    });
+    var mine = 0;
+    if (myCar) mine = exemptRule && myCar.perPassenger !== null ? (myCar.memberId === trip.meId ? 0 : myCar.perPassenger) : myCar.perRider;
     total += mine;
-  } else if (carLegs.length) {
-    out.push({ kind: 'row', left: '교통  따로 가요', right: won(0) });
   } else if (travel && travel.perPerson !== null) {
     var exempt = trip.rules.driverPaysFuel === false && travel.perPassenger !== null;
     var move = exempt ? travel.perPassenger : travel.perPerson;

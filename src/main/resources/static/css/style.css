@@ -855,3 +855,42 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
 .ov-cars .car { padding: 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); gap: 8px; }
 .ov-cars .car.mine { border-color: var(--accent); }
 .ov-cars input[type=text] { margin-top: 4px; }
+
+/* 히어로 뒤 배경(PC): 사진 셋이 18초마다 번갈아 옅게, 천천히 다가오며. 휴대폰은 숨긴다(데이터·배터리) */
+.hero-bg { display: none; }
+@media (min-width: 960px) {
+  /* 히어로 안에서 화면 끝까지 넓힌다. isolation 으로 히어로 안에서만 뒤에 깔려 아래 절을 덮지 않는다 */
+  .hero { position: relative; isolation: isolate; }
+  .hero-bg { display: block; position: absolute; top: -96px; bottom: -32px; left: calc(50% - 50vw); width: 100vw; overflow: hidden; z-index: -1; pointer-events: none; }
+  .hero-bg::after { content: ""; position: absolute; inset: 0;
+    background: linear-gradient(to bottom, color-mix(in srgb, var(--bg) 70%, transparent), color-mix(in srgb, var(--bg) 82%, transparent) 60%, var(--bg)); }
+  .hero-bg span { position: absolute; inset: -4%; background: center / cover no-repeat; opacity: 0; filter: saturate(0.9) blur(1px);
+    animation: hero-fade 54s linear infinite, hero-drift 54s ease-in-out infinite; }
+  .hero-bg span:nth-child(2) { animation-delay: -36s, -36s; }
+  .hero-bg span:nth-child(3) { animation-delay: -18s, -18s; }
+}
+@keyframes hero-fade { 0% { opacity: 0; } 6% { opacity: 0.55; } 30% { opacity: 0.55; } 37% { opacity: 0; } 100% { opacity: 0; } }
+@keyframes hero-drift { from { transform: scale(1) translate(0, 0); } to { transform: scale(1.12) translate(-2%, -1%); } }
+@media (prefers-reduced-motion: reduce) { .hero-bg span:first-child { opacity: 0.4; } }
+
+/* 마지막 권유: 휴대폰은 가운데 한 줄, PC 는 왼쪽 말 · 오른쪽 노트북+휴대폰으로 양쪽을 맞춘다 */
+.cta { position: relative; overflow: hidden; text-align: left; }
+.cta-inner { position: relative; max-width: 1040px; margin: 0 auto; display: grid; gap: 40px; }
+.cta-copy { justify-items: start; }
+.cta-copy p { margin-inline: 0; }
+.cta-points { display: grid; gap: 8px; padding: 0; list-style: none; font-size: var(--fs-md); }
+.cta-points li::before { content: "✓"; margin-right: 8px; color: #6ee7d8; font-weight: 700; }
+.cta-actions { margin-top: 8px; }
+.cta .btn.ghost { background: rgb(255 255 255 / 0.12); color: #fff; border-color: rgb(255 255 255 / 0.4); }
+.devices { position: relative; justify-self: center; width: min(560px, 100%); padding-bottom: 24px; }
+.laptop-screen { border: 10px solid #111418; border-bottom-width: 14px; border-radius: 14px 14px 0 0; background: #111418; overflow: hidden; aspect-ratio: 16 / 10; box-shadow: 0 30px 60px rgb(0 0 0 / 0.45); }
+.laptop-screen img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.laptop-base { height: 14px; margin: 0 -6%; border-radius: 0 0 14px 14px; background: linear-gradient(#cfd4da, #8b939c); }
+.devices .mini-device { position: absolute; right: -4%; bottom: 0; width: 30%; padding: 6px; border-radius: 26px; }
+.devices .mini-device .phone-screen { height: auto; aspect-ratio: 390 / 844; border-radius: 20px; }
+.devices .mini-device img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+@media (min-width: 960px) {
+  .cta-inner { grid-template-columns: 1fr 1.1fr; align-items: center; column-gap: 64px; }
+  .cta::before { content: ""; position: absolute; inset: -6%; z-index: 0; background: inherit; animation: hero-drift 40s ease-in-out infinite alternate; }
+  .cta > * { position: relative; z-index: 1; }
+}

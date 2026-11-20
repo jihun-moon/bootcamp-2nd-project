@@ -13,27 +13,26 @@
 |---|---|---|---|---|---|---|
 | REQ-01 | 카카오 로그인 시작 | GET | `/oauth2/authorization/kakao` | | 302 → 카카오 | Spring Security |
 | REQ-01 | 카카오가 돌려보내는 곳 | GET | `/login/oauth2/code/kakao` | | 302 → `/login/done` | Spring Security, `KakaoUserService` |
-| REQ-01 | 내 정보 | GET | `/api/me` | | 200 `{id, nickname}` | `AuthController` |
+| REQ-01 | 내 정보 | GET | `/api/me` | | 200 `{id, nickname, guest}` / 401 | `AuthController` |
 | REQ-01 | 로그인 버튼 고르기 | GET | `/api/auth/options` | | 200 `{kakao}` | `AuthController` |
 | REQ-01 | 로그아웃 | POST | `/api/logout` | | 204 | Spring Security |
-| REQ-02 | 방 만들기 | POST | `/api/trips` | `{"title", "destination", "startDate", "endDate"}` | 201 방 | `TripController`, `TripService` |
-| REQ-04 | 방 보기 | GET | `/api/trips/{id}` | | 200 방(참여자, `meId`, `inviteCode`) | `TripController`, `TripService` |
+| REQ-02 | 방 만들기 | POST | `/api/trips` | `{"title", "destination", "startDate", "endDate"}` | 201 방 / 빈 이름 400 / 손님 403 | `TripController`, `TripService` |
+| REQ-04 | 방 보기 | GET | `/api/trips/{id}` | | 200 방 `{id, title, destination, startDate, endDate, inviteCode, meId, members, rules, nextTripId, meet, roomDraw}` | `TripController`, `TripService.find`, `TripDto.Response` |
 | REQ-03 | 손님으로 참여(로그인 없이) | POST | `/api/invites/{inviteCode}/guest` | `{"name": "민재"}` | 200 `{tripId}` + 로그인·기억 쿠키 / 400 / 404 / 415 / 429 | `TripController.joinAsGuest`, `GuestService`, docs/19 |
 | REQ-03 | 초대 링크로 참여 | POST | `/api/invites/{inviteCode}` | | 200 `{tripId}` | `TripController`, `TripService` |
 | REQ-02 | 내 여행방 | GET | `/api/me/trips` | | 200 `[{id, title, destination, startDate, memberCount, surveyDone, host, todo}]` 최근 50개 / 401 | `TripController`, `TripService.myTrips` |
-| REQ-11 | 바뀜 알림(SSE) | GET | `/api/trips/{id}/events` | | `event: change` / `ping` | `TripController`, `TripEvents` |
-| REQ-05 | 방 고치기 *(남은 일)* | PATCH | `/api/trips/{id}` | 바꿀 칸 | 200 | |
-| REQ-05 | 방 지우기 *(남은 일)* | DELETE | `/api/trips/{id}` | | 204 | |
+| REQ-11 | 바뀜 알림(SSE) | GET | `/api/trips/{id}/events` | | `event: change`(data: `roles`·`members`·`stays`·`dates`·`trip`·`shopping`·`settle`·`deleted`) / 15초마다 `ping` | `TripController`, `TripEvents`, `TripChanged` |
+| REQ-05 | 방 지우기(방장) | DELETE | `/api/trips/{id}` | | 204 / 방장 아님 403 / 방 없음 404 | `TripController.delete`, `TripService.delete`, `TripDeleting` 이벤트(설문·역할·숙소·장보기·정산이 각자 지움), 남은 화면엔 SSE `deleted` |
 | REQ-06 | 나가기(본인)·빼기(방장) | DELETE | `/api/trips/{id}/members/{memberId}` | | 204 / 남을 빼려는 참여자 403 / 혼자 남은 방 400 | `TripController`, `TripService.leave`, `MemberLeaving` 이벤트(설문·역할·숙소 표·장보기·정산이 각자 지움) |
 | | 날짜 맞추기 판 | GET | `/api/trips/{id}/dates` | | 200 `{memberCount, responded, available: {"2027-01-15": [1, 2]}}` | `TripController`, `TripService.dates` |
 | | 내 되는 날 | PUT | `/api/trips/{id}/members/{memberId}/dates` | `{"dates": ["2027-01-15"]}` | 200 판 / 남의 것 403 / 지난 날·1년 넘음 400 | `TripService.saveDates` |
 | | 날짜 정하기(방장) | PUT | `/api/trips/{id}/period` | `{"startDate", "endDate"}` | 200 방 / 403 / 도착이 출발보다 앞 400 | `TripService.setPeriod` |
 | | 방 규칙(방장) | PUT | `/api/trips/{id}/rules` | `{"driverPaysFuel", "refundNoShow", "drinksSeparate"}` | 200 방 / 403 | `TripService.updateRules` |
 | REQ-05 | 방 이름·지역 고치기(방장) | PUT | `/api/trips/{id}` | `{"title", "destination"}` | 200 방 / 403 / 빈 이름 400 | `TripService.rename` |
-| | 방장 넘기기(방장) | PUT | `/api/trips/{id}/host` | `{"memberId": 3}` | 200 방 / 403 / 자기에게 400 | `TripService.handOver` |
+| | 방장 넘기기(방장) | PUT | `/api/trips/{id}/host` | `{"memberId": 3}` | 200 방 / 403 / 자기·손님에게 400 | `TripService.handOver` |
 | | 방·침대 뽑기 | POST | `/api/trips/{id}/room-draw` | `{"rooms": 2}` | 200 방(roomDraw) / 2~6 밖 400 | `TripService.drawRooms`(SecureRandom) |
 | | 모일 시간·장소(방장) | PUT | `/api/trips/{id}/meet` | `{"time": "08:00", "place": "합정역 2번 출구"}` | 200 방 / 403 / 40자 넘음 400 | `TripService.updateMeet` |
-| | 같은 멤버로 다음 여행 | POST | `/api/trips/{id}/next` | | 201 `{tripId, created, memberCount}` / 이미 있으면 200 같은 방 / 동시에 겹치면 409 | `TripService.next`, `Trip.previousTripId`(unique) |
+| | 같은 멤버로 다음 여행 | POST | `/api/trips/{id}/next` | | 201 `{tripId, created, memberCount}` / 이미 있으면 200 같은 방 / 손님 403 / 동시에 겹치면 409 | `TripService.next`, `Trip.previousTripId`(unique) |
 
 ## 설문·역할 (문지훈)
 
@@ -52,10 +51,10 @@
 | 요구사항 | 기능 | 메서드 | 주소 | 요청 본문 | 응답 | 코드 |
 |---|---|---|---|---|---|---|
 | REQ-15 | 숙소 목록·그룹 취향 | GET | `/api/trips/{id}/stays` | | 200 `{amenities, preferences, surveyed, stays}` | `StayController` |
-| REQ-13 | 숙소 올리기 | POST | `/api/trips/{id}/stays` | `{"url", "title", "amenities": []}` | 201 | `StayController`, `LinkPreview` |
+| REQ-13 | 숙소 올리기 | POST | `/api/trips/{id}/stays` | `{"url", "title", "price", "amenities": []}` (url 에 지도 앱 공유 글 통째도 된다) | 201 / 링크가 하나도 없음·가격 음수·숙소 30개 넘음 400 | `StayController`, `ShareText`, `LinkPreview` |
 | REQ-14 | 투표·바꾸기·취소 | PUT | `/api/trips/{id}/votes/{memberId}` | `{"stayId": 3}` (null 이면 취소) | 204 | `StayController` |
 | REQ-16 | 숙소 고치기·지우기 *(남은 일)* | PATCH / DELETE | `/api/trips/{id}/stays/{stayId}` | 조건 | 200 / 204 | |
-| | 숙소 링크 미리보기 | POST | `/api/trips/{id}/stays/preview` | `{"url"}` | 200 `{title, imageUrl, price, amenities}` | `StayController`, `LinkPreview` |
+| | 숙소 링크 미리보기 | POST | `/api/trips/{id}/stays/preview` | `{"url"}` (링크나 공유 글 통째) | 200 `{title, imageUrl, price, amenities}` / 링크가 하나도 없음 400 | `StayController`, `ShareText`(첫 링크·이름 줄), `LinkPreview` |
 
 ### 장보기·정산
 
@@ -66,9 +65,9 @@
 | | 내가 살게·쓴 돈 | PUT | `/api/trips/{id}/shopping/items/{item}` | `{"amount": 12000}` (null = 아직) | 200 / 남이 맡은 줄 409 | `ShoppingService.claim` |
 | | 내려놓기 | DELETE | `/api/trips/{id}/shopping/items/{item}` | | 200 / 맡은 사람·방장 아니면 403 | `ShoppingService.release` |
 | | 술 마셔요 표시 | PUT | `/api/trips/{id}/members/{memberId}/drinks` | `{"drinks": false}` | 200 방 / 남의 것은 방장만(아니면 403) | `TripService.setDrinks`, `Member.drinks` |
-| | 정산 판(누가 누구에게 얼마) | GET | `/api/trips/{id}/settlement` | | 200 `{total, lines, balances, transfers: [{fromName, toName, amount}], driverPaysFuel}` | `SettleController`, `SettleService` |
+| | 정산 판(누가 누구에게 얼마) | GET | `/api/trips/{id}/settlement` | | 200 `{total, lines, balances, transfers: [{fromName, toName, amount}], payments, driverPaysFuel, drinksSeparate, refundNoShow}` (transfers 는 남은 줄, payments 는 끝난 줄) | `SettleController`, `SettleService` |
 | | 먼저 낸 돈 적기 | POST | `/api/trips/{id}/expenses` | `{"kind": "STAY", "memo": "잔금", "amount": 476000, "sharerIds": [1, 2]}` (sharerIds 없으면 모두·규칙대로) | 201 판 / 금액 0 이하·종류 없음·방에 없는 사람 400 | `SettleService.add` |
-| | 보냈어요·받았어요 | POST | `/api/trips/{id}/payments` | `{"fromId": 2, "toId": 1, "amount": 20000}` | 201 판 / 보낸·받은 사람·방장 아니면 403 | `SettleService.markPaid`, `Payment` |
+| | 보냈어요·받았어요 | POST | `/api/trips/{id}/payments` | `{"fromId": 2, "toId": 1, "amount": 20000}` | 201 판 / 보낸·받은 사람·방장 아니면 403 / 같은 사람·방에 없는 사람·금액 0 이하 400 | `SettleService.markPaid`, `Payment` |
 | | 보냈어요 되돌리기 | DELETE | `/api/trips/{id}/payments/{paymentId}` | | 200 판 / 누른 사람·보낸·받은 사람·방장 아니면 403 | `SettleService.unmarkPaid` |
 | | 적은 돈 지우기 | DELETE | `/api/trips/{id}/expenses/{expenseId}` | | 200 판 / 낸 사람·방장 아니면 403 | `SettleService.remove` |
 

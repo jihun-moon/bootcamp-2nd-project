@@ -7,11 +7,11 @@
 | 기능 | 하는 일 |
 |---|---|
 | 초대·참여 | 카톡 링크 하나. 친구는 이름만 쓰고 바로(손님), 카카오로 이으면 다른 기기에서도 나로. 다음 날 같은 휴대폰은 저절로 로그인 |
-| 날짜 맞추기 | 각자 되는 날을 누르면 겹친 날과 2박·1박·당일 후보 셋. 방장이 한 번에 정한다 |
-| 설문 → 역할 추천 | 1분 설문으로 운전·총무·장보기를 정하고, 카드마다 근거("차 있음 +4")를 보여 준다. 늦게 온 사람도 저절로 다시 짠다 |
+| 날짜 맞추기 | 각자 되는 날을 누르면 겹친 날과 2박·1박·당일 후보 셋. 방장이 한 번에 정한다. 안 누른 사람은 누구나 "콕 찌르기" |
+| 설문 → 역할 추천 | 1분 설문으로 운전·총무·장보기를 정하고, 카드마다 근거("차 있음 +4")를 보여 준다. 손으로 옮긴 카드가 없으면 늦게 온 사람도 저절로 다시 짠다 |
 | 실시간 역할 보드 | 카드를 옮기면 같은 방 사람들 화면에도 바로 바뀐다. 둘이 동시에 옮기면 늦은 쪽은 409 |
 | 방 규칙 | 운전자 기름값, 전날 불참 예약금, 술값. 정산 계산에 그대로 들어간다 |
-| 숙소 투표 | 링크를 붙이면 제목·사진·최저가·편의시설을 채우고 1인 얼마를 보인다. 조건별 **최솟값**으로 "의견 갈림"을 드러낸다 |
+| 숙소 투표 | 링크나 지도 앱 공유 글을 통째로 붙이면 제목·사진·최저가·편의시설을 채우고 1인 얼마를 보인다. 조건별 **최솟값**으로 "의견 갈림"을 드러낸다 |
 | 교통비 | 카카오 길찾기로 기름값·톨비, 규칙대로 운전자를 빼고 나눈다 |
 | 장보기 | 인원·술 마시는 사람·박 수로 양을 계산, "내가 살게"와 쓴 돈. 공용 준비물은 "내가 챙길게" |
 | 모이는 곳·방 뽑기 | 모일 시간·장소는 하루 전부터 방 머리에. 방·침대는 서버가 섞어 공평하게 |
@@ -44,20 +44,24 @@ JDK 17 이상만 있으면 된다. DB 는 메모리 H2 라 설치할 것이 없�
 | 로그인 버튼 고르기 | GET | `/api/auth/options` | 200 `{"kakao": true}` | | 박재현 |
 | 내 정보 | GET | `/api/me` | 200 `{"id": 2, "nickname": "민지", "guest": false}` | 로그인 안 했으면 401 | 박재현 |
 | 로그아웃 | POST | `/api/logout` | 204 | | 박재현 |
-| 여행방 만들기 | POST | `/api/trips` | 201 방 JSON(만든 사람이 방장)<br>요청 `{"title": "겨울 펜션", "destination": "가평", "startDate": "2027-01-15", "endDate": "2027-01-17"}` | 여행 이름이 비면 400 | 박재현 |
+| 여행방 만들기 | POST | `/api/trips` | 201 방 JSON(만든 사람이 방장)<br>요청 `{"title": "겨울 펜션", "destination": "가평", "startDate": "2027-01-15", "endDate": "2027-01-17"}` | 여행 이름이 비면 400, 손님이면 403 | 박재현 |
 | 여행방 보기 | GET | `/api/trips/{id}` | 200 `{"id": 1, "title": "...", "inviteCode": "...", "meId": 2, "members": [...]}` | | 박재현 |
+| 방 지우기 | DELETE | `/api/trips/{id}` | 204 (설문·역할·숙소·장보기·정산이 같이 지워지고 되돌릴 수 없다. 보던 사람은 SSE `deleted` 로 첫 화면으로) | 방장이 아니면 403, 방이 없으면 404 | 문지훈 |
 | 손님으로 참여(로그인 없이) | POST | `/api/invites/{inviteCode}/guest` | 200 `{"tripId": 1}`, 손님 계정이 생기고 로그인·기억 쿠키(`tm_remember`, 60일)<br>요청 `{"name": "민재"}` | 이름 비거나 20자 넘음 400, 코드 틀림 404, form 전송 415, 한 방 손님 30명·같은 곳 한 시간 10번 넘음 429 | 박재현(설계 docs/19) |
 | 초대 링크로 참여 | POST | `/api/invites/{inviteCode}` | 200 `{"tripId": 1}` (이미 있으면 그대로) | 코드가 틀리면 404 | 박재현 |
-| 바뀜 알림 (SSE) | GET | `/api/trips/{id}/events` | `event: change` `data: roles` \| `members` \| `stays` \| `dates` \| `trip` \| `shopping` \| `settle`, 15초마다 `ping` | | 박재현 |
+| 바뀜 알림 (SSE) | GET | `/api/trips/{id}/events` | `event: change` `data: roles` \| `members` \| `stays` \| `dates` \| `trip` \| `shopping` \| `settle` \| `deleted`, 15초마다 `ping` | | 박재현 |
 | 설문 저장 | PUT | `/api/trips/{id}/members/{memberId}/survey` | 200 저장한 설문<br>요청 `{"activity": "INDOOR", "planning": "PLANNER", "hasCar": true, ..., "preferences": {"DETACHED": 5}}` | activity·planning 이 없거나 점수가 1~5 밖이면 400<br>남의 설문이면 403 | 문지훈 |
 | 설문 보기 | GET | `/api/trips/{id}/members/{memberId}/survey` | 200 설문(본인·방장이 아니면 `mobilityLimited` 칸이 빠진다) | 설문 전이면 404 | 문지훈 |
 | 역할 보드 | GET | `/api/trips/{id}/roles` | 200 `{"roles": [...], "assignments": [{"roleId": 4, "memberId": 2, "reasons": ["차 있음 +4"], "version": 0}]}` | | 문지훈 |
 | 역할 추천 | POST | `/api/trips/{id}/roles/recommend` | 200 새 보드(손으로 옮긴 것도 다시 짠다) | 방장이 아니면 403 | 문지훈 |
 | 이동·회비 근거 | GET | `/api/trips/{id}/roles/travel` | 200 `{"legs": [{"name": "재현", "driver": true, "km": 62, "minutes": 70, "toll": 3200, "fuel": 8800}], "perPerson": 6000, ...}` | 키가 없으면 200 + `message` 안내 | 문지훈 |
+| 역할 더하기 | POST | `/api/trips/{id}/roles` | 201 보드<br>요청 `{"title": "설거지", "required": false, "capacity": 2, "tasks": ["저녁 설거지"]}` | 방장이 아니면 403, 역할이 12개 넘거나 이름이 비거나 정원이 1~8 밖이면 400 | 문지훈 |
+| 역할 고치기 | PATCH | `/api/trips/{id}/roles/{roleId}` | 200 보드<br>요청은 더하기와 같다(칸을 다 보낸다) | 방장이 아니면 403, 검사에 걸리면 400, 역할이 없으면 404 | 문지훈 |
+| 역할 지우기 | DELETE | `/api/trips/{id}/roles/{roleId}` | 204 (그 역할에 있던 사람은 미배정으로) | 방장이 아니면 403, 역할이 없으면 404 | 문지훈 |
 | 역할 카드 옮기기 | PATCH | `/api/trips/{id}/roles/assignments/{memberId}` | 200 보드<br>요청 `{"roleId": 4, "version": 0}` (roleId null = 미배정) | 그 사이 누가 옮겼으면(version 다름) 409 | 문지훈 |
 | 숙소 목록·그룹 취향 | GET | `/api/trips/{id}/stays` | 200 `{"amenities": [...], "preferences": {"DETACHED": {"avg": 4.5, "min": 3}}, "surveyed": 3, "stays": [...]}` | | 김현수 |
-| 숙소 링크 미리보기 | POST | `/api/trips/{id}/stays/preview` | 200 `{"title": "가평 무지개 독채펜션", "imageUrl": "https://...", "price": 238640, "amenities": ["DETACHED"]}`<br>요청 `{"url": "https://..."}` | url 이 `http(s)://` 가 아니면 400 | 김현수 |
-| 숙소 올리기 | POST | `/api/trips/{id}/stays` | 201 숙소<br>요청 `{"url": "https://...", "title": "숲속 독채", "price": 240000, "amenities": ["DETACHED"]}` | url 이 `http(s)://` 가 아니거나 가격이 음수면 400 | 김현수 |
+| 숙소 링크 미리보기 | POST | `/api/trips/{id}/stays/preview` | 200 `{"title": "가평 무지개 독채펜션", "imageUrl": "https://...", "price": 238640, "amenities": ["DETACHED"]}`<br>요청 `{"url": "https://..."}` 또는 지도 앱 공유 글 통째(`"[카카오맵] 가평 숲속펜션 ... https://kko.to/x"`), 이름은 공유 글에서 꺼낸다 | 글 안에 `http(s)://` 링크가 하나도 없으면 400 | 김현수 |
+| 숙소 올리기 | POST | `/api/trips/{id}/stays` | 201 숙소<br>요청 `{"url": "https://...", "title": "숲속 독채", "price": 240000, "amenities": ["DETACHED"]}` | 링크나 공유 글 안에 `http(s)://` 링크가 없거나 가격이 음수면 400, 숙소가 30개 넘으면 400 | 김현수 |
 | 숙소 투표 | PUT | `/api/trips/{id}/votes/{memberId}` | 204<br>요청 `{"stayId": 3}` (null = 취소) | 남의 표면 403, 숙소가 없으면 404 | 김현수 |
 | 내 여행방 | GET | `/api/me/trips` | 200 `[{"id": 1, "title": "...", "memberCount": 8, "surveyDone": 5, "host": true, "todo": ["survey"]}]`<br>todo = 내가 안 한 일(invite·survey·dates, 급한 순) | 로그인 안 했으면 401 | 박재현 |
 | 날짜 맞추기 판 | GET | `/api/trips/{id}/dates` | 200 `{"memberCount": 8, "responded": 5, "available": {"2027-01-15": [1, 2]}}` | | 문지훈 |
@@ -65,10 +69,10 @@ JDK 17 이상만 있으면 된다. DB 는 메모리 H2 라 설치할 것이 없�
 | 날짜 정하기 | PUT | `/api/trips/{id}/period` | 200 방<br>요청 `{"startDate": "2027-01-15", "endDate": "2027-01-17"}` | 방장이 아니면 403, 도착이 출발보다 앞이면 400 | 문지훈 |
 | 방 규칙 | PUT | `/api/trips/{id}/rules` | 200 방<br>요청 `{"driverPaysFuel": false, "refundNoShow": false, "drinksSeparate": true}` | 방장이 아니면 403 | 문지훈 |
 | 방 이름·지역 고치기 | PUT | `/api/trips/{id}` | 200 방<br>요청 `{"title": "강릉 우정 여행", "destination": "강릉"}` | 방장이 아니면 403, 이름이 비면 400 | 문지훈 |
-| 방장 넘기기 | PUT | `/api/trips/{id}/host` | 200 방<br>요청 `{"memberId": 3}` | 방장이 아니면 403, 자기에게 400 | 문지훈 |
+| 방장 넘기기 | PUT | `/api/trips/{id}/host` | 200 방<br>요청 `{"memberId": 3}` | 방장이 아니면 403, 자기·손님에게 400 | 문지훈 |
 | 방·침대 뽑기 | POST | `/api/trips/{id}/room-draw` | 200 방(`roomDraw: {"rooms": [["재현","민지"], ...], "count": 2, "by": "민지"}`)<br>요청 `{"rooms": 2}` | 방 2~6개가 아니면 400 | 문지훈 |
 | 모일 시간·장소 | PUT | `/api/trips/{id}/meet` | 200 방(`meet: {"time": "08:00", "place": "합정역 2번 출구"}`), 하루 전부터 방 머리에 "내일 08:00 · 합정역 2번 출구" | 방장이 아니면 403, 장소 40자 넘으면 400 | 문지훈 |
-| 같은 멤버로 다음 여행 | POST | `/api/trips/{id}/next` | 201 `{"tripId": 7, "created": true, "memberCount": 8}` (이미 있으면 200 같은 방) | 방에 없으면 404, 동시에 겹치면 409 | 문지훈 |
+| 같은 멤버로 다음 여행 | POST | `/api/trips/{id}/next` | 201 `{"tripId": 7, "created": true, "memberCount": 8}` (이미 있으면 200 같은 방) | 방에 없으면 404, 손님이면 403, 동시에 겹치면 409 | 문지훈 |
 | 나가기·빼기 | DELETE | `/api/trips/{id}/members/{memberId}` | 204 (설문·역할·숙소 표·장보기·정산이 같이 빠짐) | 남을 빼려는 참여자 403, 혼자 남은 방 400 | 문지훈 |
 | 장보기 | GET / PUT / DELETE | `/api/trips/{id}/shopping`, `/shopping/plan`, `/shopping/items/{item}` | 200 `{"people": 8, "items": [...], "spent": 52000, "perPerson": 6500}` | 남이 맡은 줄 409, 범위 밖 400 | 문지훈 |
 | 술 마셔요 표시 | PUT | `/api/trips/{id}/members/{memberId}/drinks` | 200 방<br>요청 `{"drinks": false}` (기본은 마심) | 남의 것을 방장이 아닌 사람이 바꾸면 403 | 문지훈 |
@@ -119,7 +123,7 @@ docs/          설계 문서, 각자 발표 정리(parts/)
 | 문서 | 들어 있는 것 |
 |---|---|
 | [1. 주제와 요구사항](docs/01-주제와-요구사항.md) | 주제를 고른 까닭, REQ-01~18, 담당 |
-| [2. 화면 설계](docs/02-화면설계.md) | 화면 목록 SCR-01~08, **와이어프레임**, 화면 흐름 |
+| [2. 화면 설계](docs/02-화면설계.md) | 화면 목록 SCR-01~11, **와이어프레임**, 화면 흐름 |
 | [3. DB 설계](docs/03-DB설계.md) | ERD, 표마다 정한 것과 까닭, 정규화 확인 |
 | [4. URL 설계](docs/04-URL설계.md) | API 표(코드 위치까지) |
 | [5. 역할 분담과 일정](docs/05-역할분담.md) | 사람별 남은 일, 4주 일정, 발표 순서 |
@@ -129,7 +133,10 @@ docs/          설계 문서, 각자 발표 정리(parts/)
 | [8. 화면 개편](docs/08-화면-개편.md) | 참고한 페이지, 첫 화면 짜임과 까닭, 방 화면에서 고친 것 |
 | [9. 더 쓸 데이터와 운영자 계정](docs/09-더-쓸-데이터와-운영자-계정.md) | 받아 둔 키로 더 할 것, 새로 받을 API, 개발자 문구 걷기, 카카오 운영자 계정 설계, 글꼴·크기 기준 |
 | [10. 사진과 쓰고 싶게 만드는 기능](docs/10-사진과-쓰고-싶게-만드는-기능.md) | 사진·AI 이미지 자리와 프롬프트, 센스 있는 기능 후보와 담당 |
-| [11~14. 조사](docs/11-커뮤니티-시장조사.md) | 커뮤니티 불편, 한국 비슷한 서비스, AI·연동, 실제 해결법 |
+| [11. 커뮤니티 시장조사](docs/11-커뮤니티-시장조사.md) | 커뮤니티 불편 |
+| [12. 한국 비슷한 서비스](docs/12-한국-비슷한-서비스.md) | 국내 비슷한 서비스 |
+| [13. AI와 더 엮을 것](docs/13-AI와-더-엮을-것.md) | AI·연동 |
+| [14. 실제 해결법과 시스템 아이디어](docs/14-실제-해결법과-시스템-아이디어.md) | 실제 해결법 |
 | [15. 팀별 평가와 퍼지는 장치](docs/15-팀별-평가와-퍼지는-장치.md) | PM·디자인·홍보·MZ·개발 시선, SNS 퍼지는 고리 |
 | [16. 지도·맛집·AI 확장과 재미](docs/16-지도-맛집-AI-확장과-재미.md) | 지도·장소 API 약관, 우리만 할 수 있는 지도 |
 | [17. 7명 여행 시뮬레이션](docs/17-7명-여행-시뮬레이션과-소개-페이지.md) | 처음부터 끝까지 돌려 찾은 것, 커뮤니티 불편 22개 대조 |
@@ -169,7 +176,7 @@ flowchart LR
 ./gradlew test
 ```
 
-API 와 화면 테스트 143개(3·7·8·15명 방을 처음부터 끝까지 도는 시나리오, 당일치기·4박·차 없음 같은 유연성, 손님 참여, 정산 셈 포함). PR 을 올리기 전에 통과해야 한다.
+API 와 화면 테스트 152개(3·7·8·15명 방을 처음부터 끝까지 도는 시나리오, 당일치기·4박·차 없음 같은 유연성, 손님 참여, 정산 셈, 방 지우기, 공유 글 포함). PR 을 올리기 전에 통과해야 한다.
 
 ## 같이 작업하기
 

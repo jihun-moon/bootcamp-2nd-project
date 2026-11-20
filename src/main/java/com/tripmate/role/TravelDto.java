@@ -17,12 +17,13 @@ public final class TravelDto {
 
     // GET /api/trips/1/roles/travel
     // { "message": null, "legs": [ { "name": "재현", "driver": true, "km": 62, "minutes": 70, "toll": 3200, "fuel": 8800 } ],
-    //   "perPerson": 6000, "fuelPrice": 1700, "fuelSource": "어림값", "kmPerLiter": 12, "tips": [] }
-    public record Summary(String message, List<Leg> legs, Integer perPerson,
+    //   "perPerson": 6000, "perPassenger": 8000, "fuelPrice": 1700, "fuelSource": "어림값", "kmPerLiter": 12, "tips": [] }
+    // perPassenger 는 운전한 사람을 빼고 나눈 값. 커뮤니티에서 가장 자주 싸우는 게 "운전자도 기름값 내나"라서 두 값을 나란히 준다
+    public record Summary(String message, List<Leg> legs, Integer perPerson, Integer perPassenger,
                           int fuelPrice, String fuelSource, int kmPerLiter, List<String> tips) {
 
         static Summary unavailable(String message) {
-            return new Summary(message, List.of(), null, 0, null, 0, List.of());
+            return new Summary(message, List.of(), null, null, 0, null, 0, List.of());
         }
     }
 

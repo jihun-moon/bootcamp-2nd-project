@@ -18,22 +18,26 @@
   <section class="hero">
     <div class="stack loose">
       <h1>"운전 누가 해?"<br>이제 단톡방에서 안 싸워요.</h1>
-      <p class="lead">1분 설문이면 운전·총무는 <b>근거와 함께</b> 정해지고, 숙소는 <b>누가 싫어하는지까지</b> 보여요. 셋이든 열다섯이든, 여럿이 가면 다 돼요.</p>
+      <p class="lead">친구들은 1분 설문만. 운전·총무는 <b>근거와 함께</b>, 숙소는 <b>1인 가격까지</b> 정해져요.</p>
       <div class="stack">
         <div class="row wrap">
           <a th:href="@{/trips/new}" class="btn primary big">우리 방 만들기 (30초)</a>
           <!-- 방장이 아닌 사람도 가입 전에 안을 볼 수 있게. 로그인 없이 읽기 전용 -->
           <a th:href="@{/demo}" class="btn big">체험 방 둘러보기</a>
         </div>
+        <!-- 휴대폰에서는 아래 휴대폰 장면이 접힌 곳 밑이라, 첫 화면 안에서 "결과가 이렇게 나온다"를 세 줄로 먼저 보인다 -->
+        <div class="proof" aria-label="이렇게 정해져요">
+          <p><b>운전</b> 재현 <span>차 있음 +4</span></p>
+          <p><b>총무</b> 도윤 <span>계획형 +3</span></p>
+          <p><b>숙소</b> 숲속 독채 <span>1인 8만원</span></p>
+        </div>
         <ul class="trust">
-          <li>30초면 만들어요</li>
           <li>앱 설치 없이 카톡 링크로</li>
+          <li>셋이든 열다섯이든</li>
         </ul>
       </div>
     </div>
 
-    <!-- Partiful 첫 화면처럼 "문제(단톡방) → 제품(초대 카드) → 결과(역할 보드)"를 휴대폰 안에서 한 번에 보여 준다.
-         home.js 가 메시지를 하나씩 띄운다. 움직임 줄이기를 켠 사람과 스크립트가 없을 때는 마지막 장면이 그대로 보인다 -->
     <!-- Partiful 첫 화면처럼 "문제(단톡방) → 제품(초대 카드) → 결과(역할 보드)"를 휴대폰 안에서 보여 준다.
          실제 휴대폰·메신저처럼 상태 표시줄, 방 머리, 프로필, 시각, 입력칸까지 둔다(메신저 로고·이름은 쓰지 않는다).
          home.js 가 메시지를 하나씩 띄운다. 움직임 줄이기를 켠 사람과 스크립트가 없을 때는 결과 화면이 그대로 보인다 -->
@@ -96,7 +100,7 @@
         </div>
       </div>
     </div>
-    <p class="phone-caption muted">위 장면은 예시예요. 실제 화면은 "체험 방 둘러보기"에서 눌러 볼 수 있어요.</p>
+    <p class="phone-caption muted">예시 장면이에요 · <a th:href="@{/demo}" class="link">체험 방에서 직접 눌러 보기</a></p>
     </div>
   </section>
 
@@ -104,7 +108,7 @@
        실제 추천(RoleScorer + 헝가리안)은 8명 설문으로 하고, 여기는 같은 점수 규칙 일부로 혼자 보는 미리 보기다 -->
   <section class="section" id="quiz" data-reveal>
     <h2>나는 여행 가면 무슨 역할형일까?</h2>
-    <p class="muted">질문 셋, 10초. 실제 방에서는 친구들 설문까지 모아 모두가 가장 만족하는 배정을 찾아요.</p>
+    <p class="muted">질문 셋, 10초면 나와요.</p>
     <div class="box stack quiz">
       <fieldset><legend class="strong">차를 가져갈 수 있어?</legend>
         <div class="row wrap"><label class="chip"><input type="radio" name="car" value="yes"> 가능</label><label class="chip"><input type="radio" name="car" value="no"> 어려워</label></div></fieldset>
@@ -201,8 +205,8 @@
           <tr><td>실제 돈 보내기</td><td class="yes">송금 요청</td><td class="yes">✓</td><td class="yes">결제</td><td class="us">정산 앱으로</td></tr>
         </tbody>
       </table>
-      <p class="muted small">2026년 11월 공개 페이지 기준. 카카오톡 투표·정산, 토스 모임정산, NOL(옛 트리플)·마이리얼트립을 봤어요.</p>
     </div>
+    <p class="caption">2026년 11월 공개 페이지 기준</p>
   </section>
 
   <section class="section faq">

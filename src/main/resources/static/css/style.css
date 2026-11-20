@@ -274,6 +274,11 @@ tr:last-child td { border-bottom: 0; }
 .hero h1 { font-size: var(--fs-2xl); }
 .hero h1 em { font-style: normal; }
 .hero .lead { font-size: var(--fs-md); color: var(--muted); }
+/* 결과 영수증 세 줄: 역할(굵게) 이름, 오른쪽 끝에 근거. 카드·알약 대신 줄과 구분선만 */
+.proof { max-width: 360px; border-top: 1px solid var(--line); }
+.proof p { display: flex; gap: 8px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: var(--fs-sm); max-width: none; }
+.proof b { min-width: 2.5em; color: var(--accent); }
+.proof span { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; }
 .trust { display: flex; flex-wrap: wrap; gap: 4px 8px; color: var(--muted); font-size: var(--fs-sm); }
 .trust li + li::before { content: "· "; }
 
@@ -283,7 +288,7 @@ tr:last-child td { border-bottom: 0; }
 .preview .caption { font-size: var(--fs-xs); color: var(--muted); }
 
 .section { padding: 48px 0 8px; }
-.section > h2 { font-size: var(--fs-xl); margin-bottom: 8px; }
+.section > h2 { font-size: var(--fs-xl); margin-bottom: 8px; font-weight: 700; letter-spacing: -0.01em; } /* 훑을 때 제목만 따라가도 읽히게 굵게 */
 .section > .muted { margin-bottom: 24px; }
 
 /* 휴대폰 틀. 기기를 그린 것이라 둥글기 두 단계 규칙의 예외다. 화면 안 색은 다크 모드와 상관없이 실제 기기 화면처럼 고정 */
@@ -483,3 +488,11 @@ body:has(.sticky-cta) .site-header .btn { display: none; } /* 아래 붙은 버�
 /* 숙소 가격: 이름 다음으로 크게. 예약 사이트에 다시 들어가지 않아도 1인 얼마인지 보인다 */
 .stay .price { font-size: var(--fs-lg); font-weight: 700; }
 .stay .price small { display: block; font-size: var(--fs-sm); font-weight: 400; color: var(--muted); }
+/* 교통비 두 기준: 같은 크기 두 칸을 나란히. 어느 쪽이 맞다고 고르지 않는다 */
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.split p { display: grid; gap: 2px; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); }
+.split b { font-size: var(--fs-lg); }
+/* 표·그림 아래 출처 한 줄. 상자 밖, 오른쪽 끝, 위 8px */
+.caption { margin-top: 8px; margin-left: auto; text-align: right; font-size: var(--fs-xs); color: var(--muted); }
+/* 마지막 권유도 다른 절 제목과 같은 크기 */
+.cta h2 { font-size: var(--fs-xl); }

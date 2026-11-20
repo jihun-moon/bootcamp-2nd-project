@@ -56,17 +56,20 @@ public class TravelService {
 
         var tips = new ArrayList<String>();
         Integer perPerson = null;
+        Integer perPassenger = null;
         if (driving.isEmpty()) {
             tips.add("운전 칸에 사람이 들어가면 1인 교통비를 셀게요.");
         } else {
             var total = driving.stream().mapToInt(l -> (l.fuel() + l.toll()) * ROUND_TRIP).sum();
             perPerson = roundUp((double) total / plan.memberCount());
+            var passengers = plan.memberCount() - driving.size();
+            if (passengers > 0) perPassenger = roundUp((double) total / passengers);
         }
         driving.stream()
                 .filter(l -> l.minutes() > LONG_DRIVE_MINUTES)
                 .forEach(l -> tips.add(l.name() + " 차는 편도 " + duration(l.minutes()) + "이에요. 교대할 사람을 정해 두세요."));
 
-        return new TravelDto.Summary(null, legs, perPerson, price.wonPerLiter(), price.source(), kmPerLiter, tips);
+        return new TravelDto.Summary(null, legs, perPerson, perPassenger, price.wonPerLiter(), price.source(), kmPerLiter, tips);
     }
 
     private TravelDto.Leg leg(TravelDto.Car car, KakaoMapClient.Point to, int wonPerLiter) {

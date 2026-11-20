@@ -256,7 +256,13 @@ function renderTravel() {
     list.append($('<li class="card">').append(name, $('<div class="muted small">').text(detail)));
   });
   if (travel.perPerson !== null) {
-    box.append($('<p class="strong">').text('1인 교통비 약 ' + won(travel.perPerson) + ' (운전하는 차 왕복, ' + trip.members.length + '명)'));
+    // "운전한 사람도 기름값 내?"를 단톡방에서 따지지 않게 두 기준을 나란히 둔다. 고르는 건 그룹 몫
+    var split = $('<div class="split">').appendTo(box);
+    split.append($('<p>').append($('<span class="muted small">').text('모두 나누면'), $('<b>').text(won(travel.perPerson))));
+    if (travel.perPassenger !== null) {
+      split.append($('<p>').append($('<span class="muted small">').text('운전한 사람은 빼고'), $('<b>').text(won(travel.perPassenger))));
+    }
+    box.append($('<p class="muted small">').text('운전하는 차 왕복 기름값·통행료, ' + trip.members.length + '명 기준. 운전자 수고비는 단톡방에서 정해요.'));
   }
   travel.tips.forEach(function (t) { box.append($('<p class="notice">').text(t)); });
   box.append($('<p class="muted small">').text('길·통행료: 카카오모빌리티 · 휘발유 ' + won(travel.fuelPrice) + '/L(' + travel.fuelSource + ') · 연비 ' + travel.kmPerLiter + 'km/L로 셈'));
@@ -281,7 +287,10 @@ function resultText() {
   });
   var notYet = trip.members.filter(function (m) { return !m.surveyDone; }).map(function (m) { return m.name; });
   if (notYet.length) lines.push('설문 아직: ' + notYet.join(', '));
-  if (travel && travel.perPerson !== null) lines.push('1인 교통비 약 ' + won(travel.perPerson) + ' (기름값·통행료 왕복)');
+  if (travel && travel.perPerson !== null) {
+    lines.push('1인 교통비 약 ' + won(travel.perPerson) + ' (기름값·통행료 왕복)'
+      + (travel.perPassenger !== null ? ', 운전자 빼면 ' + won(travel.perPassenger) : ''));
+  }
   lines.push('TripMate 에서 정했어요 ' + location.origin + '/join/' + trip.inviteCode);
   return lines.join('\n');
 }

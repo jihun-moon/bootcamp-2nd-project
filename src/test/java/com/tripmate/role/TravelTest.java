@@ -71,7 +71,7 @@ class TravelTest {
         mvc.perform(post("/api/trips/1/roles/recommend").session(host)).andExpect(status().isOk());
 
         // 기름 100km / 12 * 1700 = 14,166 → 14,200(100원 올림). 차 한 대 왕복 (14,200 + 5,000) * 2 = 38,400
-        // 두 대 76,800 / 8명 = 9,600
+        // 두 대 76,800 / 8명 = 9,600. 운전한 둘을 빼면 76,800 / 6명 = 12,800
         mvc.perform(get("/api/trips/1/roles/travel").session(minji))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.legs", hasSize(2)))
@@ -80,6 +80,7 @@ class TravelTest {
                 .andExpect(jsonPath("$.legs[0].minutes").value(130))
                 .andExpect(jsonPath("$.legs[0].fuel").value(14_200))
                 .andExpect(jsonPath("$.perPerson").value(9_600))
+                .andExpect(jsonPath("$.perPassenger").value(12_800))
                 .andExpect(jsonPath("$.tips", hasSize(2)))
                 .andExpect(jsonPath("$.tips[0]", containsString("편도 2시간 10분")))
                 .andExpect(jsonPath("$.legs[0].departure").doesNotExist());

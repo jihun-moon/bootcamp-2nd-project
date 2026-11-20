@@ -86,18 +86,21 @@ function drawPng() {
   var W = 720, pad = 48, lh = { title: 64, meta: 40, row: 52, total: 72, note: 40, cut: 36 };
   var font = '"Pretendard Variable", Pretendard, sans-serif';
   var c = document.createElement('canvas').getContext('2d');
-  // 메모 줄이 그림 폭을 넘으면 낱말 단위로 줄을 나눈다(글자를 눌러 담지 않게)
-  c.font = '400 22px ' + font;
+  // 메모·방 이름 줄이 그림 폭을 넘으면 낱말 단위로 줄을 나눈다. 전에는 메모만 나눠서
+  // "강릉 2박 3일 대학 동기 MT 겨울 여행 · 12월 18일(금) ~ …" 같은 긴 방 줄이 옆으로 눌려 찍혔다
+  var wrapFont = { note: '400 22px ', meta: '400 24px ' };
   var drawn = [];
   lines.forEach(function (l) {
-    if (l.kind !== 'note' || c.measureText(l.left).width <= W - pad * 2) { drawn.push(l); return; }
+    if (!wrapFont[l.kind]) { drawn.push(l); return; }
+    c.font = wrapFont[l.kind] + font;
+    if (c.measureText(l.left).width <= W - pad * 2) { drawn.push(l); return; }
     var cur = '';
     l.left.split(' ').forEach(function (word) {
       var next = cur ? cur + ' ' + word : word;
-      if (c.measureText(next).width > W - pad * 2 && cur) { drawn.push({ kind: 'note', left: cur }); cur = word; }
+      if (c.measureText(next).width > W - pad * 2 && cur) { drawn.push({ kind: l.kind, left: cur }); cur = word; }
       else cur = next;
     });
-    if (cur) drawn.push({ kind: 'note', left: cur });
+    if (cur) drawn.push({ kind: l.kind, left: cur });
   });
   var H = pad * 2 + drawn.reduce(function (h, l) { return h + lh[l.kind]; }, 0) + 24;
   var canvas = c.canvas;

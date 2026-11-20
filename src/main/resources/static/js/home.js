@@ -185,12 +185,19 @@ function stickyAfterHero() {
 
 // "나는 무슨 역할형?" 미리 보기. 점수는 RoleScorer 규칙 일부(차 있음 +4, 계획형 +3, 숙소 휴식 +2, 밖 활동 +2)를 그대로 쓴다.
 // 차가 없으면 운전은 고르지 않는다(실제 추천과 같다)
+// 결과는 글 한 줄보다 "나 같다" 싶은 사진·한마디·짝꿍이 있어야 캡처해서 스토리에 올린다(MBTI 결과 카드처럼).
+// 사진은 Unsplash 무료(운전 DaWKnhdOrIo, 총무 djb1whucfBY, 고기 UE6KHjZDAUY, 기록 hz_m6C_YG_k)
 var QUIZ_ROLES = [
-  { key: 'drive', name: '운전대 잡는 든든형', why: '차 있음 +4', score: function (a) { return a.car === 'yes' ? 4 : -1000; } },
-  { key: 'money', name: '엑셀부터 켜는 총무형', why: '계획형 +3', score: function (a) { return a.plan === 'planner' ? 3 : 0; } },
-  { key: 'bbq', name: '고기 굽는 숙소 지킴이형', why: '숙소 휴식 선호 +2', score: function (a) { return a.act === 'in' ? 2 : 0; } },
-  { key: 'photo', name: '사진 남기는 기록형', why: '밖 활동 선호 +2', score: function (a) { return a.act === 'out' ? 2 : 0; } }
+  { key: 'drive', name: '운전대 잡는 든든형', why: '차 있음 +4', score: function (a) { return a.car === 'yes' ? 4 : -1000; },
+    line: '"휴게소 호두과자는 내가 쏜다"', desc: '조수석에 DJ 하나만 있으면 몇 시간이고 달려요. 우리 방 규칙이면 기름값은 빼 줘요.', mate: 'photo' },
+  { key: 'money', name: '엑셀부터 켜는 총무형', why: '계획형 +3', score: function (a) { return a.plan === 'planner' ? 3 : 0; },
+    line: '"1원까지 맞아야 잠이 와"', desc: '회비 걷고 영수증 뽑는 게 제일 신나요. 단톡방 정산은 이 사람 없으면 안 굴러가요.', mate: 'drive' },
+  { key: 'bbq', name: '고기 굽는 숙소 지킴이형', why: '숙소 휴식 선호 +2', score: function (a) { return a.act === 'in' ? 2 : 0; },
+    line: '"집게는 내 거야"', desc: '숙소 도착하면 숯부터 피워요. 8명 2박이면 고기 몇 kg인지 감으로 알아요.', mate: 'money' },
+  { key: 'photo', name: '사진 남기는 기록형', why: '밖 활동 선호 +2', score: function (a) { return a.act === 'out' ? 2 : 0; },
+    line: '"한 장만 더! 진짜 마지막"', desc: '여행 끝나고 단톡방 앨범을 채우는 사람. 다들 프사는 이 사람 덕이에요.', mate: 'bbq' }
 ];
+var quizBest = null;
 
 function quizAnswers() {
   var pick = function (name) { var c = document.querySelector('input[name="' + name + '"]:checked'); return c ? c.value : null; };
@@ -201,14 +208,87 @@ function showQuizResult() {
   var a = quizAnswers();
   if (!a.car || !a.plan || !a.act) return;
   var best = QUIZ_ROLES.slice().sort(function (x, y) { return y.score(a) - x.score(a); })[0];
+  var mate = QUIZ_ROLES.find(function (r) { return r.key === best.mate; });
+  var changed = quizBest !== best;
+  quizBest = best;
+  $('#quiz-photo').attr('src', '/img/role/' + best.key + '.jpg');
   $('#quiz-role').text(best.name);
-  $('#quiz-why').text('근거: ' + best.why);
-  $('#quiz-result').prop('hidden', false);
+  $('#quiz-line').text(best.line);
+  $('#quiz-desc').text(best.desc);
+  $('#quiz-mate').text(mate.name);
+  $('#quiz-why').text('근거: ' + best.why + ' (실제 방에서 역할을 고르는 점수와 같아요)');
+  var result = $('#quiz-result').prop('hidden', false);
+  if (changed) delight(result.find('.quiz-card')[0]);
+}
+
+// 결과 카드 그림(1080x1920, 인스타 스토리 크기). 사진 위에 이름, 아래 한마디·짝꿍, 바닥에 주소.
+// 그림이 퍼질 때 바닥 주소가 광고가 된다(docs/15). 같은 출처 사진이라 canvas 를 그림으로 뽑을 수 있다
+function drawQuizCard(role) {
+  var W = 1080, H = 1920, font = '"Pretendard Variable", Pretendard, sans-serif';
+  var c = document.createElement('canvas'); c.width = W; c.height = H;
+  var g = c.getContext('2d');
+  var mate = QUIZ_ROLES.find(function (r) { return r.key === role.mate; });
+  return new Promise(function (resolve, reject) {
+    var img = new Image();
+    img.onload = function () {
+      g.fillStyle = '#f5f6f8'; g.fillRect(0, 0, W, H);
+      // 사진은 위 60% 를 꽉 채우게 잘라 넣는다
+      var ph = 1150, scale = Math.max(W / img.width, ph / img.height);
+      var sw = W / scale, sh = ph / scale;
+      g.drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, 0, 0, W, ph);
+      var grad = g.createLinearGradient(0, ph - 520, 0, ph);
+      grad.addColorStop(0, 'rgba(0,0,0,0)'); grad.addColorStop(1, 'rgba(0,0,0,0.72)');
+      g.fillStyle = grad; g.fillRect(0, ph - 520, W, 520);
+      g.fillStyle = '#ffffff'; g.textAlign = 'left';
+      g.font = '600 44px ' + font; g.fillText('나는 여행 가면', 72, ph - 200);
+      g.font = '800 84px ' + font; g.fillText(role.name, 72, ph - 90, W - 144);
+      g.fillStyle = '#1b1f24';
+      g.font = '800 60px ' + font; g.fillText(role.line, 72, ph + 140, W - 144);
+      g.fillStyle = '#5f6873'; g.font = '400 40px ' + font;
+      wrapText(g, role.desc, 72, ph + 230, W - 144, 60);
+      g.fillStyle = '#0e7c72'; g.font = '700 40px ' + font;
+      g.fillText('찰떡 짝꿍  ' + mate.name, 72, ph + 470, W - 144);
+      g.fillStyle = '#1b1f24'; g.font = '800 44px ' + font; g.fillText('TripMate', 72, H - 120);
+      g.fillStyle = '#5f6873'; g.font = '400 34px ' + font; g.fillText('너는 무슨 역할형? → ' + location.host + '/#quiz', 72, H - 66, W - 144);
+      c.toBlob(resolve, 'image/jpeg', 0.9); // PNG 는 2MB 라 공유가 느렸다. 사진이 든 카드라 JPG 로
+    };
+    img.onerror = reject;
+    img.src = '/img/role/' + role.key + '.jpg';
+  });
+}
+
+function wrapText(g, text, x, y, max, lh) {
+  var line = '';
+  text.split(' ').forEach(function (word) {
+    var next = line ? line + ' ' + word : word;
+    if (g.measureText(next).width > max && line) { g.fillText(line, x, y); y += lh; line = word; }
+    else line = next;
+  });
+  if (line) g.fillText(line, x, y);
+}
+
+// 휴대폰은 공유 창(카톡·인스타 스토리)으로 그림째, PC 는 그림 저장
+function shareQuizCard() {
+  if (!quizBest) return;
+  var button = $('#quiz-card').prop('disabled', true);
+  drawQuizCard(quizBest).then(function (blob) {
+    var file = new File([blob], 'tripmate-' + quizBest.key + '.jpg', { type: 'image/jpeg' });
+    if (CAN_SHARE && navigator.canShare && navigator.canShare({ files: [file] })) {
+      return navigator.share({ files: [file], text: '나 여행 가면 "' + quizBest.name + '"래 ㅋㅋ 너는? ' + location.origin + '/#quiz' })
+        .catch(function () { /* 공유 창을 닫은 것 */ });
+    }
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = file.name; a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    showToast('결과 카드를 저장했어요. 스토리나 단톡방에 올려 보세요.');
+  }).catch(function () { showToast('카드를 만들지 못했어요. 다시 눌러 주세요.'); })
+    .finally(function () { button.prop('disabled', false); });
 }
 
 $(function () {
   $('.quiz input').on('change', showQuizResult);
-  $('#quiz-share').text(shareLabel('카톡으로 결과 던지기', '결과 복사해서 단톡방에 던지기')).on('click', function () {
+  $('#quiz-card').text(shareLabel('결과 카드 공유하기', '결과 카드 저장하기')).on('click', shareQuizCard);
+  $('#quiz-share').text(shareLabel('친구한테도 해 보라고 보내기', '친구 부를 글 복사하기')).on('click', function () {
     shareText('나 여행 가면 "' + $('#quiz-role').text() + '"래 ㅋㅋ 너는? ' + location.origin + '/#quiz', '복사했어요. 단톡방에 던져 보세요.');
   });
   loadMyTrips();

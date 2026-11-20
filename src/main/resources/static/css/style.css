@@ -412,7 +412,6 @@ tr:last-child td { border-bottom: 0; }
 .quiz fieldset > .row { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; }
 .quiz label.chip:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 .quiz-result { padding-top: 16px; border-top: 1px solid var(--line); display: grid; gap: 8px; }
-.quiz-role { font-size: var(--fs-xl); font-weight: 700; }
 .bubble { max-width: 88%; padding: 8px 12px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); }
 .bubble.me { justify-self: end; background: var(--kakao); color: #191600; border-color: transparent; }
 .bubble .who { display: block; font-size: var(--fs-xs); color: var(--muted); }
@@ -718,4 +717,23 @@ button.link::after { content: ""; position: absolute; inset: -12px -8px; } /* �
 @media (min-width: 720px) {
   .shop-list { grid-template-columns: 1fr 1fr; column-gap: 12px; }
   .shop-group { grid-column: 1 / -1; }
+}
+
+/* 역할형 결과 카드: 실제 사진 위에 이름(MBTI 결과 카드처럼 캡처해 올리고 싶게). 사진 아래쪽을 어둡게 깔아 흰 글씨가 읽히게 */
+.quiz-card { overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.quiz-photo { position: relative; }
+.quiz-photo img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
+.quiz-photo::after { content: ""; position: absolute; inset: 40% 0 0; background: linear-gradient(transparent, rgb(0 0 0 / 0.72)); }
+.quiz-photo p { position: absolute; left: 20px; right: 20px; bottom: 16px; z-index: 1; display: grid; gap: 2px; color: #fff; text-shadow: 0 1px 8px rgb(0 0 0 / 0.4); max-width: none; }
+.quiz-photo small { font-size: var(--fs-sm); font-weight: 600; opacity: 0.9; }
+.quiz-photo b { font-size: var(--fs-2xl); font-weight: 800; letter-spacing: -0.02em; line-height: 1.25; }
+.quiz-body { display: grid; gap: 8px; padding: 20px; }
+.quiz-line { font-size: var(--fs-lg); font-weight: 800; }
+.quiz-mate { color: var(--accent); font-weight: 600; }
+.quiz-mate b { margin-left: 4px; }
+@media (min-width: 720px) {
+  .quiz-card { display: grid; grid-template-columns: 1fr 1fr; }
+  .quiz-photo { min-height: 340px; }
+  .quiz-photo img { position: absolute; inset: 0; height: 100%; aspect-ratio: auto; } /* 사진이 글 칸 높이만큼만(세로 사진이 카드를 590px 로 늘였다) */
+  .quiz-body { align-content: center; padding: 28px; }
 }

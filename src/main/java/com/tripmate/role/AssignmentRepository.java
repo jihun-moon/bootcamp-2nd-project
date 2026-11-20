@@ -12,8 +12,6 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
     @EntityGraph(attributePaths = {"member", "role", "reasons"})
     List<Assignment> findByRoleTripIdOrderById(Long tripId);
 
-    boolean existsByRoleTripId(Long tripId);
-
     Optional<Assignment> findByMemberId(Long memberId);
 
     // 역할을 지우기 전에 그 칸의 배정을 먼저 지운다(외래 키)

@@ -90,11 +90,11 @@
           <div class="app-head"><span class="logo"><img th:src="@{/img/logo-mark.svg}" width="20" height="20" alt=""><span class="wordmark">Trip<span>Mate</span></span></span><span class="avatar">재</span></div>
           <p class="app-title">겨울 펜션 2박 3일</p>
           <p class="app-meta">가평 · 1월 15일(금) ~ 17일(일) · 2박 3일 · 8명</p>
-          <nav class="app-tabs" aria-hidden="true"><span>개요</span><span>설문</span><span class="on">역할</span><span>숙소</span></nav>
+          <nav class="app-tabs" aria-hidden="true"><span>개요</span><span>설문</span><span class="on">역할</span><span>숙소</span><span>장보기</span></nav>
           <ul class="app-board">
             <li data-step class="note">마지막 설문이 끝나 역할이 정해졌어요</li>
             <li data-step><div class="between"><b>운전</b><span class="tag">2/2</span></div><p>재현 · 민지 <span class="reason">차 있음 +4</span></p></li>
-            <li data-step><div class="between"><b>총무</b><span class="tag">1/1</span></div><p>도윤 <span class="reason">계획형 +3</span></p></li>
+            <li data-step><div class="between"><b>총무·타임라인</b><span class="tag">1/1</span></div><p>도윤 <span class="reason">계획형 +3</span></p></li>
             <li data-step><div class="between"><b>장보기</b><span class="tag">1/1</span></div><p>서연 <span class="reason">밖 활동 선호 +1</span></p></li>
             <li data-step class="sum"><span>1인 교통비<small>우리 규칙 · 운전자 빼고</small></span><b>약 <span data-count="8800">8,800</span>원</b></li>
           </ul>
@@ -145,11 +145,19 @@
         <div class="row wrap"><label class="chip"><input type="radio" name="plan" value="planner"> 분 단위로 짠다</label><label class="chip"><input type="radio" name="plan" value="spont"> 그때그때</label></div></fieldset>
       <fieldset><legend class="strong">여행 가서 더 끌리는 건?</legend>
         <div class="row wrap"><label class="chip"><input type="radio" name="act" value="in"> 숙소에서 쉬기</label><label class="chip"><input type="radio" name="act" value="out"> 밖에서 놀기</label></div></fieldset>
+      <!-- 결과 카드: 사진 위에 이름, 아래 한마디·설명·짝꿍. 그대로 캡처해도, 카드 그림(9:16)으로 받아도 되게 -->
       <div id="quiz-result" class="quiz-result" hidden>
-        <p class="muted small">당신은</p>
-        <p id="quiz-role" class="quiz-role"></p>
-        <p id="quiz-why" class="muted"></p>
-        <button type="button" id="quiz-share" class="btn primary big block">결과 복사해서 단톡방에 던지기</button>
+        <div class="quiz-card">
+          <div class="quiz-photo"><img id="quiz-photo" alt="" width="1080" height="1300"><p><small>나는 여행 가면</small><b id="quiz-role"></b></p></div>
+          <div class="quiz-body">
+            <p id="quiz-line" class="quiz-line"></p>
+            <p id="quiz-desc" class="muted"></p>
+            <p class="quiz-mate">찰떡 짝꿍 <b id="quiz-mate"></b></p>
+            <p id="quiz-why" class="muted small"></p>
+          </div>
+        </div>
+        <button type="button" id="quiz-card" class="btn primary big block">결과 카드 저장하기</button>
+        <button type="button" id="quiz-share" class="btn big block">친구 부를 글 복사하기</button>
       </div>
     </div>
   </section>

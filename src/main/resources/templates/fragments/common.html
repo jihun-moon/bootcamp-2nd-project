@@ -57,6 +57,7 @@
     <a th:href="@{/trips/{id}/survey(id=${tripId})}" th:classappend="${tab == 'survey'} ? 'active'">설문</a>
     <a th:href="@{/trips/{id}/roles(id=${tripId})}" th:classappend="${tab == 'roles'} ? 'active'">역할</a>
     <a th:href="@{/trips/{id}/stays(id=${tripId})}" th:classappend="${tab == 'stays'} ? 'active'">숙소</a>
+    <a th:href="@{/trips/{id}/shopping(id=${tripId})}" th:classappend="${tab == 'shopping'} ? 'active'">장보기</a>
   </nav>
   <p id="notice" class="notice" hidden></p>
 </header>

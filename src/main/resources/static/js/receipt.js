@@ -14,7 +14,7 @@ function pickStay(stays) {
   return stays.slice().sort(function (a, b) { return b.voterIds.length - a.voterIds.length || a.id - b.id; })[0] || null;
 }
 
-function buildLines(trip, board, stays, travel) {
+function buildLines(trip, board, stays, travel, shopping) {
   var people = trip.members.length;
   var nights = nightsOf(trip);
   var out = [];
@@ -52,6 +52,11 @@ function buildLines(trip, board, stays, travel) {
     out.push({ kind: 'row', left: '교통  기름값·통행료' + (exempt ? '(운전자 빼고)' : ''), right: won(move) });
     total += move;
   }
+  // 장보기: 산 사람들이 적은 쓴 돈 합 ÷ 인원(서버가 100원 단위로 올림)
+  if (shopping && shopping.spent) {
+    out.push({ kind: 'row', left: '장보기  ' + shopping.items.filter(function (i) { return i.buyerId; }).length + '줄', right: won(shopping.perPerson) });
+    total += shopping.perPerson;
+  }
   if (total) out.push({ kind: 'total', left: '1인 합계', right: won(total) });
   else out.push({ kind: 'note', left: '숙소 가격과 운전이 정해지면 1인 합계가 찍혀요' });
 
@@ -64,13 +69,15 @@ function buildLines(trip, board, stays, travel) {
 }
 
 function renderReceipt() {
-  var box = $('#receipt').empty();
+  var box = $('#receipt').empty().removeClass('printing');
   lines.forEach(function (l) {
     if (l.kind === 'cut') { box.append('<hr class="receipt-cut">'); return; }
     var row = $('<p>').addClass('r-' + l.kind).append($('<span>').text(l.left));
     if (l.right) row.append($('<b>').text(l.right));
     box.append(row);
   });
+  void box[0].offsetWidth; // 다 그린 뒤 처음부터 뽑히게 애니메이션을 다시 건다
+  box.addClass('printing');
 }
 
 // 그림(PNG): 화면의 영수증과 같은 줄을 canvas 에 그린다. 라이브러리 없이, 글꼴은 이미 받아 둔 Pretendard
@@ -149,9 +156,10 @@ $(function () {
     api('GET', '/api/trips/' + tripId + '/roles/travel')
       .done(function (data) { travel.resolve(data); })   // .done(travel.resolve) 는 (값, 상태, xhr) 셋을 넘겨 배열이 된다
       .fail(function () { travel.resolve(null); });
-    $.when(api('GET', '/api/trips/' + tripId + '/roles'), api('GET', '/api/trips/' + tripId + '/stays'), travel)
-      .done(function (roles, stays, t) {
-        lines = buildLines(trip, roles[0], stays[0].stays, t && t.message ? null : t);
+    $.when(api('GET', '/api/trips/' + tripId + '/roles'), api('GET', '/api/trips/' + tripId + '/stays'), travel,
+      api('GET', '/api/trips/' + tripId + '/shopping'))
+      .done(function (roles, stays, t, shop) {
+        lines = buildLines(trip, roles[0], stays[0].stays, t && t.message ? null : t, shop[0]);
         renderReceipt();
       });
   });

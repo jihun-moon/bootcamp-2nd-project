@@ -630,3 +630,25 @@ body:has(.cta) .site-footer { margin-top: 0; }
 /* 고른 날·많이 겹친 날은 진한 청록 위라 토(파랑)·일(빨강) 글자가 묻혔다. 기본 글자색으로 */
 .cal-day.avail[aria-pressed="true"], .cal-day.avail[data-heat="3"], .cal-day.avail[data-heat="4"] { color: var(--ink); }
 .cal-day.avail[aria-pressed="true"] small, .cal-day.avail[data-heat="4"] small { color: var(--ink); opacity: 0.75; }
+
+/* 장보기: 무리(고기·술…) 머리, 줄마다 이름·양(크게) + 오른쪽 "내가 살게". 맡은 줄은 옅게, 내가 맡은 줄은 청록 테 */
+.shop-plan { display: grid; gap: 8px; }
+.stepper { display: flex; align-items: center; gap: 12px; }
+.stepper .btn { min-width: var(--tap); padding: 0; font-size: var(--fs-lg); }
+.stepper b { min-width: 4em; text-align: center; font-variant-numeric: tabular-nums; }
+.shop-list { display: grid; gap: 8px; }
+.shop-group { margin-top: 12px; font-size: var(--fs-xs); font-weight: 700; color: var(--muted); letter-spacing: 0.04em; }
+.shop-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.shop-row > div:first-child { display: grid; gap: 2px; }
+.shop-qty { font-size: var(--fs-lg); font-variant-numeric: tabular-nums; }
+.shop-row.taken:not(.mine) { opacity: 0.7; }
+.shop-row.mine { border-color: var(--accent); }
+.shop-amount { width: 7.5em; }
+
+/* 영수증 프린터: 투입구(검은 막대) 아래로 종이가 22칸에 끊겨 2.2초 동안 나온다.
+   부드럽게 밀면 그냥 슬라이드라, 감열 프린터처럼 steps() 로 "드르륵" 끊는다(스레드: 초당 장수를 일부러 줄여 손맛). 움직임 줄이기면 바로 다 보인다 */
+.receipt-printer { position: relative; z-index: 1; height: 16px; margin: 0 -8px; border-radius: 8px; background: #2a2e34;
+  box-shadow: inset 0 -5px 0 #0f1214, 0 4px 10px rgb(0 0 0 / 0.25); }
+.receipt-feed { margin-top: -6px; padding: 0 0 24px; overflow: hidden; }
+.receipt.printing { animation: receipt-feed 2.2s steps(22, end) both; }
+@keyframes receipt-feed { from { transform: translateY(-100%); } to { transform: none; } }

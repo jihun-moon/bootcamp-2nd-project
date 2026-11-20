@@ -129,7 +129,8 @@
 
     <!-- 영수증: 실제 방의 receipt.js 가 그리는 것과 같은 꼴. 값은 위 예시(역할·숲속 독채 1박 32만원·운전자 빼고 교통비)에서 셈 -->
     <section class="stack" data-panel="receipt" hidden>
-      <article class="receipt">
+      <div class="receipt-box"><div class="receipt-printer" aria-hidden="true"></div>
+      <div class="receipt-feed"><article class="receipt printing">
         <p class="r-title"><span>TripMate 여행 영수증</span></p>
         <p class="r-meta"><span>겨울 펜션 2박 3일</span></p>
         <p class="r-meta"><span>가평 · 1월 15일(금) ~ 17일(일) · 2박 3일 · 8명</span></p>
@@ -143,12 +144,13 @@
         <hr class="receipt-cut">
         <p class="r-row"><span>숙소  숲속 독채 펜션</span><b>80,000원</b></p>
         <p class="r-row"><span>교통  기름값·통행료(운전자 빼고)</span><b>8,800원</b></p>
-        <p class="r-total"><span>1인 합계</span><b>88,800원</b></p>
+        <p class="r-row"><span>장보기  9줄</span><b>27,500원</b></p>
+        <p class="r-total"><span>1인 합계</span><b>116,300원</b></p>
         <hr class="receipt-cut">
         <p class="r-note"><span>규칙 · 운전한 사람 기름값 빼 줘요 · 전날 빠지면 예약금 안 돌려줘요 · 술값 마신 사람만</span></p>
         <hr class="receipt-cut">
         <p class="r-note"><span>단톡방 싸움 0회 · 정하는 데 걸린 시간 1분</span></p>
-      </article>
+      </article></div></div>
       <p class="muted small center">실제 방에서는 "카톡으로 영수증 보내기"를 누르면 이 영수증이 그림으로 바로 가요.</p>
     </section>
 

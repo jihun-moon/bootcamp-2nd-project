@@ -6,9 +6,15 @@
   <header th:replace="~{fragments/common :: tripHeader}"></header>
   <!-- 우리 여행 영수증: 이미 모인 것(역할·숙소 표·교통비·규칙)만으로 한 장. 단톡방에 그림으로 던지라고 만든 화면 -->
   <main class="stack loose">
-    <article id="receipt" class="receipt" aria-live="polite">
-      <p class="muted center">영수증을 뽑는 중…</p>
-    </article>
+    <!-- 영수증 프린터: 투입구 막대 아래로 종이가 한 칸씩 끊겨 나온다(receipt.js 가 다 그린 뒤 .printing 을 붙인다) -->
+    <div class="receipt-box">
+      <div class="receipt-printer" aria-hidden="true"></div>
+      <div class="receipt-feed">
+        <article id="receipt" class="receipt" aria-live="polite">
+          <p class="muted center">영수증을 뽑는 중…</p>
+        </article>
+      </div>
+    </div>
     <div class="stack">
       <button type="button" id="btn-receipt-share" class="btn primary big block">카톡으로 영수증 보내기</button>
       <p class="muted small center">휴대폰은 그림으로 바로 보내고, PC 는 그림을 저장해요.</p>

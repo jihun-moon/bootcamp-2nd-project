@@ -9,9 +9,10 @@ function render(t) {
   var done = trip.members.length - notYet.length;
 
   $('#invite-link').val(location.origin + '/join/' + trip.inviteCode);
-  $('#survey-count').text(done + '/' + trip.members.length + '명');
+  $('#survey-count').text('설문 ' + done + '/' + trip.members.length + '명');
   $('#survey-bar').css('width', (done / trip.members.length * 100) + '%');
   renderNext(me, notYet);
+  renderProgress(notYet);
   renderRules(me);
   renderDates(me);
 
@@ -56,6 +57,37 @@ function renderNext(me, notYet) {
     actions.append(link('역할 보드', '/trips/' + tripId + '/roles', true), link('숙소 투표', '/trips/' + tripId + '/stays'),
       link('우리 여행 영수증', '/trips/' + tripId + '/receipt'));
   }
+}
+
+// 준비 체크 다섯 줄. 역할·숙소·장보기는 각 API 를 한 번씩 읽는다(방 화면이 바뀔 때마다 SSE 로 다시)
+function renderProgress(notYet) {
+  var base = '/api/trips/' + tripId;
+  $.when(api('GET', base + '/roles'), api('GET', base + '/stays'), api('GET', base + '/shopping')).done(function (r, s, sh) {
+    var roles = r[0], stays = s[0], shop = sh[0];
+    var votes = stays.stays.reduce(function (n, x) { return n + x.voterIds.length; }, 0);
+    var claimed = shop.items.filter(function (i) { return i.buyerId; }).length;
+    var steps = [
+      { done: !!trip.startDate, title: '날짜', text: trip.startDate ? formatPeriod(trip.startDate, trip.endDate) : '되는 날을 모으는 중', href: '' },
+      { done: notYet.length === 0, title: '설문', text: (trip.members.length - notYet.length) + '/' + trip.members.length + '명', href: '/survey' },
+      { done: roles.assignments.length > 0, title: '역할', text: roles.assignments.length ? roles.assignments.length + '명 정해짐' : '설문이 다 모이면 저절로', href: '/roles' },
+      { done: votes > 0 && votes >= Math.ceil(trip.members.length / 2), title: '숙소',
+        text: stays.stays.length ? stays.stays.length + '곳 · 표 ' + votes + '/' + trip.members.length : '링크를 올려 주세요', href: '/stays' },
+      { done: claimed === shop.items.length, title: '장보기', text: claimed + '/' + shop.items.length + '줄 맡음', href: '/shopping' }
+    ];
+    var list = $('#progress').empty();
+    steps.forEach(function (st) {
+      var row = $('<a class="progress-row">').attr('href', '/trips/' + tripId + st.href).toggleClass('done', st.done)
+        .append($('<span class="progress-mark" aria-hidden="true">').text(st.done ? '✓' : ''),
+          $('<span class="strong">').text(st.title), $('<span class="muted small">').text(st.text));
+      list.append($('<li>').append(row));
+      if (st.done && lastDone && lastDone.indexOf(st.title) < 0) delight(row.find('.progress-mark'));
+    });
+    lastDone = steps.filter(function (st) { return st.done; }).map(function (st) { return st.title; });
+    var done = steps.filter(function (st) { return st.done; }).length;
+    $('#progress-count').text(done + '/5');
+    // 다 끝나면 영수증으로
+    if (done === 5) list.append($('<li>').append($('<a class="btn primary block">').attr('href', '/trips/' + tripId + '/receipt').text('우리 여행 영수증 뽑기')));
+  });
 }
 
 // 날짜 맞추기. 방에 날짜가 정해지면 숨는다. 누를 때마다 0.6초 기다렸다 한 번에 저장(연달아 눌러도 요청 하나)
@@ -140,11 +172,13 @@ function renderRules(me) {
 }
 
 // PUT: /api/trips/1/rules  { "driverPaysFuel": false, "refundNoShow": false, "drinksSeparate": true }
+var lastDone = null; // 준비 체크에서 지난번에 끝나 있던 줄. 새로 끝난 줄만 튀게
 function saveRule(key, value) {
   var next = $.extend({}, trip.rules);
   next[key] = value;
   trip.rules = next;
   renderRules(trip.members.find(function (m) { return m.id === trip.meId; })); // 누르자마자 칠하고, 저장은 뒤에서
+  delight($('#rules button[aria-pressed="true"]').filter(function () { return $(this).closest('li').text().indexOf(ROOM_RULES.find(function (r) { return r.key === key; }).title) >= 0; }));
   api('PUT', '/api/trips/' + tripId + '/rules', next)
     .done(render)
     .fail(function (xhr) { if (xhr.status !== 401) { showNotice('규칙을 저장하지 못했어요. 다시 눌러 주세요.'); loadTrip(tripId).done(render); } });

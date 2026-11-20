@@ -134,6 +134,12 @@ function drawPng() {
 // 휴대폰: 공유 창에 그림 파일째로(카톡 고르면 사진으로 간다). 그림 공유가 안 되는 곳(PC·카톡 안 브라우저)은 그림을 저장한다
 function shareReceipt() {
   $('#btn-receipt-share').prop('disabled', true);
+  if (!REDUCE_MOTION) {
+    var r = document.getElementById('receipt');
+    r.classList.remove('printing', 'tear');
+    void r.offsetWidth;
+    r.classList.add('tear');
+  }
   document.fonts.ready.then(drawPng).then(function (blob) {
     var file = new File([blob], 'tripmate-receipt.png', { type: 'image/png' });
     if (CAN_SHARE && navigator.canShare && navigator.canShare({ files: [file] })) {

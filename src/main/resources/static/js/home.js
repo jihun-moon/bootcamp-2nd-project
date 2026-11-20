@@ -137,6 +137,20 @@ function countStats() {
   nums.forEach(function (el) { el.textContent = '0'; observer.observe(el); });
 }
 
+// 첫 화면 영수증: 화면에 반쯤 들어오면 그때 프린터에서 뽑힌다(미리 뽑혀 있으면 연출을 못 본다). 한 번만
+function printOnScroll() {
+  var r = document.getElementById('home-receipt');
+  if (!r) return;
+  r.classList.add('await-print'); // 움직임이 켜진 때만 프린터 안에 숨겨 둔다(꺼져 있으면 이 함수가 안 불려 그대로 보인다)
+  var observer = new IntersectionObserver(function (entries) {
+    if (!entries[0].isIntersecting) return;
+    r.classList.remove('await-print');
+    r.classList.add('printing');
+    observer.disconnect();
+  }, { threshold: 0.4 });
+  observer.observe(r.closest('.receipt-box'));
+}
+
 // 절이 화면에 들어올 때 한 번만 살짝 올라온다. JS 가 붙인 .will-reveal 이 없으면 처음부터 그대로 보인다
 function revealOnScroll() {
   var observer = new IntersectionObserver(function (entries) {
@@ -207,4 +221,5 @@ $(function () {
   }
   revealOnScroll();
   countStats();
+  printOnScroll();
 });

@@ -87,7 +87,7 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* 바깥 틀 */
-.page { max-width: 1040px; margin: 0 auto; padding: 24px 16px 48px; }
+.page { max-width: 1040px; margin: 0 auto; padding: 28px 20px 64px; } /* 휴대폰 양옆 20: 16 은 글이 테두리에 붙어 보였다 */
 .page.narrow { max-width: 480px; }
 .page.center { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; gap: 16px; }
 
@@ -96,8 +96,8 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 .row.wrap, .between.wrap { flex-wrap: wrap; }
 .row.wrap { gap: 8px 12px; }
 .between { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.stack > * + * { margin-top: 12px; }
-.stack.loose > * + * { margin-top: 24px; }
+.stack > * + * { margin-top: 16px; }
+.stack.loose > * + * { margin-top: 32px; }
 .grid2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
 .grid4 { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
 
@@ -111,7 +111,7 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 .hint { background: var(--surface-2); border-radius: var(--radius-sm); padding: 12px; font-size: var(--fs-sm); color: var(--muted); }
 
 /* 상자 */
-.box { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+.box { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
 .box.dashed { border-style: dashed; }
 .card { background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 8px 12px; font-size: var(--fs-sm); }
 /* 상자 안을 또 상자로 나누지 않고 줄과 구분선으로 나눈다 */
@@ -209,17 +209,18 @@ label.chip { display: inline-flex; min-height: 40px; padding: 6px 12px; color: v
 
 /* 사이트 머리(첫 화면·로그인 등 방 밖 화면) */
 .site-header { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--line); }
-.site-header .inner { max-width: 1040px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.site-header .inner { max-width: 1040px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .logo { display: inline-flex; align-items: center; gap: 8px; min-height: var(--tap); font-weight: 700; font-size: var(--fs-lg); letter-spacing: -0.02em; }
 .logo .wordmark span { color: var(--accent); }
 
 /* 방 머리. 휴대폰에서 탭이 화면 위에 붙어 있어 어느 화면이든 한 번에 옮긴다 */
-.trip-header { margin-bottom: 16px; }
+.trip-header { margin-bottom: 24px; }
+.trip-header h1 { margin: 28px 0 6px; } /* 로고 줄과 방 이름 사이 4px 은 붙어 보였다 */
 .trip-header .top { display: flex; justify-content: space-between; align-items: center; font-size: var(--fs-sm); }
 .user-menu { display: flex; align-items: center; gap: 8px; color: var(--muted); }
 .user-menu span { display: inline-flex; align-items: center; gap: 6px; }
 .tabs {
-  position: sticky; top: 0; z-index: 5; display: flex; gap: 4px; margin: 12px -16px; padding: 0 16px;
+  position: sticky; top: 0; z-index: 5; display: flex; gap: 4px; margin: 20px -20px 0; padding: 0 20px;
   background: var(--bg); border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none;
 }
 .tabs a { padding: 12px; border-bottom: 2px solid transparent; color: var(--muted); font-size: var(--fs-sm); font-weight: 600; white-space: nowrap; }
@@ -456,11 +457,12 @@ body:has(.sticky-cta) .site-header .btn { display: none; } /* 아래 붙은 버�
 
 /* 넓은 화면 */
 /* 방 화면들(개요·설문·역할·숙소): 상자 사이도 조금 더 띄운다 */
-.page > main.stack > * + * { margin-top: 16px; }
+.page > main.stack > * + * { margin-top: 24px; }
 
 @media (min-width: 720px) {
   .section { padding-top: 120px; }
-  .page > main.stack > * + * { margin-top: 24px; }
+  .page > main.stack > * + * { margin-top: 32px; }
+  .box { padding: 24px; }
   .page { padding: 28px 24px 64px; }
   .hero { grid-template-columns: 1.1fr 1fr; align-items: center; padding: 56px 0 24px; }
   h1 { font-size: var(--fs-2xl); }
@@ -652,3 +654,42 @@ body:has(.cta) .site-footer { margin-top: 0; }
 .receipt-feed { margin-top: -6px; padding: 0 0 24px; overflow: hidden; }
 .receipt.printing { animation: receipt-feed 2.2s steps(22, end) both; }
 @keyframes receipt-feed { from { transform: translateY(-100%); } to { transform: none; } }
+
+/* 준비 체크: 줄 전체가 링크. 끝난 줄은 청록 체크, 남은 줄은 빈 동그라미 */
+.progress-list { display: grid; gap: 0; }
+.progress-row { display: grid; grid-template-columns: 28px 64px 1fr; align-items: center; gap: 8px; min-height: var(--tap); padding: 8px 0; border-top: 1px solid var(--line); color: inherit; }
+.progress-list li:first-child .progress-row { border-top: 0; }
+.progress-mark { display: grid; place-items: center; width: 22px; height: 22px; border: 2px solid var(--line-strong); border-radius: 50%; font-size: 12px; font-weight: 800; }
+.progress-row.done .progress-mark { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+.progress-row.done .strong { color: var(--muted); }
+.progress-list .btn { margin-top: 12px; }
+@media (hover: hover) { .progress-row:hover .strong { color: var(--accent); } }
+.receipt-show .receipt-box { max-width: 420px; margin-inline: auto; }
+.receipt.await-print { transform: translateY(-100%); }
+
+/* 손맛 연출. 짧고 한 번만(0.3초 안팎), transform 만 움직여 버벅이지 않게 */
+.pop { animation: pop 0.32s var(--ease); }
+@keyframes pop { 40% { transform: scale(1.12); } 70% { transform: scale(0.97); } }
+.stamp { position: absolute; top: 24px; right: 16px; z-index: 5; padding: 6px 16px; border: 4px solid var(--error); border-radius: 10px;
+  color: var(--error); font-size: var(--fs-xl); font-weight: 900; letter-spacing: 0.1em; transform: rotate(-12deg);
+  animation: stamp 2.2s var(--ease) both; pointer-events: none; }
+@keyframes stamp { 0% { opacity: 0; transform: rotate(-12deg) scale(2.4); } 14% { opacity: 1; transform: rotate(-12deg) scale(0.92); }
+  20% { transform: rotate(-12deg) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: rotate(-12deg) scale(1); } }
+.receipt.tear { animation: tear 0.45s var(--ease); }
+@keyframes tear { 30% { transform: translateY(6px) rotate(-1.5deg); } 60% { transform: translateY(2px) rotate(1deg); } }
+
+/* 글자처럼 생긴 단추(로그아웃·이전·고치기·내려놓기)는 18~21px 라 손가락에 작았다. 누르는 영역을 위아래 12px 씩 넓혀 44px 안팎으로 */
+button.link { position: relative; }
+button.link::after { content: ""; position: absolute; inset: -12px -8px; } /* 투명한 누르는 영역만. 배지(.tag) 모양도 자리도 안 바뀐다 */
+
+/* 우리 자리 세 줄: 남들은 회색, 우리만 청록 테와 굵게. 휴대폰은 위아래, 넓은 화면은 가로 세 칸 */
+.position { margin-top: 48px; }
+.position ul { display: grid; gap: 8px; }
+.position li { display: grid; gap: 2px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); color: var(--muted); }
+.position li span { font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.02em; }
+.position li b { font-weight: 600; }
+.position li.us { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); }
+.position li.us span { color: var(--accent); }
+.position li.us b { font-weight: 800; font-size: var(--fs-lg); }
+.position > p { margin-top: 12px; text-align: center; max-width: none; }
+@media (min-width: 720px) { .position ul { grid-template-columns: 1fr 1fr 1.4fr; align-items: stretch; } }

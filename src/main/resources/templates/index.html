@@ -105,6 +105,16 @@
     </div>
   </section>
 
+  <!-- 우리 자리: 조사(docs/12)에서 본 시장 지도를 세 줄로. 예약 앱은 "어디서", 정산 앱은 "다녀와서", 가기 전 "누가 뭘·1인 얼마"는 비어 있다 -->
+  <section class="position" aria-label="TripMate 는 어디에 있나">
+    <ul>
+      <li><span>예약 앱</span><b>어디서 잘지</b></li>
+      <li><span>정산 앱</span><b>다녀와서 누가 냈나</b></li>
+      <li class="us"><span>TripMate</span><b>가기 전에, 누가 뭘 하고 1인 얼마인지</b></li>
+    </ul>
+    <p class="muted small">단체 여행에서 제일 오래 걸리는 "정하기"만 하는 곳은 아직 여기뿐이에요.</p>
+  </section>
+
   <!-- 사진 띠: 첫 화면 다음에 여행 기분을 한 장으로. Unsplash 무료 사진(unsplash.com/photos/Y5F1JAbo6IU) -->
   <section class="photo-band">
     <img th:src="@{/img/photo/road-trip.jpg}" alt="햇살 드는 차 안, 친구들이 함께 떠나는 길" width="1600" height="800" loading="lazy">
@@ -240,6 +250,31 @@
       <li><div class="vs-head"><b>숙소 예약·결제</b><span class="vs-us">—</span></div><p class="vs-others">NOL·여기어때에서 해요</p></li>
     </ul>
     <p class="caption">2026년 11월 공개 페이지·앱스토어 설명 기준</p>
+  </section>
+
+  <!-- 여행 끝나면 이 한 장: 가장 퍼지기 좋은 그림(단톡방에 그대로 던짐). 체험 방과 같은 예시 값, 화면에 들어오면 프린터에서 뽑혀 나온다 -->
+  <section class="section receipt-show" data-reveal>
+    <h2>정하고 나면, 단톡방에 이 한 장</h2>
+    <p class="muted">역할·숙소·교통비·장보기까지 1인 얼마인지 영수증으로 뽑아 그림째 보내요.</p>
+    <div class="receipt-box">
+      <div class="receipt-printer" aria-hidden="true"></div>
+      <div class="receipt-feed">
+        <article class="receipt" id="home-receipt">
+          <p class="r-title"><span>TripMate 여행 영수증</span></p>
+          <p class="r-meta"><span>가평 · 1월 15일(금) ~ 17일(일) · 2박 3일 · 8명</span></p>
+          <hr class="receipt-cut">
+          <p class="r-row"><span>운전  재현·민지</span><b>차 있음 +4</b></p>
+          <p class="r-row"><span>총무  도윤</span><b>계획형 +3</b></p>
+          <hr class="receipt-cut">
+          <p class="r-row"><span>숙소  숲속 독채 펜션</span><b>80,000원</b></p>
+          <p class="r-row"><span>교통(운전자 빼고)</span><b>8,800원</b></p>
+          <p class="r-row"><span>장보기  11줄</span><b>27,500원</b></p>
+          <p class="r-total"><span>1인 합계</span><b>116,300원</b></p>
+          <hr class="receipt-cut">
+          <p class="r-note"><span>단톡방 싸움 0회 · 정하는 데 걸린 시간 1분</span></p>
+        </article>
+      </div>
+    </div>
   </section>
 
   <section class="section faq">

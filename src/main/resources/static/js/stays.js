@@ -151,7 +151,7 @@ function vote(stayId) {
   showNotice('');
   api('PUT', '/api/trips/' + tripId + '/votes/' + trip.meId, { stayId: stayId })
     .fail(function (xhr) { if (xhr.status !== 401) showNotice('투표하지 못했어요. 다시 눌러 주세요.'); })
-    .always(loadBoard);
+    .always(function () { loadBoard().done(function () { delight($('#stay-list .btn.primary')); }); });
 }
 
 // POST: /api/trips/1/stays  { "url": "https://...", "title": "숲속 독채", "amenities": ["DETACHED"] }

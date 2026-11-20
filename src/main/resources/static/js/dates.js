@@ -45,6 +45,7 @@ function availabilityCalendar(el, opts) {
           var k = $(this).data('date');
           if (opts.mine.has(k)) opts.mine.delete(k); else opts.mine.add(k);
           $(this).attr('aria-pressed', opts.mine.has(k));
+          delight(this);
           opts.onChange(opts.mine);
         });
       }

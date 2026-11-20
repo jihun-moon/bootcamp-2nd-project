@@ -174,10 +174,22 @@ function deleteRole() {
 }
 
 // GET: /api/trips/1/roles  -> { "roles": [...], "assignments": [{ "roleId", "memberId", "reasons", "version" }] }
+// 역할이 정해진 걸 이 방에서 처음 볼 때 보드에 "확정" 도장이 쾅. 같은 휴대폰에서 다시 열면 안 찍는다
+function stampOnce() {
+  var key = 'tripmate.stamped.' + tripId;
+  try { if (!board.assignments.length || localStorage.getItem(key)) return; localStorage.setItem(key, '1'); } catch (e) { return; }
+  if (REDUCE_MOTION) return;
+  var stamp = $('<div class="stamp" aria-hidden="true">').text('확정');
+  $('#board').css('position', 'relative').append(stamp);
+  if (navigator.vibrate && window.matchMedia('(pointer: coarse)').matches) navigator.vibrate([20, 40, 30]);
+  setTimeout(function () { stamp.remove(); }, 2200);
+}
+
 function loadBoard() {
   return api('GET', '/api/trips/' + tripId + '/roles').done(function (res) {
     board = res;
     render();
+    stampOnce();
     // 창을 연 사이 누가 옮겼으면 칸 인원이 바뀌었으니 창도 새로 그린다
     if (picking !== null) openPicker(picking);
   });

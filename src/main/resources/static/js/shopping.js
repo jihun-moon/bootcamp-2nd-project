@@ -53,7 +53,11 @@ function claimPart(item) {
   var url = '/api/trips/' + tripId + '/shopping/items/' + item.key;
   if (!item.buyerId) {
     return $('<button type="button" class="btn">').text('내가 살게').click(function () {
-      api('PUT', url, { amount: null }).done(function (b) { board = b; render(); })
+      api('PUT', url, { amount: null }).done(function (b) {
+        board = b;
+        render();
+        delight($('.shop-row.mine').filter(function () { return $(this).text().indexOf(item.label) >= 0; }));
+      })
         .fail(function (xhr) { if (xhr.status === 409) { showToast('방금 다른 사람이 맡았어요.'); load(); } });
     });
   }

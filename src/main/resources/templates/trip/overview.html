@@ -7,6 +7,12 @@
   <main class="stack">
     <!-- 방에 들어올 때마다 "여행 가는 방"이라는 느낌이 들게 얇은 풍경 띠 하나. Unsplash 무료 사진(unsplash.com/photos/NZZgWbjYu2Y) -->
     <img class="cover thin" th:src="@{/img/photo/forest-hills.jpg}" alt="" width="1200" height="600">
+    <!-- 준비 체크: 날짜·설문·역할·숙소·장보기가 탭마다 흩어져 "뭐가 남았지?"를 알려면 다 눌러 봐야 했다. 한눈에 다섯 줄, 누르면 그 화면 -->
+    <section class="box stack">
+      <div class="between"><h2>준비 체크</h2><span id="progress-count" class="muted small"></span></div>
+      <ol id="progress" class="progress-list"></ol>
+    </section>
+
     <!-- 지금 나에게 맞는 다음 할 일 하나. 처음 들어온 사람이 "여기서 뭘 하지?"를 고민하지 않게 trip.js 가 고른다 -->
     <section id="next" class="box stack">
       <h2 id="next-title"></h2>
@@ -29,18 +35,15 @@
       <ul id="rules" class="stack"></ul>
     </section>
 
+    <!-- 함께하는 사람: 설문 진행과 초대 링크를 한 상자로(상자가 일곱 개라 빽빽했다. 스레드 디자이너 조언 "box 가 너무 많다") -->
     <section class="box stack">
-      <h2>초대 링크</h2>
+      <div class="between"><h2>함께하는 사람</h2><span id="survey-count" class="muted small"></span></div>
+      <div class="bar"><div id="survey-bar" class="fill"></div></div>
+      <ul id="members" class="grid4"></ul>
       <div class="row">
         <input type="text" id="invite-link" readonly aria-label="초대 링크">
         <button type="button" id="btn-invite" class="btn">보내기</button>
       </div>
-    </section>
-
-    <section class="box stack">
-      <div class="between small"><span class="strong">설문 진행</span><span id="survey-count" class="muted"></span></div>
-      <div class="bar"><div id="survey-bar" class="fill"></div></div>
-      <ul id="members" class="grid4"></ul>
     </section>
   </main>
 </div>

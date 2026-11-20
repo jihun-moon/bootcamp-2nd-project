@@ -98,6 +98,19 @@ function rulesText(rules) {
     }).join(' · ');
 }
 
+// 손맛: 누른 것이 톡 튀고, 휴대폰은 12ms 짧게 떤다(안드로이드. 아이폰 사파리는 진동이 없어 튀기만).
+// 움직임 줄이기를 켠 사람은 둘 다 안 한다
+var REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function delight(el) {
+  if (REDUCE_MOTION || !el) return;
+  var node = el.jquery ? el[0] : el;
+  if (!node) return;
+  node.classList.remove('pop');
+  void node.offsetWidth;
+  node.classList.add('pop');
+  if (navigator.vibrate && window.matchMedia('(pointer: coarse)').matches) navigator.vibrate(12);
+}
+
 // 결과만 짧게 알릴 때(복사했어요 등). 막힘·오류처럼 사람이 읽고 해야 할 일이 있으면 showNotice 를 쓴다
 var toastTimer = null;
 function showToast(message) {

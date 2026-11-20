@@ -33,16 +33,36 @@ public class SettleService {
     private final ExpenseRepository expenseRepository;
     private final ShoppingClaimRepository claimRepository;
     private final PaymentRepository paymentRepository;
+    private final SettleLinkRepository linkRepository;
     private final ApplicationEventPublisher events;
 
     public SettleService(TripRepository tripRepository, ExpenseRepository expenseRepository,
                          ShoppingClaimRepository claimRepository, PaymentRepository paymentRepository,
-                         ApplicationEventPublisher events) {
+                         SettleLinkRepository linkRepository, ApplicationEventPublisher events) {
         this.tripRepository = tripRepository;
         this.expenseRepository = expenseRepository;
         this.claimRepository = claimRepository;
         this.paymentRepository = paymentRepository;
+        this.linkRepository = linkRepository;
         this.events = events;
+    }
+
+    // 정산 받는 링크 코드. 있으면 그대로, 없으면 만든다(몇 번 불러도 같은 코드)
+    @Transactional
+    public String linkCode(Long tripId) {
+        return linkRepository.findByTripId(tripId)
+                .orElseGet(() -> linkRepository.save(new SettleLink(tripRepository.getReferenceById(tripId))))
+                .getCode();
+    }
+
+    // /s/{code} 화면. 틀린 코드는 404(있는지 없는지 말고는 아무것도 알려 주지 않는다)
+    @Transactional(readOnly = true)
+    public SettleDto.Shared shared(String code) {
+        var trip = linkRepository.findByCode(code)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)).getTrip();
+        var b = board(trip.getId());
+        return new SettleDto.Shared(trip.getId(), trip.getTitle(), trip.getDestination(), trip.getStartDate(), trip.getEndDate(),
+                b.total(), b.lines(), b.transfers(), b.payments());
     }
 
     @Transactional(readOnly = true)
@@ -193,6 +213,7 @@ public class SettleService {
     // 방을 지우면 그 방의 보냈어요 표시와 먼저 낸 돈도 지운다
     @EventListener
     public void onTripDeleting(TripDeleting e) {
+        linkRepository.findByTripId(e.tripId()).ifPresent(linkRepository::delete);
         paymentRepository.deleteAll(paymentRepository.findByTripIdOrderById(e.tripId()));
         expenseRepository.deleteAll(expenseRepository.findByTripIdOrderById(e.tripId()));
     }

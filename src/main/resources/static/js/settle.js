@@ -109,10 +109,20 @@ function settledStamp(on) {
   return stamp;
 }
 
+// 끝의 주소는 정산 받는 링크(/s/코드). 카톡 안 브라우저처럼 로그인이 안 이어진 곳에서도 금액이 바로 보인다.
+// 코드를 아직 못 받았으면(첫 응답 전) 방 영수증 주소로
+var settleCode = null;
 function settleText(trip) {
   var rows = settle.transfers.map(function (t) { return t.fromName + ' → ' + t.toName + ' ' + won(t.amount); });
+  var link = settleCode ? location.origin + '/s/' + settleCode : location.origin + '/trips/' + tripId + '/receipt';
   return '[' + trip.title + ' 정산] 모두 ' + won(settle.total) + '\n' + rows.join('\n')
-    + '\n토스·카카오페이로 보내 주세요. 자세히 → ' + location.origin + '/trips/' + tripId + '/receipt';
+    + '\n토스·카카오페이로 보내 주세요. 로그인 없이 보기 → ' + link;
+}
+
+// PUT: /api/trips/1/settlement/link -> { "code": "..." }   몇 번 불러도 같은 코드. 둘이 동시에 처음 만들면 409 라 한 번 더
+function loadSettleCode(retry) {
+  api('PUT', '/api/trips/' + tripId + '/settlement/link').done(function (r) { settleCode = r.code; })
+    .fail(function (xhr) { if (xhr.status === 409 && !retry) loadSettleCode(true); });
 }
 
 // 술 표시처럼 내가 방을 바꿨을 때: 바뀐 방으로 다시 센다(SSE 로도 오지만 내 화면은 바로)
@@ -179,6 +189,8 @@ function initSettle(trip) {
   });
   settleTripChanged = function (t) { trip = t; loadSettle(t); };
   loadSettle(trip);
+  // 공유 단추를 누른 뒤 서버를 기다리면 휴대폰 공유 창이 "사용자가 누른 것"으로 안 쳐져 막힌다. 그래서 미리 받아 둔다
+  loadSettleCode(false);
   // 누가 돈을 적거나 장보기 금액을 고치면 모두의 화면이 다시 센다. 사람·규칙이 바뀌면(술 표시, 나가기) 방부터 다시 읽는다
   listen(tripId, function (kind) {
     if (kind === 'members' || kind === 'trip' || kind === 'all') loadTrip(tripId).done(function (t) { trip = t; loadSettle(t); });

@@ -839,3 +839,9 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
   padding: 8px 12px; border-radius: var(--radius-sm); background: var(--accent-soft); }
 .nudge[hidden] { display: none; }
 .nudge .btn.small { min-height: 36px; padding: 6px 12px; font-size: var(--fs-sm); }
+
+/* 정산 받는 링크: 내 이름을 고르면 내 줄만 진하게, 나머지는 흐리게 */
+.shared-settle #who { align-items: center; }
+.shared-settle .settle-list:has(.mine) .settle-row:not(.mine) { opacity: .45; }
+.shared-settle details summary { cursor: pointer; }
+.shared-settle details[open] summary { margin-bottom: 12px; }

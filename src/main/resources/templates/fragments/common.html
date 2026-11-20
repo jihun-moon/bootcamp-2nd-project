@@ -9,6 +9,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0e7c72">
   <title th:text="${title} + ' | TripMate'">TripMate</title>
+  <!-- 정산 받는 링크처럼 이름·금액이 든 공개 화면은 검색에 안 잡히게 -->
+  <meta name="robots" content="noindex, nofollow" th:if="${noindex}">
   <meta name="description" content="여럿이 가는 여행에서 운전·총무·장보기를 설문 1분으로 근거 있게 나누고, 숙소는 누가 싫어하는지까지 보고 고른다. 앱 설치 없이 카톡 링크로.">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="TripMate">

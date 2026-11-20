@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
@@ -44,5 +45,14 @@ public final class SettleDto {
     }
 
     public record Transfer(Long fromId, String fromName, Long toId, String toName, int amount) {
+    }
+
+    // 로그인 없이 보는 정산(/s/{code}). 방 화면의 판에서 사람별 몫(balances)·규칙은 빼고 보낼 줄·낸 돈·끝난 줄만
+    public record Shared(Long tripId, String title, String destination, LocalDate startDate, LocalDate endDate,
+                         int total, List<Line> lines, List<Transfer> transfers, List<Paid> payments) {
+    }
+
+    // PUT /api/trips/1/settlement/link -> { "code": "Qm9vdGNhbXAtMi10cmlw" }  주소는 /s/{code}
+    public record Link(String code) {
     }
 }

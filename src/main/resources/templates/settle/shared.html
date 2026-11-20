@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head('정산')}"></head>
+<body>
+<header th:replace="~{fragments/common :: siteHeader(false)}"></header>
+<!-- 정산 받는 링크(SettlePageController). 로그인 없이 보는 화면이라 이름·금액만 두고 계좌·방 링크는 넣지 않는다 -->
+<main class="page narrow stack shared-settle">
+  <div class="stack">
+    <p class="muted small">우리 여행 정산</p>
+    <h1 th:text="${s.title()}">겨울 펜션 2박 3일</h1>
+    <p class="muted" th:text="${s.destination() != null ? s.destination() + ' · ' : ''}
+        + ${s.startDate() != null ? #temporals.format(s.startDate(), 'M월 d일') + ' ~ ' + #temporals.format(s.endDate(), 'M월 d일') + ' · ' : ''}
+        + '모두 ' + ${#numbers.formatInteger(s.total(), 1, 'COMMA')} + '원'">가평 · 1월 15일 ~ 1월 17일 · 모두 612,000원</p>
+  </div>
+
+  <!-- 내 이름을 누르면 내 줄만 진하게(settle-shared.js). 고른 이름은 이 휴대폰에만 기억한다 -->
+  <div id="who" class="toggles" hidden aria-label="나는 누구?"></div>
+
+  <section class="box stack">
+    <h2>누가 누구에게 얼마</h2>
+    <ol class="settle-list">
+      <li th:if="${s.transfers().isEmpty()}" class="settled muted"><span th:text="${s.payments().isEmpty() ? '보낼 돈이 없어요.' : '다 보냈어요. 이번 여행 정산 끝!'}">다 보냈어요</span></li>
+      <li th:each="t : ${s.transfers()}" class="settle-row" th:data-from="${t.fromName()}" th:data-to="${t.toName()}">
+        <span><b th:text="${t.fromName()}">민지</b><span class="arrow" aria-hidden="true"> → </span><b th:text="${t.toName()}">재현</b></span>
+        <b class="settle-amount" th:text="${#numbers.formatInteger(t.amount(), 1, 'COMMA')} + '원'">32,000원</b>
+      </li>
+    </ol>
+    <ul class="stack small settle-paid" th:unless="${s.payments().isEmpty()}">
+      <li class="muted">끝난 송금</li>
+      <li th:each="p : ${s.payments()}" th:text="'✓ ' + ${p.fromName()} + ' → ' + ${p.toName()} + ' ' + ${#numbers.formatInteger(p.amount(), 1, 'COMMA')} + '원'">✓ 도윤 → 재현 20,000원</li>
+    </ul>
+    <p class="muted small">토스·카카오페이로 보내고, 보냈으면 방에서 "보냈어요"를 눌러 주세요. 그 줄이 여기서도 빠져요.</p>
+  </section>
+
+  <details class="box" th:unless="${s.lines().isEmpty()}">
+    <summary class="strong" th:text="'먼저 낸 돈 ' + ${s.lines().size()} + '줄'">먼저 낸 돈 4줄</summary>
+    <ul class="stack small settle-lines">
+      <li th:each="l : ${s.lines()}" class="between">
+        <span th:text="${l.payerName()} + ' · ' + ${l.label()} + ${l.sharedBy() != null ? ' (' + l.sharedBy() + '명만)' : ''}">재현 · 숙소</span>
+        <b th:text="${#numbers.formatInteger(l.amount(), 1, 'COMMA')} + '원'">476,000원</b>
+      </li>
+    </ul>
+  </details>
+
+  <p class="muted small">TripMate 에서 우리 규칙대로 셌어요(운전자 기름값, 술값 따로 같은 방 규칙까지).
+    <a th:href="@{/}" class="link">우리도 해 보기</a></p>
+</main>
+<script th:src="@{/js/settle-shared.js}"></script>
+</body>
+</html>

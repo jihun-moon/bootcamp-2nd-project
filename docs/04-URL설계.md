@@ -69,6 +69,8 @@
 | | 먼저 낸 돈 적기 | POST | `/api/trips/{id}/expenses` | `{"kind": "STAY", "memo": "잔금", "amount": 476000, "sharerIds": [1, 2]}` (sharerIds 없으면 모두·규칙대로) | 201 판 / 금액 0 이하·종류 없음·방에 없는 사람 400 | `SettleService.add` |
 | | 보냈어요·받았어요 | POST | `/api/trips/{id}/payments` | `{"fromId": 2, "toId": 1, "amount": 20000}` | 201 판 / 보낸·받은 사람·방장 아니면 403 / 같은 사람·방에 없는 사람·금액 0 이하 400 | `SettleService.markPaid`, `Payment` |
 | | 보냈어요 되돌리기 | DELETE | `/api/trips/{id}/payments/{paymentId}` | | 200 판 / 누른 사람·보낸·받은 사람·방장 아니면 403 | `SettleService.unmarkPaid` |
+| | 정산 받는 링크 코드 | PUT | `/api/trips/{id}/settlement/link` | | 200 `{"code"}`(몇 번 불러도 같은 코드) / 방 사람 아니면 404 / 둘이 동시에 처음 만들면 409 | `SettleService.linkCode`, `SettleLink` |
+| | 정산 받는 링크 화면 | GET | `/s/{code}` | | 200 HTML(로그인 없이, `Cache-Control: no-store`, noindex) / 틀린 코드·지운 방 404 | `SettlePageController`, `SettleService.shared` |
 | | 적은 돈 지우기 | DELETE | `/api/trips/{id}/expenses/{expenseId}` | | 200 판 / 낸 사람·방장 아니면 403 | `SettleService.remove` |
 
 API 는 IntelliJ HTTP Client 나 Talend API Tester 로 시험할 수 있다. 로그인이 필요하니 브라우저에서 카카오로 로그인한 뒤 `JSESSIONID` 쿠키를 붙인다.

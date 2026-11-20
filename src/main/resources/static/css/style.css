@@ -61,7 +61,9 @@
 
 * { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; overflow-x: clip; } /* 화면 폭 띠(사진·권유)가 가로 스크롤을 만들지 않게 */
+html { -webkit-text-size-adjust: 100%; overflow-x: clip; }
+/* 화면 폭 띠(100vw)는 윈도우 스크롤바 폭만큼(8~15px) 넓다. html 의 clip 은 화면에 옮겨지며 hidden 이 되어 옆으로 8px 밀렸다(PC 1440 에서 scrollX 8). body 에서 한 번 더 잘라 밀릴 것이 없게 */
+body { overflow-x: clip; }
 
 body {
   margin: 0;
@@ -693,3 +695,22 @@ button.link::after { content: ""; position: absolute; inset: -12px -8px; } /* �
 .position li.us b { font-weight: 800; font-size: var(--fs-lg); }
 .position > p { margin-top: 12px; text-align: center; max-width: none; }
 @media (min-width: 720px) { .position ul { grid-template-columns: 1fr 1fr 1.4fr; align-items: stretch; } }
+
+/* 개요: 휴대폰은 위아래 한 줄. 넓은 화면은 왼쪽 "지금 할 일"(다음 할 일·준비 체크·날짜), 오른쪽 "사람과 규칙" 두 기둥.
+   기둥은 서로 높이를 안 맞추니 달력이 길어도 오른쪽에 빈자리가 안 생긴다. 오른쪽은 사람이 먼저(초대가 급하다) */
+.ov-main > * + *, .ov-side > * + * { margin-top: 24px; }
+@media (min-width: 720px) { .ov-main > * + *, .ov-side > * + * { margin-top: 32px; } }
+@media (min-width: 960px) {
+  .ov-grid { display: grid; grid-template-columns: 1.25fr 1fr; gap: 32px; align-items: start; }
+  .ov-grid > * + * { margin-top: 0 !important; }
+  .ov-cover { grid-column: 1 / -1; }
+  .ov-main, .ov-side { display: flex; flex-direction: column; gap: 32px; min-width: 0; }
+  .ov-main > *, .ov-side > * { margin-top: 0 !important; }
+  .ov-people { order: -1; }
+  .ov-people .grid4 { grid-template-columns: 1fr 1fr; }
+}
+/* 장보기: 넓은 화면은 목록을 두 칸으로(무리 머리는 칸 전체) */
+@media (min-width: 720px) {
+  .shop-list { grid-template-columns: 1fr 1fr; column-gap: 12px; }
+  .shop-group { grid-column: 1 / -1; }
+}

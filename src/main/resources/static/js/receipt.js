@@ -64,7 +64,8 @@ function buildLines(trip, board, stays, travel, shopping) {
   if (rules) { out.push({ kind: 'cut' }); out.push({ kind: 'note', left: '규칙 · ' + rules }); }
   out.push({ kind: 'cut' });
   out.push({ kind: 'note', left: '단톡방 싸움 0회 · 정하는 데 걸린 시간 1분' });
-  out.push({ kind: 'note', left: '발행 ' + new Date().toLocaleDateString('ko-KR') + ' · tripmate' });
+  // 그림이 단톡방·스토리로 퍼질 때 이 줄이 광고가 된다(그림 바닥 주소)
+  out.push({ kind: 'note', left: '발행 ' + new Date().toLocaleDateString('ko-KR') + ' · 우리 방도 1분 → ' + location.host });
   return out;
 }
 

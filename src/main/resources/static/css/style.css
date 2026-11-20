@@ -298,7 +298,9 @@ tr:last-child td { border-bottom: 0; }
 .msg .line { display: flex; align-items: flex-end; gap: 4px; }
 .msg .bubble { max-width: 190px; padding: 7px 10px; border-radius: 4px 14px 14px 14px; background: #fff; border: 0; line-height: 1.4; }
 .msg .time { font-size: 10px; color: #4d5866; white-space: nowrap; display: grid; justify-items: end; }
-.msg .unread { color: #e8b800; font-weight: 700; }
+.msg .unread { color: #e8b800; font-weight: 700; display: inline-block; }
+.msg .unread.tick { animation: tick 0.25s var(--ease); }
+@keyframes tick { from { opacity: 0.2; transform: translateY(-2px); } }
 .msg.mine { grid-template-columns: 1fr; }
 .msg.mine .line { justify-content: flex-end; }
 .link-card { display: grid; width: 200px; overflow: hidden; border-radius: 14px; background: #fff; color: #191919; }
@@ -363,6 +365,14 @@ tr:last-child td { border-bottom: 0; }
 }
 
 .chat { display: grid; gap: 8px; }
+.phone-wrap { display: grid; justify-items: center; gap: 16px; }
+.phone-caption { max-width: 320px; text-align: center; font-size: var(--fs-sm); }
+.quiz fieldset { display: grid; gap: 8px; }
+.quiz label.chip input { position: absolute; opacity: 0; } /* 동그라미 대신 칩 전체가 고른 표시 */
+.quiz label.chip:has(input:checked) { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.quiz label.chip { position: relative; border: 1px solid var(--line); background: var(--surface); }
+.quiz-result { padding-top: 16px; border-top: 1px solid var(--line); display: grid; gap: 8px; }
+.quiz-role { font-size: var(--fs-xl); font-weight: 700; }
 .bubble { max-width: 88%; padding: 8px 12px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); }
 .bubble.me { justify-self: end; background: var(--kakao); color: #191600; border-color: transparent; }
 .bubble .who { display: block; font-size: var(--fs-xs); color: var(--muted); }

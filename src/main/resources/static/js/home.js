@@ -31,6 +31,7 @@ function playPhone(phone) {
   var chatSteps = phone.querySelectorAll('.chat-scene [data-step]');
   var boardSteps = phone.querySelectorAll('.board-scene [data-step]');
   var counter = phone.querySelector('[data-count]');
+  var unread = phone.querySelector('.unread');
   var typing = $('<li class="typing" aria-hidden="true"><i></i><i></i><i></i></li>');
 
   phone.classList.add('no-anim', 'playing');
@@ -40,6 +41,7 @@ function playPhone(phone) {
     for (;;) {
       phone.classList.remove('on-board');
       $(chatSteps).add(boardSteps).removeClass('shown');
+      if (unread) unread.textContent = '7';
       await wait(600);
       for (var i = 0; i < chatSteps.length; i++) {
         await untilVisible();
@@ -51,6 +53,8 @@ function playPhone(phone) {
           typing.detach();
         }
         chatSteps[i].classList.add('shown');
+        // 카톡처럼 친구들이 읽을 때마다 노란 숫자가 줄어든다(7 → 1). 다 읽기 전에 민지가 답한다
+        if (mine && unread) readOneByOne(unread, [6, 5, 3, 2, 1]);
         await wait(mine ? 1800 : 900); // 초대 카드는 읽을 시간을 조금 더
       }
       await wait(1200);
@@ -84,6 +88,17 @@ function tiltPhone(phone) {
     });
   });
   hero.addEventListener('pointerleave', function () { phone.style.transform = ''; });
+}
+
+// 안 읽은 수를 한 칸씩 줄인다. 바뀔 때 살짝 깜빡여 눈이 간다
+async function readOneByOne(el, steps) {
+  for (var i = 0; i < steps.length; i++) {
+    await wait(300 + Math.random() * 250);
+    el.textContent = String(steps[i]);
+    el.classList.remove('tick');
+    void el.offsetWidth;
+    el.classList.add('tick');
+  }
 }
 
 function countUp(el, target) {
@@ -123,7 +138,35 @@ function stickyAfterHero() {
   }).observe(heroCta);
 }
 
+// "나는 무슨 역할형?" 미리 보기. 점수는 RoleScorer 규칙 일부(차 있음 +4, 계획형 +3, 숙소 휴식 +2, 밖 활동 +2)를 그대로 쓴다.
+// 차가 없으면 운전은 고르지 않는다(실제 추천과 같다)
+var QUIZ_ROLES = [
+  { key: 'drive', name: '운전대 잡는 든든형', why: '차 있음 +4', score: function (a) { return a.car === 'yes' ? 4 : -1000; } },
+  { key: 'money', name: '엑셀부터 켜는 총무형', why: '계획형 +3', score: function (a) { return a.plan === 'planner' ? 3 : 0; } },
+  { key: 'bbq', name: '고기 굽는 숙소 지킴이형', why: '숙소 휴식 선호 +2', score: function (a) { return a.act === 'in' ? 2 : 0; } },
+  { key: 'photo', name: '사진 남기는 기록형', why: '밖 활동 선호 +2', score: function (a) { return a.act === 'out' ? 2 : 0; } }
+];
+
+function quizAnswers() {
+  var pick = function (name) { var c = document.querySelector('input[name="' + name + '"]:checked'); return c ? c.value : null; };
+  return { car: pick('car'), plan: pick('plan'), act: pick('act') };
+}
+
+function showQuizResult() {
+  var a = quizAnswers();
+  if (!a.car || !a.plan || !a.act) return;
+  var best = QUIZ_ROLES.slice().sort(function (x, y) { return y.score(a) - x.score(a); })[0];
+  $('#quiz-role').text(best.name);
+  $('#quiz-why').text('근거: ' + best.why + '. 친구들 답까지 모이면 모두가 가장 만족하는 쪽으로 다시 맞춰요.');
+  $('#quiz-result').prop('hidden', false);
+}
+
 $(function () {
+  $('.quiz input').on('change', showQuizResult);
+  $('#quiz-share').on('click', function () {
+    var text = '나 여행 가면 "' + $('#quiz-role').text() + '"래 ㅋㅋ 너는? ' + location.origin + '/#quiz';
+    copyText(text).then(function () { showToast('복사했어요. 단톡방에 던져 보세요.'); });
+  });
   loadMyTrips();
   stickyAfterHero();
   if (reduceMotion || !('IntersectionObserver' in window)) return;

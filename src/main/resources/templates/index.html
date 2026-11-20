@@ -10,8 +10,8 @@
   <!-- 로그인한 사람에게만 보인다. 다시 온 사람이 첫 화면에서 바로 자기 방으로 가게 -->
   <section id="my-trips" class="box stack" hidden>
     <div class="between">
-      <h2>내 여행방 <span id="my-trips-todo" class="tag" hidden></span></h2>
-      <a th:href="@{/trips/new}" class="link">+ 새 방</a>
+      <h2>내 여행방 <span id="my-trips-todo" class="todo-pill" hidden></span></h2>
+      <a th:href="@{/trips/new}" class="btn small">+ 새 방</a>
     </div>
     <p id="my-trips-clear" class="muted small" hidden>할 일 다 했어요. 이제 짐만 싸면 돼요.</p>
     <ul id="trip-list" class="trip-list"></ul>

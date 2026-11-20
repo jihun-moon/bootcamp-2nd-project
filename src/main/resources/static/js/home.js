@@ -13,24 +13,50 @@ var MY_TODO = {
   dates: { label: '되는 날 누르기', path: '#dates-card' }
 };
 
+// 사진 위 알약에 넣을 짧은 날짜 말(방 머리의 dday() 는 길어서 카드에 안 들어간다)
+function shortDday(startDate, endDate) {
+  if (!startDate) return '날짜 미정';
+  var day = function (s) { return new Date(s + 'T00:00:00'); };
+  var now = new Date(); now = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  var toStart = Math.round((day(startDate) - now) / 86400000);
+  if (toStart > 0) return 'D-' + toStart;
+  if (toStart === 0) return 'D-DAY';
+  return now <= day(endDate || startDate) ? '여행 중' : '다녀왔어요';
+}
+
+// 방 카드: 소개 페이지의 방 머리처럼 지역 사진 + D-day 알약, 아래 이름·지역·설문, 할 일 한 줄, 오른쪽 단추 하나.
+// 할 일 있는 방을 앞에 둔다(들어온 김에 바로 하게)
 function loadMyTrips() {
   $.ajax({ url: '/api/me/trips', type: 'GET' }).done(function (trips) {
     if (!trips.length) return;
     var list = $('#trip-list').empty();
     var todoCount = 0;
-    trips.forEach(function (t) {
-      var meta = [t.destination || '지역 미정', t.startDate ? formatPeriod(t.startDate, t.endDate) : '날짜 미정',
-        '설문 ' + t.surveyDone + '/' + t.memberCount].join(' · ');
-      var first = (t.todo || [])[0] && MY_TODO[t.todo[0]];
-      todoCount += (t.todo || []).length;
-      var info = $('<div>').append(
-        $('<div class="strong">').text(t.title).append(t.host ? $('<span class="tag me">').text('방장') : null),
+    trips.slice().sort(function (x, y) { return (y.todo || []).length - (x.todo || []).length; }).forEach(function (t) {
+      var todo = t.todo || [];
+      var first = todo[0] && MY_TODO[todo[0]];
+      todoCount += todo.length;
+      var photo = tripPhoto(t.destination, t.startDate);
+      var thumb = $('<span class="trip-thumb">').append(
+        photo ? $('<img loading="lazy" width="400" height="200">').attr({ src: photo.src, alt: photo.alt }) : null,
+        $('<span class="trip-dday">').text(shortDday(t.startDate, t.endDate)));
+      var meta = [t.destination || '지역 미정', t.startDate ? formatPeriod(t.startDate, t.endDate) : '날짜 미정'].join(' · ');
+      var body = $('<div class="trip-body">').append(
+        $('<div class="strong trip-title">').text(t.title).append(t.host ? $('<span class="tag me">').text('방장') : null),
         $('<div class="muted small">').text(meta),
-        first ? $('<div class="todo-line small">').text('할 일 · ' + t.todo.map(function (k) { return MY_TODO[k].label; }).join(', ')) : null);
-      $('<li>').append($('<a class="card trip-item">').toggleClass('has-todo', !!first)
+        $('<div class="trip-survey small">').append(
+          $('<span class="bar">').append($('<span class="fill">').css('width', Math.round(100 * t.surveyDone / t.memberCount) + '%')),
+          $('<span class="muted">').text('설문 ' + t.surveyDone + '/' + t.memberCount + '명')),
+        first ? $('<div class="todo-line small">').text('할 일 · ' + todo.map(function (k) { return MY_TODO[k].label; }).join(', ')) : null);
+      $('<li>').append($('<a class="trip-card">').toggleClass('has-todo', !!first)
         .attr('href', '/trips/' + t.id + (first ? first.path : ''))
-        .append(info, $('<span class="link">').text(first ? '하러 가기' : '들어가기'))).appendTo(list);
+        .append(thumb, body, $('<span class="btn small">').toggleClass('primary', !!first).text(first ? '하러 가기' : '들어가기'))).appendTo(list);
     });
+    // 방이 많으면 첫 화면이 목록이 된다. 앞의 셋(할 일 있는 방이 먼저)만 두고 나머지는 한 번 눌러 펼친다
+    var more = list.children().slice(3).prop('hidden', true);
+    if (more.length) {
+      $('<li class="trip-more">').append($('<button type="button" class="btn small block">').text('방 ' + more.length + '개 더 보기')
+        .on('click', function () { more.prop('hidden', false); $(this).parent().remove(); })).appendTo(list);
+    }
     $('#my-trips-todo').text(todoCount ? '할 일 ' + todoCount : '').prop('hidden', !todoCount);
     $('#my-trips-clear').prop('hidden', todoCount > 0);
     $('#my-trips').prop('hidden', false);
@@ -239,6 +265,8 @@ function stickyAfterHero() {
   observer.observe(heroCta);
   var endCta = document.querySelector('.cta .btn.primary');
   if (endCta) observer.observe(endCta);
+  // 로그인해서 내 여행방이 보이는 동안도 숨는다("+ 새 방"이 바로 위에 있고, 카드 단추를 가렸다)
+  observer.observe(document.getElementById('my-trips'));
 }
 
 // "나는 무슨 역할형?" 미리 보기. 점수는 RoleScorer 규칙 일부(차 있음 +4, 계획형 +3, 숙소 휴식 +2, 밖 활동 +2)를 그대로 쓴다.

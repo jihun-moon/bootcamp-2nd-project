@@ -171,8 +171,8 @@ p > a.link, li > p a.link { text-decoration-color: var(--line-strong); }
   .kakao-login:hover { filter: brightness(0.96); }
   .link:hover { text-decoration-color: currentColor; }
   .choice:hover, label.chip:hover { border-color: var(--line-strong); }
-  .trip-item, .stay { transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease); }
-  .trip-item:hover, .stay:hover { border-color: var(--line-strong); transform: translateY(-2px); }
+  .trip-card, .stay { transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease); }
+  .trip-card:hover, .stay:hover { border-color: var(--line-strong); transform: translateY(-2px); }
   .tabs a:hover { color: var(--ink); }
   .toggle:hover:not([aria-pressed="true"]) { border-color: var(--line-strong); background: var(--surface-2); }
   .segmented button:hover:not([aria-pressed="true"]) { color: var(--ink); background: var(--surface-2); }
@@ -405,8 +405,6 @@ tr:last-child td { border-bottom: 0; }
 .cta p { margin-inline: auto; } /* 본문 줄 길이 제한(68ch) 때문에 왼쪽으로 붙지 않게 */
 .site-footer { border-top: 1px solid var(--line); margin-top: 48px; padding: 24px 0; color: var(--muted); font-size: var(--fs-xs); }
 
-.trip-list { display: grid; gap: 8px; }
-.trip-item { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 
 /* 토스트: 복사됨처럼 결과만 알리는 짧은 말. 화면 아래에 잠깐 떴다 사라진다(누를 것 없음) */
 .toast {
@@ -715,7 +713,6 @@ button.link::after { content: ""; position: absolute; inset: -12px -8px; } /* �
 @media (min-width: 720px) { .dday { left: 20px; bottom: 18px; font-size: var(--fs-md); } }
 
 /* 내 여행방: 내가 아직 안 한 일이 있는 방은 청록 점과 한 줄로 먼저 눈에 */
-.trip-item.has-todo { border-color: var(--accent); }
 .todo-line { margin-top: 4px; color: var(--accent); font-weight: 600; }
 .todo-line::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 6px; border-radius: 50%; background: var(--accent); vertical-align: middle; }
 
@@ -724,9 +721,6 @@ button.link::after { content: ""; position: absolute; inset: -12px -8px; } /* �
 .settle-list .settled { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 72px; } /* 도장이 글을 덮지 않게 같은 줄 오른쪽 */
 .stamp.keep.quiet { animation: none; }
 @keyframes stamp-in { 0% { opacity: 0; transform: rotate(-12deg) scale(2.4); } 60% { opacity: 1; transform: rotate(-12deg) scale(0.92); } 100% { opacity: 1; transform: rotate(-12deg) scale(1); } }
-/* 내 여행방: "하러 가기"가 두 줄로 꺾이지 않게, "+ 새 방"은 손가락 크기만큼 누르는 영역 */
-.trip-item .link { white-space: nowrap; }
-#my-trips .between .link { padding: 12px 6px; margin: -12px -6px; }
 
 /* 술 마신 사람: 정산 칸 안 고르기 줄. 보낼 줄과 적기 사이에 선 하나로 나눈다 */
 .settle-drinkers { padding-top: 16px; border-top: 1px solid var(--line); }
@@ -1045,3 +1039,38 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
 
 /* 첫 화면 단톡방: 욕은 글자 대신 "#@%!"를 흐리게(실제 욕은 코드에도 없다) */
 .censor { display: inline-block; padding: 0 4px; border-radius: 4px; background: #191919; color: #fff; filter: blur(0.6px); font-weight: 700; letter-spacing: 0.04em; }
+
+/* 내 여행방(로그인한 첫 화면): 소개 페이지 방 머리처럼 사진 + D-day 알약 카드.
+   PC 는 히어로 배경 사진(.hero-bg, 위로 96px 넘친다)보다 위에 떠야 글이 안 바랜다 */
+#my-trips { position: relative; z-index: 1; box-shadow: 0 12px 32px -18px rgb(0 0 0 / 0.25); }
+.todo-pill { margin-left: 6px; padding: 2px 10px; border-radius: 99px; background: var(--accent); color: var(--accent-ink); font-size: var(--fs-xs); font-weight: 700; vertical-align: middle; }
+.trip-list { display: grid; gap: 12px; }
+.trip-list > li { display: grid; } /* 같은 줄 카드 높이를 맞춘다 */
+.trip-list > li[hidden] { display: none; }
+.trip-card { display: grid; grid-template-columns: 72px 1fr; grid-template-areas: "thumb body" "thumb btn"; gap: 10px 14px; align-items: center;
+  padding: 12px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm); color: inherit; text-decoration: none; }
+.trip-card.has-todo { border-color: var(--accent); }
+.trip-thumb { grid-area: thumb; position: relative; display: block; aspect-ratio: 1; border-radius: 10px; overflow: hidden;
+  background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 45%, #ffd84d)); }
+.trip-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.trip-dday { position: absolute; left: 4px; bottom: 4px; padding: 1px 6px; border-radius: 99px; background: rgb(0 0 0 / 0.55); color: #fff; font-size: 11px; font-weight: 700; backdrop-filter: blur(6px); white-space: nowrap; }
+.trip-body { grid-area: body; min-width: 0; display: grid; gap: 4px; }
+.trip-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trip-survey { display: flex; align-items: center; gap: 8px; }
+.trip-survey .bar { display: block; flex: 1; max-width: 120px; height: 6px; }
+.trip-survey .fill { display: block; }
+.trip-card .todo-line { margin-top: 0; }
+.trip-card > .btn { grid-area: btn; justify-self: start; white-space: nowrap; }
+.trip-thumb { align-self: start; }
+@media (min-width: 720px) {
+  .trip-list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); }
+  .trip-card { grid-template-columns: 104px 1fr auto; grid-template-areas: "thumb body btn"; padding: 14px; }
+  .trip-card > .btn { justify-self: end; }
+  .trip-thumb { align-self: center; }
+  .trip-dday { left: 6px; bottom: 6px; padding: 2px 8px; font-size: var(--fs-xs); }
+}
+.trip-more { grid-column: 1 / -1; }
+/* 내 여행방이 보이면(PC) 히어로 배경 사진이 박스 아래에서 딱 끊기지 않고 서서히 나타나게 */
+@media (min-width: 960px) {
+  body:has(#my-trips:not([hidden])) .hero-bg { top: 0; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 220px); mask-image: linear-gradient(to bottom, transparent, #000 220px); }
+}

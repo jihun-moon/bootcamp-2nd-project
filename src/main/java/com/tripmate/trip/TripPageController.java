@@ -21,6 +21,12 @@ public class TripPageController {
         return "index";
     }
 
+    // GET: /demo   로그인 없이 둘러보는 읽기 전용 체험 방(예시 데이터, DB 안 씀)
+    @GetMapping("/demo")
+    public String demo() {
+        return "trip/demo";
+    }
+
     // GET: /trips/new
     @GetMapping("/trips/new")
     public String newTrip() {

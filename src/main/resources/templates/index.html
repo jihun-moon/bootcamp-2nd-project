@@ -22,7 +22,8 @@
       <div class="stack">
         <div class="row wrap">
           <a th:href="@{/trips/new}" class="btn primary big">무료로 여행방 만들기</a>
-          <a href="#how" class="btn big">어떻게 쓰나요?</a>
+          <!-- 방장이 아닌 사람도 가입 전에 안을 볼 수 있게. 로그인 없이 읽기 전용 -->
+          <a th:href="@{/demo}" class="btn big">체험 방 둘러보기</a>
         </div>
         <ul class="trust">
           <li>30초면 만들어요</li>

@@ -201,6 +201,10 @@ label.chip { display: inline-flex; min-height: 40px; padding: 6px 12px; color: v
 }
 .tabs a { padding: 12px; border-bottom: 2px solid transparent; color: var(--muted); font-size: var(--fs-sm); font-weight: 600; white-space: nowrap; }
 .tabs a.active { border-color: var(--accent); color: var(--accent); }
+/* 체험 방은 같은 화면 안에서 내용만 바꾸니 링크가 아니라 단추 탭 */
+.tabs .tab { padding: 12px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--muted); font-size: var(--fs-sm); font-weight: 600; white-space: nowrap; }
+.tabs .tab.active { border-color: var(--accent); color: var(--accent); }
+.demo-banner { margin-bottom: 12px; }
 
 /* 프로필 */
 .avatar {

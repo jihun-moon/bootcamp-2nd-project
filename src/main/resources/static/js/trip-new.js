@@ -169,7 +169,10 @@ function create(form) {
   }).fail(function (xhr) {
     if (xhr.status === 401) return;
     sessionStorage.removeItem(DRAFT_KEY); // 다음에 들어왔을 때 저절로 또 만들지 않게
-    $('#form-error').text('방을 만들지 못했어요. 잠시 뒤 다시 눌러 주세요.').prop('hidden', false);
+    // 손님(이름만 쓰고 들어온 사람)은 방을 못 만든다. 까닭과 길을 같이(전에는 "만들지 못했어요"만 떠서 왜인지 몰랐다)
+    $('#form-error').text(xhr.status === 403
+      ? '이름만 쓰고 들어온 손님은 방을 만들 수 없어요. 카카오로 이으면 바로 만들 수 있어요.'
+      : '방을 만들지 못했어요. 잠시 뒤 다시 눌러 주세요.').prop('hidden', false);
     $('#btn-create').prop('disabled', false).text('방 만들고 초대 링크 받기');
   });
 }
@@ -179,6 +182,8 @@ $(function () {
   shown = new Date(today().getFullYear(), today().getMonth(), 1);
   renderRegions();
   renderQuickDates();
+  // 로그인 안 했으면 단추 아래 한 줄(누르면 카카오로 간다는 걸 미리). api() 는 401 이면 바로 로그인으로 보내서 $.ajax 로 직접 묻는다
+  $.ajax({ url: '/api/me', type: 'GET' }).fail(function (xhr) { if (xhr.status === 401) $('#host-login-note').prop('hidden', false); });
   $('#destination').on('input', suggestTitle);
   $('#trip-form').submit(function (e) {
     e.preventDefault();

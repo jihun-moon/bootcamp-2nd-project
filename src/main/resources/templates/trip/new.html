@@ -33,6 +33,8 @@
     </label>
     <p id="form-error" class="error" hidden></p>
     <button type="submit" id="btn-create" class="btn primary big block">방 만들고 초대 링크 받기</button>
+    <!-- 처음 온 사람이 누르자마자 카카오 화면이 떠서 놀랐다. 로그인 안 했을 때만 미리 한 줄(trip-new.js) -->
+    <p id="host-login-note" class="muted small center" hidden>방장만 카카오로 한 번 로그인해요. 고른 건 그대로 남고, 친구들은 이름만 쓰고 들어와요.</p>
   </form>
 </main>
 <script th:src="@{/js/trip-new.js}"></script>

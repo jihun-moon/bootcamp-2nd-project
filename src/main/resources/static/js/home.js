@@ -111,17 +111,6 @@ async function readOneByOne(el, steps) {
   }
 }
 
-function countUp(el, target) {
-  var start = performance.now();
-  var step = function (now) {
-    var t = Math.min(1, (now - start) / 700);
-    // 회비처럼 100원 단위로 올라가게
-    el.textContent = (Math.round(target * (1 - Math.pow(1 - t, 3)) / 100) * 100).toLocaleString('ko-KR');
-    if (t < 1) requestAnimationFrame(step);
-  };
-  requestAnimationFrame(step);
-}
-
 // 공감 숫자(76·74·82%)는 화면에 들어올 때 0부터 0.9초 동안 올라간다. 한 번만
 function countStats() {
   var nums = document.querySelectorAll('[data-count-to]');

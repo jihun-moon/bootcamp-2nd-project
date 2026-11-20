@@ -82,6 +82,19 @@ function shareLabel(phone, pc) {
   return CAN_SHARE ? phone : pc;
 }
 
+// 아직 안 한 사람 콕 찌르기. 방장만이 아니라 누구나 누른다(챙기는 일이 한 사람에게 몰리지 않게).
+// 이름과 그 화면 링크가 든 글을 단톡방으로. 다 했으면 줄을 숨긴다. 나는 빼고 센다(내 일은 화면이 따로 알려 준다)
+// renderNudge($('#dates-nudge'), trip, ['민지', '도윤'], '되는 날을 안 골랐어요', '되는 날만 눌러 줘요', '')
+function renderNudge(box, trip, names, state, ask, path) {
+  box.empty().prop('hidden', !names.length);
+  if (!names.length) return;
+  box.append($('<span class="muted small">').text(names.join(', ') + ' 님이 아직 ' + state),
+    $('<button type="button" class="btn small">').text('콕 찌르기').click(function () {
+      shareText('[' + trip.title + '] ' + names.join(', ') + ' 님 ' + ask + '\n' + location.origin + '/trips/' + trip.id + path,
+        '콕 찌를 글을 복사했어요. 단톡방에 붙여 넣어 주세요.');
+    }));
+}
+
 // 방 규칙 세 칸. key 는 Spring TripDto.Rules 칸 이름. 커뮤니티 글에서 가장 많이 싸운 것들이라(docs/11) 출발 전에 정해 둔다
 var ROOM_RULES = [
   { key: 'driverPaysFuel', title: '운전한 사람 기름값', options: [{ label: '같이 내요', value: true }, { label: '빼 줘요', value: false }] },

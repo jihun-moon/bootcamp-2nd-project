@@ -44,6 +44,11 @@ function renderStays() {
   });
   $('#stay-empty').prop('hidden', ranked.length > 0);
   $('#stay-count').text(ranked.length ? ranked.length + '곳 · 내 표 ' + (myVote ? '1' : '0') + '/1' : '');
+  // 후보가 둘 이상이고(하나면 고를 게 없다) 내가 표를 낸 뒤에만
+  var voted = new Set([].concat.apply([], board.stays.map(function (s) { return s.voterIds; })));
+  renderNudge($('#vote-nudge'), trip, ranked.length < 2 || !myVote ? [] : trip.members
+    .filter(function (m) { return m.id !== trip.meId && !voted.has(m.id); }).map(function (m) { return m.name; }),
+    '숙소 표를 안 냈어요', '숙소 하나만 골라 줘요', '/stays');
 
   var list = $('#stay-list').empty();
   ranked.forEach(function (stay, i) {

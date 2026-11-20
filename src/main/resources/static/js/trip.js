@@ -144,6 +144,10 @@ function drawDates(me, board) {
     myDates = new Set(Object.keys(board.available).filter(function (k) { return board.available[k].indexOf(me.id) >= 0; }));
   }
   $('#dates-count').text(board.responded + '/' + board.memberCount + '명 답함');
+  // 내가 고른 뒤에만 보인다. 나도 안 했는데 남을 찌르는 줄이 먼저 뜨면 어색하고, 시작하자마자 모두의 이름이 뜬다
+  var answered = new Set([].concat.apply([], Object.values(board.available)));
+  renderNudge($('#dates-nudge'), trip, !answered.has(me.id) ? [] : trip.members.filter(function (m) { return m.id !== me.id && !answered.has(m.id); })
+    .map(function (m) { return m.name; }), '되는 날을 안 골랐어요', '되는 날만 눌러 줘요. 10초면 돼요', '');
   availabilityCalendar($('#dates-cal'), {
     mine: myDates, available: board.available, total: board.memberCount, editable: true,
     onChange: function (set) {

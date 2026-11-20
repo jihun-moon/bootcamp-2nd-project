@@ -833,3 +833,9 @@ button.link::after { content: ""; position: absolute; inset: -12px -8px; } /* �
 /* 숙소 링크 칸: 공유 글이 여러 줄이라 textarea. 두 줄 높이로 두고 손잡이는 숨긴다 */
 textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height: 3.2em; }
 .stay-sources { margin-top: -4px; }
+
+/* 콕 찌르기 줄: 누가 남았는지 한 줄, 오른쪽에 작은 단추 */
+.nudge { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+  padding: 8px 12px; border-radius: var(--radius-sm); background: var(--accent-soft); }
+.nudge[hidden] { display: none; }
+.nudge .btn.small { min-height: 36px; padding: 6px 12px; font-size: var(--fs-sm); }

@@ -41,6 +41,7 @@ class PageTest {
         mvc.perform(get("/trips/1/survey")).andExpect(view().name("survey/survey"));
         mvc.perform(get("/trips/1/roles")).andExpect(view().name("role/roles"));
         mvc.perform(get("/trips/1/stays")).andExpect(view().name("stay/stays"));
+        mvc.perform(get("/trips/1/receipt")).andExpect(view().name("trip/receipt"));
     }
 
     @Test

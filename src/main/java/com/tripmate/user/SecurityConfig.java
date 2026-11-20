@@ -1,5 +1,7 @@
 package com.tripmate.user;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -13,6 +15,8 @@ import org.springframework.security.web.servlet.util.matcher.PathPatternRequestM
 
 @Configuration
 public class SecurityConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, KakaoUserService kakaoUserService) throws Exception {
@@ -34,7 +38,12 @@ public class SecurityConfig {
                         .loginPage("/login")
                         .userInfoEndpoint(u -> u.userService(kakaoUserService))
                         .successHandler((req, res, a) -> res.sendRedirect("/login/done"))
-                        .failureHandler((req, res, ex) -> res.sendRedirect("/login?error")))
+                        // 실패 까닭을 남긴다(키 값은 안 찍힌다). 예: invalid_client = 콘솔 Client Secret 이 켜져 있는데 서버에 없음,
+                        // authorization_request_not_found = 로그인 도중 서버가 다시 켜져 세션이 사라짐
+                        .failureHandler((req, res, ex) -> {
+                            log.warn("카카오 로그인 실패: {}", ex.getMessage());
+                            res.sendRedirect("/login?error");
+                        }))
                 // CSP: 스크립트는 우리 서버와 jQuery CDN 만. 화면에 끼어든 <script> 는 돌지 않는다(XSS 를 한 겹 더 막음).
                 // 글꼴·스타일은 cdnjs(Pretendard), 숙소 사진은 예약 사이트 https 주소라 img 는 https 전체.
                 // style 'unsafe-inline' 은 jQuery .css() 와 막대 너비 같은 style 속성 때문. 스크립트에는 주지 않는다

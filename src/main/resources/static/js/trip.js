@@ -53,7 +53,8 @@ function renderNext(me, notYet) {
   } else {
     $('#next-title').text('모두 설문을 끝냈어요');
     $('#next-text').text('설문으로 역할이 정해졌어요. 마음에 안 들면 보드에서 눌러 바꿀 수 있어요.');
-    actions.append(link('역할 보드', '/trips/' + tripId + '/roles', true), link('숙소 투표', '/trips/' + tripId + '/stays'));
+    actions.append(link('역할 보드', '/trips/' + tripId + '/roles', true), link('숙소 투표', '/trips/' + tripId + '/stays'),
+      link('우리 여행 영수증', '/trips/' + tripId + '/receipt'));
   }
 }
 

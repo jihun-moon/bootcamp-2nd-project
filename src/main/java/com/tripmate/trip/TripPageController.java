@@ -46,6 +46,14 @@ public class TripPageController {
         return "trip/join";
     }
 
+    // GET: /trips/1/receipt   우리 여행 영수증(역할·1인 숙소비·교통비·규칙을 한 장으로). 데이터는 화면이 API 로 읽는다
+    @GetMapping("/trips/{tripId}/receipt")
+    public String receipt(@PathVariable Long tripId, Model model) {
+        model.addAttribute("tripId", tripId);
+        model.addAttribute("tab", "receipt");
+        return "trip/receipt";
+    }
+
     // GET: /trips/1
     @GetMapping("/trips/{tripId}")
     public String overview(@PathVariable Long tripId, Model model) {

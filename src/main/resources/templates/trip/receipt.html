@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head('우리 여행 영수증')}"></head>
+<body th:data-trip-id="${tripId}">
+<div class="page narrow">
+  <header th:replace="~{fragments/common :: tripHeader}"></header>
+  <!-- 우리 여행 영수증: 이미 모인 것(역할·숙소 표·교통비·규칙)만으로 한 장. 단톡방에 그림으로 던지라고 만든 화면 -->
+  <main class="stack loose">
+    <article id="receipt" class="receipt" aria-live="polite">
+      <p class="muted center">영수증을 뽑는 중…</p>
+    </article>
+    <div class="stack">
+      <button type="button" id="btn-receipt-share" class="btn primary big block">카톡으로 영수증 보내기</button>
+      <p class="muted small center">휴대폰은 그림으로 바로 보내고, PC 는 그림을 저장해요.</p>
+    </div>
+  </main>
+</div>
+<script th:src="@{/js/receipt.js}"></script>
+</body>
+</html>

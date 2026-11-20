@@ -56,6 +56,16 @@ public class TripService {
         return TripDto.Response.of(trip, me);
     }
 
+    // 방장이 방 규칙을 바꾸면 모두의 화면(개요·역할 보드의 교통비·결과 글)이 다시 읽는다
+    @Transactional
+    public TripDto.Response updateRules(Long tripId, Member host, TripDto.Rules rules) {
+        var trip = tripRepository.findWithMembersById(tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        trip.updateRules(rules.driverPaysFuel(), rules.refundNoShow(), rules.drinksSeparate());
+        events.publishEvent(new TripChanged(tripId, "trip"));
+        return TripDto.Response.of(trip, host);
+    }
+
     // 초대 링크를 두 번 눌러도 참여자는 한 번만 들어간다
     @Transactional
     public TripDto.Joined join(AppUser user, String inviteCode) {

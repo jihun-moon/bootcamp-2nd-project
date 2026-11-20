@@ -17,14 +17,23 @@ public final class TripDto {
                                 LocalDate startDate, LocalDate endDate) {
     }
 
+    // PUT /api/trips/1/rules  { "driverPaysFuel": false, "refundNoShow": false, "drinksSeparate": true }
+    // 칸마다 null 이면 "아직 안 정함". 세 칸을 한 번에 보내 덮어쓴다
+    public record Rules(Boolean driverPaysFuel, Boolean refundNoShow, Boolean drinksSeparate) {
+
+        static Rules of(Trip trip) {
+            return new Rules(trip.getDriverPaysFuel(), trip.getRefundNoShow(), trip.getDrinksSeparate());
+        }
+    }
+
     // meId 는 요청한 사람의 이 방 참여자 id. 화면이 "나"를 고르는 단계 없이 바로 쓴다
     public record Response(Long id, String title, String destination, LocalDate startDate, LocalDate endDate,
-                           String inviteCode, Long meId, List<MemberResponse> members) {
+                           String inviteCode, Long meId, List<MemberResponse> members, Rules rules) {
 
         static Response of(Trip trip, Member me) {
             var members = trip.getMembers().stream().map(MemberResponse::from).toList();
             return new Response(trip.getId(), trip.getTitle(), trip.getDestination(),
-                    trip.getStartDate(), trip.getEndDate(), trip.getInviteCode(), me.getId(), members);
+                    trip.getStartDate(), trip.getEndDate(), trip.getInviteCode(), me.getId(), members, Rules.of(trip));
         }
     }
 

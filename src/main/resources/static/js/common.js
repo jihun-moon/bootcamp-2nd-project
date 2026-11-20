@@ -82,6 +82,22 @@ function shareLabel(phone, pc) {
   return CAN_SHARE ? phone : pc;
 }
 
+// 방 규칙 세 칸. key 는 Spring TripDto.Rules 칸 이름. 커뮤니티 글에서 가장 많이 싸운 것들이라(docs/11) 출발 전에 정해 둔다
+var ROOM_RULES = [
+  { key: 'driverPaysFuel', title: '운전한 사람 기름값', options: [{ label: '같이 내요', value: true }, { label: '빼 줘요', value: false }] },
+  { key: 'refundNoShow', title: '전날 빠지면 예약금', options: [{ label: '돌려줘요', value: true }, { label: '안 돌려줘요', value: false }] },
+  { key: 'drinksSeparate', title: '술값', options: [{ label: '다 같이 나눠요', value: false }, { label: '마신 사람만', value: true }] }
+];
+
+// 정한 것만 "운전한 사람 기름값 빼 줘요 · 술값 마신 사람만" 한 줄로. 하나도 안 정했으면 빈 글
+function rulesText(rules) {
+  return ROOM_RULES.filter(function (r) { return rules && rules[r.key] !== null && rules[r.key] !== undefined; })
+    .map(function (r) {
+      var picked = r.options.find(function (o) { return o.value === rules[r.key]; });
+      return r.title + ' ' + picked.label;
+    }).join(' · ');
+}
+
 // 결과만 짧게 알릴 때(복사했어요 등). 막힘·오류처럼 사람이 읽고 해야 할 일이 있으면 showNotice 를 쓴다
 var toastTimer = null;
 function showToast(message) {

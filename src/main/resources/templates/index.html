@@ -128,32 +128,40 @@
   <section id="how" class="section">
     <h2>친구들은 뭘 하면 돼요? 링크 한 번 누르면 끝</h2>
     <p class="muted">앱 설치 없이, 카톡 링크로 1분.</p>
+    <!-- 단계 그림은 지금 실제 화면을 그대로 줄인 것. 화면이 바뀌면 같이 고친다. 누르면 체험 방 -->
     <ol class="steps">
       <li data-reveal>
         <a th:href="@{/demo}" class="mini-phone" aria-label="체험 방에서 직접 해 보기">
-          <p class="strong">먼저 친구들을 불러요</p>
-          <div class="row"><span class="fake-input">tripmate/join/3f9a…</span><span class="btn primary">보내기</span></div>
-          <ul class="rows small"><li>재현 <span class="tag">방장</span></li><li>민지 <span class="chip">설문 전</span></li></ul>
-        <span class="mini-go">직접 해 보기 →</span></a>
+          <p class="muted small">겨울 펜션 2박 3일 · 1명</p>
+          <p class="strong">단톡방에 초대 보내기</p>
+          <span class="btn primary block">카톡으로 초대 보내기</span>
+          <p class="mini-bubble">[겨울 펜션 2박 3일] 여행방 만들었어! 1분 설문만 해 줘<span>tripmate.kr/join/3f9a…</span></p>
+          <span class="mini-go">직접 해 보기 →</span>
+        </a>
         <div class="step-text"><h3>방장이 방 만들고 카톡으로 보내기</h3><p class="muted">여행 이름만 적으면 30초. 누르면 카톡 공유 창이 떠요.</p></div>
       </li>
       <li data-reveal>
         <a th:href="@{/demo}" class="mini-phone" aria-label="체험 방에서 직접 해 보기">
-          <p class="muted small">재현 · 3 / 5</p>
-          <p class="strong">차를 가져갈 수 있나요?</p>
-          <span class="choice on">가능</span><span class="choice">어려워요</span>
-        <span class="mini-go">직접 해 보기 →</span></a>
+          <div class="bar thin"><div class="fill" style="width:60%"></div></div>
+          <p class="muted small">민지 · 3 / 5</p>
+          <p class="strong">차를 가져갈 수 있어요?</p>
+          <span class="choice on">가능</span>
+          <span class="choice">어려워요</span>
+          <span class="mini-go">직접 해 보기 →</span>
+        </a>
         <div class="step-text"><h3>친구들은 다섯 번 누르면 끝</h3><p class="muted">차 있어? 계획형이야? 이건 빼 줘. 한 번 누르면 다음 장으로 넘어가요.</p></div>
       </li>
       <li data-reveal>
         <a th:href="@{/demo}" class="mini-phone" aria-label="체험 방에서 직접 해 보기">
           <p class="strong">역할 보드</p>
           <ul class="rows small">
-            <li class="between"><span><b>운전</b> 재현</span><span class="chip">차 있음 +4</span></li>
-            <li class="between"><span><b>총무</b> 도윤</span><span class="chip">계획형 +3</span></li>
+            <li class="between"><span><b>운전</b> 재현</span><span class="muted">차 있음 +4</span></li>
+            <li class="between"><span><b>총무</b> 도윤</span><span class="muted">계획형 +3</span></li>
+            <li class="between"><span><b>1인 교통비</b></span><span>8,800원</span></li>
           </ul>
-          <span class="btn">카톡으로 결과 보내기</span>
-        <span class="mini-go">직접 해 보기 →</span></a>
+          <span class="btn block">카톡으로 결과 보내기</span>
+          <span class="mini-go">직접 해 보기 →</span>
+        </a>
         <div class="step-text"><h3>마지막 사람이 끝내면 역할이 저절로</h3><p class="muted">왜 그 사람인지 근거까지. 마음에 안 들면 카드를 눌러 옮겨요.</p></div>
       </li>
     </ol>
@@ -214,6 +222,7 @@
     <details><summary>돈이 드나요?</summary><p>무료예요. 길찾기·유가 같은 공공 정보도 무료 범위에서 써요.</p></details>
     <details><summary>친구들도 가입해야 하나요?</summary><p>카카오 로그인 한 번이면 돼요. 비밀번호는 TripMate 가 저장하지 않아요.</p></details>
     <details><summary>출발 동네 같은 정보는 누가 보나요?</summary><p>출발 동네와 이동이 불편한 사정은 본인과 방장만 봐요. 다른 사람에게는 거리·시간이나 "이동 적은 역할 우선"으로만 보여요.</p></details>
+    <details><summary>돈 문제로 안 싸우려면요?</summary><p>방장이 처음에 방 규칙 세 가지(운전한 사람 기름값, 전날 빠지면 예약금, 술값)를 골라 두면 모두의 화면과 결과 글에 같이 나가요.</p></details>
     <details><summary>정산·송금도 되나요?</summary><p>돈이 오가는 건 토스·카카오페이가 더 잘해요. TripMate 는 출발 전에 "1인 얼마, 왜"를 정해 주고, 결과 글을 단톡방에 붙이면 거기서 송금하면 돼요.</p></details>
     <details><summary>몇 명까지 되나요?</summary><p>정해진 인원은 없어요. 셋이 가도, 열다섯이 가도 설문 모인 만큼 나눠요. 역할이 모자라면 방장이 더하면 돼요.</p></details>
     <details><summary>추천이 마음에 안 들면요?</summary><p>역할 카드를 눌러 바로 옮길 수 있어요. 방장은 "설거지" 같은 역할을 더하거나 고칠 수 있어요.</p></details>

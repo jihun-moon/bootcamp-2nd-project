@@ -257,10 +257,14 @@ function renderTravel() {
   });
   if (travel.perPerson !== null) {
     // "운전한 사람도 기름값 내?"를 단톡방에서 따지지 않게 두 기준을 나란히 둔다. 고르는 건 그룹 몫
+    // 방 규칙(운전한 사람 기름값)을 정했으면 그쪽 칸을 "우리 규칙"으로 칠한다
+    var rule = trip.rules.driverPaysFuel;
     var split = $('<div class="split">').appendTo(box);
-    split.append($('<p>').append($('<span class="muted small">').text('모두 나누면'), $('<b>').text(won(travel.perPerson))));
+    split.append($('<p>').toggleClass('chosen', rule === true)
+      .append($('<span class="muted small">').text(rule === true ? '우리 규칙 · 모두 나누면' : '모두 나누면'), $('<b>').text(won(travel.perPerson))));
     if (travel.perPassenger !== null) {
-      split.append($('<p>').append($('<span class="muted small">').text('운전한 사람은 빼고'), $('<b>').text(won(travel.perPassenger))));
+      split.append($('<p>').toggleClass('chosen', rule === false)
+        .append($('<span class="muted small">').text(rule === false ? '우리 규칙 · 운전한 사람은 빼고' : '운전한 사람은 빼고'), $('<b>').text(won(travel.perPassenger))));
     }
     box.append($('<p class="muted small">').text('운전하는 차 왕복 기름값·통행료, ' + trip.members.length + '명 기준. 운전자 수고비는 단톡방에서 정해요.'));
   }
@@ -288,9 +292,15 @@ function resultText() {
   var notYet = trip.members.filter(function (m) { return !m.surveyDone; }).map(function (m) { return m.name; });
   if (notYet.length) lines.push('설문 아직: ' + notYet.join(', '));
   if (travel && travel.perPerson !== null) {
-    lines.push('1인 교통비 약 ' + won(travel.perPerson) + ' (기름값·통행료 왕복)'
+    // 규칙을 정했으면 그 값 하나만, 안 정했으면 두 기준을 다
+    var rule = trip.rules.driverPaysFuel;
+    if (rule === false && travel.perPassenger !== null) lines.push('1인 교통비 약 ' + won(travel.perPassenger) + ' (운전한 사람은 빼고, 기름값·통행료 왕복)');
+    else if (rule === true) lines.push('1인 교통비 약 ' + won(travel.perPerson) + ' (모두 나눠서, 기름값·통행료 왕복)');
+    else lines.push('1인 교통비 약 ' + won(travel.perPerson) + ' (기름값·통행료 왕복)'
       + (travel.perPassenger !== null ? ', 운전자 빼면 ' + won(travel.perPassenger) : ''));
   }
+  var rules = rulesText(trip.rules);
+  if (rules) lines.push('규칙: ' + rules);
   lines.push('TripMate 에서 정했어요 ' + location.origin + '/join/' + trip.inviteCode);
   return lines.join('\n');
 }
@@ -318,7 +328,10 @@ $(function () {
     loadBoard().done(function () { if (board.assignments.length) loadTravel(); });
     // 누가 들어오면 미배정 칸이 바뀌니 방 정보도 다시 읽는다
     listen(tripId, function (what) {
-      if (what === 'members' || what === 'all') {
+      if (what === 'trip') {
+        // 방 규칙이 바뀌면 교통비 칸의 "우리 규칙" 표시만 다시 그린다
+        loadTrip(tripId).done(function (t) { trip = t; renderTravel(); });
+      } else if (what === 'members' || what === 'all') {
         loadTrip(tripId).done(function (t) { trip = t; loadBoard(); });
       } else if (what === 'roles') {
         // 운전이 바뀌면 교통비도 바뀐다. 카드를 연달아 옮길 때마다 길찾기를 부르지 않게 멈춘 뒤 한 번만 센다

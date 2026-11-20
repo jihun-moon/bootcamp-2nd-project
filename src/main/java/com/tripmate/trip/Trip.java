@@ -24,6 +24,11 @@ public class Trip {
     private LocalDate startDate;
     private LocalDate endDate;
 
+    // 방 규칙. 커뮤니티 글에서 가장 많이 싸운 세 가지를 출발 전에 정해 둔다(docs/11). null 은 아직 안 정함
+    private Boolean driverPaysFuel;  // 운전한 사람도 기름값을 같이 내나
+    private Boolean refundNoShow;    // 전날 빠지면 예약금을 돌려주나
+    private Boolean drinksSeparate;  // 술값은 마신 사람만 내나
+
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id")
     private List<Member> members = new ArrayList<>();
@@ -44,6 +49,12 @@ public class Trip {
         return member;
     }
 
+    public void updateRules(Boolean driverPaysFuel, Boolean refundNoShow, Boolean drinksSeparate) {
+        this.driverPaysFuel = driverPaysFuel;
+        this.refundNoShow = refundNoShow;
+        this.drinksSeparate = drinksSeparate;
+    }
+
     public Long getId() { return id; }
     public String getInviteCode() { return inviteCode; }
     public String getTitle() { return title; }
@@ -51,4 +62,7 @@ public class Trip {
     public LocalDate getStartDate() { return startDate; }
     public LocalDate getEndDate() { return endDate; }
     public List<Member> getMembers() { return members; }
+    public Boolean getDriverPaysFuel() { return driverPaysFuel; }
+    public Boolean getRefundNoShow() { return refundNoShow; }
+    public Boolean getDrinksSeparate() { return drinksSeparate; }
 }

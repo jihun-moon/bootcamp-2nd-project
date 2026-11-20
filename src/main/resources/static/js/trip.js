@@ -12,6 +12,7 @@ function render(t) {
   $('#survey-count').text(done + '/' + trip.members.length + '명');
   $('#survey-bar').css('width', (done / trip.members.length * 100) + '%');
   renderNext(me, notYet);
+  renderRules(me);
 
   var list = $('#members').empty();
   trip.members.forEach(function (m) {
@@ -55,9 +56,47 @@ function renderNext(me, notYet) {
   }
 }
 
+// 방 규칙 카드. 방장은 눌러서 고르고, 참여자는 정해진 것을 읽기만 한다
+function renderRules(me) {
+  var list = $('#rules').empty();
+  $('#rules-note').text(me.host ? '처음에 정해 두면 나중에 안 싸워요. 모두의 화면과 결과 글에 보여요.' : '방장이 정해요. 결과 글에도 같이 나가요.');
+  ROOM_RULES.forEach(function (r) {
+    var value = trip.rules[r.key];
+    // 방장은 이름 아래 두 단추, 참여자는 한 줄(이름 … 정한 것)
+    var row = $('<li>').addClass(me.host ? 'pref' : 'between').append($('<span class="strong">').text(r.title));
+    if (!me.host) {
+      var picked = r.options.find(function (o) { return o.value === value; });
+      row.append($('<span>').toggleClass('muted', !picked).text(picked ? picked.label : '아직 안 정함'));
+    } else {
+      var group = $('<div class="segmented" role="group">').attr('aria-label', r.title);
+      r.options.forEach(function (o) {
+        $('<button type="button">').text(o.label).attr('aria-pressed', value === o.value).click(function () {
+          // 같은 걸 다시 누르면 "안 정함"으로 되돌린다
+          saveRule(r.key, value === o.value ? null : o.value);
+        }).appendTo(group);
+      });
+      row.append(group);
+    }
+    list.append(row);
+  });
+}
+
+// PUT: /api/trips/1/rules  { "driverPaysFuel": false, "refundNoShow": false, "drinksSeparate": true }
+function saveRule(key, value) {
+  var next = $.extend({}, trip.rules);
+  next[key] = value;
+  trip.rules = next;
+  renderRules(trip.members.find(function (m) { return m.id === trip.meId; })); // 누르자마자 칠하고, 저장은 뒤에서
+  api('PUT', '/api/trips/' + tripId + '/rules', next)
+    .done(render)
+    .fail(function (xhr) { if (xhr.status !== 401) { showNotice('규칙을 저장하지 못했어요. 다시 눌러 주세요.'); loadTrip(tripId).done(render); } });
+}
+
 // 링크만 던지면 무슨 링크인지 몰라 안 누른다. 할 일(1분 설문)과 까닭을 한 줄 붙인다
 function sendInvite() {
-  shareText('[' + trip.title + '] 여행방 만들었어! 1분 설문만 해 줘. 운전·총무랑 숙소 같이 정하자\n' + $('#invite-link').val(),
+  var rules = rulesText(trip.rules);
+  shareText('[' + trip.title + '] 여행방 만들었어! 1분 설문만 해 줘. 운전·총무랑 숙소 같이 정하자\n'
+    + (rules ? '규칙: ' + rules + '\n' : '') + $('#invite-link').val(),
     '초대 글을 복사했어요. 단톡방에 붙여 넣어 주세요.');
 }
 

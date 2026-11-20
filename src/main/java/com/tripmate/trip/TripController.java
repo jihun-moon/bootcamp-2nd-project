@@ -35,6 +35,14 @@ public class TripController {
         return ResponseEntity.ok(tripService.find(tripId, me));
     }
 
+    // PUT: /api/trips/1/rules  body = { "driverPaysFuel": false, "refundNoShow": false, "drinksSeparate": true }
+    // 방장만. 참여자는 403
+    @PutMapping("/trips/{tripId}/rules")
+    public ResponseEntity<TripDto.Response> updateRules(@PathVariable Long tripId, @RequestBody TripDto.Rules rules) {
+        var host = tripAccess.host(tripId);
+        return ResponseEntity.ok(tripService.updateRules(tripId, host, rules));
+    }
+
     // GET: /api/me/trips   첫 화면의 "내 여행방". 로그인 안 했으면 401(화면은 이걸로 로그인 여부도 안다)
     @GetMapping("/me/trips")
     public ResponseEntity<List<TripDto.Summary>> myTrips() {

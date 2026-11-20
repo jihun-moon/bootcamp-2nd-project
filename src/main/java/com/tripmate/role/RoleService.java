@@ -102,7 +102,7 @@ public class RoleService {
             throw new ResponseStatusException(HttpStatus.CONFLICT);
         }
         if (current.isEmpty() && target != null) {
-            assignmentRepository.save(new Assignment(member, target, List.of()));
+            assignmentRepository.save(Assignment.placedByHand(member, target));
         } else if (current.isPresent() && target == null) {
             assignmentRepository.delete(current.get());
         } else if (current.isPresent()) {
@@ -137,13 +137,19 @@ public class RoleService {
     }
 
     // 마지막 사람이 설문을 끝내면 방장이 단추를 누르지 않아도 역할이 정해진다.
-    // 이미 배정이 있으면(방장이 추천받았거나 누가 손으로 옮겼으면) 건드리지 않는다. 혼자 있는 방은 아직 부를 친구가 남아 기다린다
+    // 혼자 있는 방은 아직 부를 친구가 남아 기다린다.
+    // 방장과 제일 빠른 친구 둘이 먼저 끝내면 그때 "모두 끝남"이라 둘만 배정되고, 저녁에 들어온 다섯은 빈손이었다(7명 시뮬레이션).
+    // 그래서 배정 없는 사람이 생기면 다시 짠다. 다만 누가 카드를 손으로 옮겼으면그 뜻을 지우지 않게 둔다
     @Transactional
     public void recommendWhenAllDone(Long tripId) {
         var members = tripRepository.findWithMembersById(tripId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)).getMembers();
         var allDone = members.size() >= 2 && members.stream().allMatch(Member::isSurveyDone);
-        if (allDone && !assignmentRepository.existsByRoleTripId(tripId)) recommend(tripId);
+        if (!allDone) return;
+        var assignments = assignmentRepository.findByRoleTripIdOrderById(tripId);
+        var someoneLeftOut = assignments.size() < members.size();
+        var movedByHand = assignments.stream().anyMatch(Assignment::isByHand);
+        if (assignments.isEmpty() || someoneLeftOut && !movedByHand) recommend(tripId);
     }
 
     // 손으로 옮긴 배정까지 지우고 설문으로 처음부터 다시 짠다. 점수 규칙은 RoleScorer, 배정은 HungarianAssigner

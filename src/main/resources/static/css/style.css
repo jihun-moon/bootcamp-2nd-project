@@ -319,7 +319,9 @@ tr:last-child td { border-bottom: 0; }
 .room-head { display: flex; align-items: center; gap: 8px; padding: 6px 16px 10px; font-size: 15px; }
 .room-head .back { font-size: 24px; line-height: 1; margin-right: 4px; }
 .room-head .count { color: #4d5866; font-size: 14px; }
-.chat-demo { flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 4px 12px 12px; overflow: hidden; }
+.chat-demo { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 8px; padding: 4px 12px 12px; overflow: hidden; }
+/* 메신저처럼 새 말이 늘 맨 아래. 전에는 위에서부터 쌓고 아직 안 뜬 말도 자리를 차지해, 화면 높이(500·580px)를 넘는 마지막 말
+   "ㅋㅋ 다섯 번 누르니까 끝남…"이 아래로 잘렸다(768px 이상에서 늘, 휴대폰은 시각 칸이). 안 뜬 말은 자리도 비우고, 넘치면 옛 말이 위로 밀려난다 */
 .day { text-align: center; }
 .day span { display: inline-block; padding: 3px 10px; border-radius: 99px; background: rgb(0 0 0 / 0.12); color: #fff; font-size: 11px; }
 .msg { display: grid; grid-template-columns: 36px 1fr; gap: 8px; align-items: start; }
@@ -370,6 +372,9 @@ tr:last-child td { border-bottom: 0; }
 /* 재생 중일 때만 숨겼다가 차례로 띄운다. JS 가 없으면 .playing 이 안 붙어 결과 화면이 보인다 */
 .phone.playing [data-step] { opacity: 0; transform: translateY(8px); transition: opacity 0.28s var(--ease), transform 0.28s var(--ease); }
 .phone.playing [data-step].shown { opacity: 1; transform: none; }
+.phone.playing .chat-demo [data-step]:not(.shown) { display: none; }
+.phone.playing .chat-demo [data-step].shown { animation: msg-in 0.28s var(--ease); }
+@keyframes msg-in { from { opacity: 0; transform: translateY(8px); } }
 .phone.playing .board-scene { opacity: 0; transform: translateX(24px); pointer-events: none; }
 .phone.playing.on-board .chat-scene { opacity: 0; transform: translateX(-24px); }
 .phone.playing.on-board .board-scene { opacity: 1; transform: none; transition-delay: 0.25s; }

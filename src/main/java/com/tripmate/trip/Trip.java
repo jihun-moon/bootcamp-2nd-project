@@ -128,7 +128,6 @@ public class Trip {
     }
 
     public Long getId() { return id; }
-    public Long getPreviousTripId() { return previousTripId; }
     public LocalTime getMeetTime() { return meetTime; }
     public String getRoomDraw() { return roomDraw; }
     public Integer getRoomDrawCount() { return roomDrawCount; }

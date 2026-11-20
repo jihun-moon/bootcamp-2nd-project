@@ -2,6 +2,8 @@ package com.tripmate.user;
 
 import jakarta.persistence.*;
 
+import java.util.UUID;
+
 // 로그인한 사람. 방마다의 참여자(Member)와 따로 둔다. user 는 Postgres 예약어라 app_user
 @Entity
 public class AppUser {
@@ -32,7 +34,7 @@ public class AppUser {
     }
 
     static AppUser guest(String name) {
-        var user = new AppUser("guest:" + java.util.UUID.randomUUID(), name, null);
+        var user = new AppUser("guest:" + UUID.randomUUID(), name, null);
         user.guest = true;
         return user;
     }

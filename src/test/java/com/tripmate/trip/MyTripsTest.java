@@ -78,6 +78,7 @@ class MyTripsTest {
 
         mvc.perform(get("/join/" + code))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("og:title\" content=\"&#39;겨울 펜션 2박 3일&#39; 여행에 초대받았어요")));
+                .andExpect(content().string(containsString("og:title\" content=\"&#39;겨울 펜션 2박 3일&#39; 여행에 초대받았어요")))
+                .andExpect(content().string(containsString("지금 8명 들어와 있어요")));
     }
 }

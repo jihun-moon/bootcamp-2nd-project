@@ -41,7 +41,13 @@ public class TripPageController {
         model.addAttribute("inviteCode", inviteCode);
         tripRepository.findByInviteCode(inviteCode).ifPresent(trip -> {
             model.addAttribute("ogTitle", "'" + trip.getTitle() + "' 여행에 초대받았어요");
-            model.addAttribute("ogDescription", "설문 1분이면 운전·총무 같은 역할과 숙소를 근거 있게 같이 정해요. 앱 설치 없이 바로 열려요.");
+            // 미리보기에 "몇 명 중 몇 명 했는지"를 넣는다. 친구가 이미 했다는 걸 보면 누를 마음이 생긴다(조사: 다들 하는 걸 보면 따라 함).
+            // shortcut: 카톡은 같은 주소의 미리보기를 한동안 들고 있어서 숫자가 늦게 바뀐다. 초대 글을 다시 보낼 때 새로 읽힌다
+            var members = trip.getMembers();
+            var done = members.stream().filter(Member::isSurveyDone).count();
+            model.addAttribute("ogDescription", done > 0
+                    ? members.size() + "명 중 " + done + "명 벌써 했어요 · 앱 설치 없이 1분이면 운전·총무까지 정해져요"
+                    : "지금 " + members.size() + "명 들어와 있어요 · 앱 설치 없이 1분이면 운전·총무까지 정해져요");
         });
         return "trip/join";
     }

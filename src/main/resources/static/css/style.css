@@ -785,3 +785,9 @@ button.link::after { content: ""; position: absolute; inset: -12px -8px; } /* �
 /* 나눌 사람 접힘 줄: 왼쪽 정렬 글자 단추 하나(평소엔 이 줄만 보인다) */
 .settle-who { justify-self: start; color: var(--muted); }
 .settle-who[aria-expanded="true"] { color: var(--accent); }
+
+/* 보낼 줄 오른쪽: 금액과 한 번 누르는 단추. 끝난 송금은 작게, 줄 긋지 않고 흐리게 */
+.settle-right { display: inline-flex; align-items: center; gap: 10px; }
+.btn.small.settle-done { min-height: 36px; padding: 6px 12px; font-size: var(--fs-sm); }
+.settle-paid li { gap: 8px; color: var(--muted); }
+.settle-paid li > span:first-child { flex: 1; min-width: 0; }

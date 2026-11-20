@@ -60,6 +60,7 @@ JDK 17 이상만 있으면 된다. DB 는 메모리 H2 라 설치할 것이 없�
 | 장보기 | GET / PUT / DELETE | `/api/trips/{id}/shopping`, `/shopping/plan`, `/shopping/items/{item}` | 200 `{"people": 8, "items": [...], "spent": 52000, "perPerson": 6500}` | 남이 맡은 줄 409, 범위 밖 400 | 문지훈 |
 | 술 마셔요 표시 | PUT | `/api/trips/{id}/members/{memberId}/drinks` | 200 방<br>요청 `{"drinks": false}` (기본은 마심) | 남의 것을 방장이 아닌 사람이 바꾸면 403 | 문지훈 |
 | 누가 누구에게 얼마 | GET | `/api/trips/{id}/settlement` | 200 `{"total": 560000, "transfers": [{"fromName": "도윤", "toName": "재현", "amount": 53200}]}` | | 문지훈 |
+| 보냈어요·받았어요 | POST / DELETE | `/api/trips/{id}/payments`, `/payments/{paymentId}` | 201 / 200 판(끝난 줄은 `payments`, 남은 줄만 `transfers`)<br>요청 `{"fromId": 2, "toId": 1, "amount": 20000}` | 보낸·받은 사람·방장이 아니면 403, 같은 사람·방에 없는 사람 400 | 문지훈 |
 | 먼저 낸 돈 적기·지우기 | POST / DELETE | `/api/trips/{id}/expenses`, `/expenses/{expenseId}` | 201 / 200 판<br>요청 `{"kind": "FUEL", "memo": "주유", "amount": 64000}` (kind: STAY·FUEL·FOOD·DRINK·OTHER, `sharerIds` 를 주면 그 사람들끼리만, 안 주면 모두· 규칙이 켜지면 FUEL 은 운전자 빼고, DRINK·장보기 술은 마신 사람끼리) | 금액 0 이하 400, 남이 적은 것 403 | 문지훈 |
 
 화면 주소(`/trips/1/roles` 같은 것)는 [화면 설계](docs/02-화면설계.md)에 있다. API 를 직접 불러 보려면 브라우저에서 카카오로 로그인한 뒤 `JSESSIONID` 쿠키를 IntelliJ HTTP Client 나 Talend API Tester 에 붙인다. 테스트는 `TestLogin`(src/test)이 같은 세션을 바로 만든다.

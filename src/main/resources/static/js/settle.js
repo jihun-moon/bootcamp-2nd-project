@@ -2,9 +2,18 @@
 // GET    /api/trips/1/settlement
 // POST   /api/trips/1/expenses      { "kind": "FUEL", "memo": "주유 + 톨비", "amount": 64000 }
 // DELETE /api/trips/1/expenses/3
+// POST   /api/trips/1/payments      { "fromId": 2, "toId": 1, "amount": 20000 }   보냈어요/받았어요
+// DELETE /api/trips/1/payments/4
 var settle = null;
 var settleKind = 'STAY';
 var SETTLE_KINDS = [['STAY', '숙소'], ['FUEL', '주유·톨비'], ['FOOD', '식비'], ['DRINK', '술'], ['OTHER', '기타']];
+
+// 이름 뒤 이/가: 받침이 있으면 "문지훈이·재현이", 없으면 "민지가"(한글이 아니면 "이(가)")
+function withSubject(name) {
+  var code = name.charCodeAt(name.length - 1) - 0xAC00;
+  if (code < 0 || code > 11171) return name + '이(가)';
+  return name + (code % 28 ? '이' : '가');
+}
 
 function renderSettle(board, trip) {
   settle = board;
@@ -13,14 +22,42 @@ function renderSettle(board, trip) {
   if (!board.lines.length) {
     list.append($('<li class="muted">').text('먼저 낸 돈을 적으면 누가 누구에게 얼마 보낼지 바로 나와요.'));
   } else if (!board.transfers.length) {
-    list.append($('<li class="settled muted">').append($('<span>').text('모두 딱 맞게 냈어요. 보낼 돈이 없어요.')));
+    list.append($('<li class="settled muted">').append($('<span>').text(board.payments.length
+      ? '다 보냈어요. 이번 여행 정산 끝!' : '모두 딱 맞게 냈어요. 보낼 돈이 없어요.')));
   }
   settledStamp(board.lines.length > 0 && !board.transfers.length);
+  var me = trip.members.find(function (m) { return m.id === trip.meId; });
   board.transfers.forEach(function (t) {
     var mine = t.fromId === trip.meId || t.toId === trip.meId;
+    // 한 번만 누르면 된다: 보내는 사람은 "보냈어요", 받는 사람은 "받았어요". 방장은 대신 눌러 줄 수 있다
+    var label = t.fromId === trip.meId ? '보냈어요' : t.toId === trip.meId ? '받았어요' : me && me.host ? '받음 표시' : null;
+    var right = $('<span class="settle-right">').append($('<b class="settle-amount">').text(won(t.amount)));
+    if (label) {
+      right.append($('<button type="button" class="btn small settle-done">').text(label).click(function () {
+        var button = $(this).prop('disabled', true);
+        api('POST', '/api/trips/' + tripId + '/payments', { fromId: t.fromId, toId: t.toId, amount: t.amount })
+          .done(function (b) { renderSettle(b, trip); showToast(t.fromName + ' → ' + t.toName + ' 끝. 남은 줄에서 뺐어요.'); })
+          .fail(function () { button.prop('disabled', false); });
+      }));
+    }
     $('<li class="settle-row">').toggleClass('mine', mine).append(
       $('<span>').append($('<b>').text(t.fromName), $('<span class="arrow" aria-hidden="true">').text(' → '), $('<b>').text(t.toName)),
-      $('<b class="settle-amount">').text(won(t.amount))).appendTo(list);
+      right).appendTo(list);
+  });
+
+  // 끝난 송금: 누가 눌렀는지와 되돌리기(누른 사람, 보낸·받은 사람, 방장)
+  var paid = $('#settle-paid').empty().prop('hidden', !board.payments.length);
+  if (board.payments.length) paid.append($('<li class="muted">').text('끝난 송금'));
+  board.payments.forEach(function (p) {
+    var row = $('<li class="between">').append($('<span>').text('✓ ' + p.fromName + ' → ' + p.toName + ' ' + won(p.amount)
+      + ' · ' + withSubject(p.markedByName) + (p.markedById === p.toId ? ' 받았어요' : p.markedById === p.fromId ? ' 보냈어요' : ' 표시했어요')));
+    var can = [p.fromId, p.toId, p.markedById].indexOf(trip.meId) >= 0 || (me && me.host);
+    if (can) {
+      row.append($('<button type="button" class="link small">').text('되돌리기').click(function () {
+        api('DELETE', '/api/trips/' + tripId + '/payments/' + p.id).done(function (b) { renderSettle(b, trip); });
+      }));
+    }
+    paid.append(row);
   });
   $('#btn-settle-share').prop('hidden', !board.transfers.length);
 

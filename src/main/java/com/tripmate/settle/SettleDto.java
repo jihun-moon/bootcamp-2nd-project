@@ -21,8 +21,16 @@ public final class SettleDto {
 
     // GET /api/trips/1/settlement
     // { "total": 612000, "lines": [...], "balances": [...], "transfers": [ { "fromName": "민지", "toName": "준호", "amount": 32000 } ] }
+    // transfers 는 아직 남은 보낼 줄, payments 는 "보냈어요/받았어요"로 끝난 줄
     public record Board(int total, List<Line> lines, List<Balance> balances, List<Transfer> transfers,
-                        Boolean driverPaysFuel, Boolean drinksSeparate) {
+                        List<Paid> payments, Boolean driverPaysFuel, Boolean drinksSeparate) {
+    }
+
+    // POST /api/trips/1/payments  { "fromId": 2, "toId": 1, "amount": 20000 }   보낸 사람·받은 사람·방장만
+    public record PaymentRequest(@NotNull Long fromId, @NotNull Long toId, @Positive @Max(100_000_000) int amount) {
+    }
+
+    public record Paid(Long id, Long fromId, String fromName, Long toId, String toName, int amount, Long markedById, String markedByName) {
     }
 
     // 낸 돈 한 줄. shopping 이 true 면 장보기 표에서 온 줄이라 여기서는 못 지운다(장보기 화면에서 고친다)

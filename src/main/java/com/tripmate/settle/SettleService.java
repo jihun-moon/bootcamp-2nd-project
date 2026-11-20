@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 // 다녀와서 "누가 누구에게 얼마". 낸 돈(직접 적은 것 + 장보기 "내가 살게"에 적은 돈)을 모두 똑같이 나누되,
 // 기름값·톨비는 방 규칙이 "운전자는 안 냄"이면 기름값을 낸 사람(운전자)을 빼고,
@@ -31,13 +32,16 @@ public class SettleService {
     private final TripRepository tripRepository;
     private final ExpenseRepository expenseRepository;
     private final ShoppingClaimRepository claimRepository;
+    private final PaymentRepository paymentRepository;
     private final ApplicationEventPublisher events;
 
     public SettleService(TripRepository tripRepository, ExpenseRepository expenseRepository,
-                         ShoppingClaimRepository claimRepository, ApplicationEventPublisher events) {
+                         ShoppingClaimRepository claimRepository, PaymentRepository paymentRepository,
+                         ApplicationEventPublisher events) {
         this.tripRepository = tripRepository;
         this.expenseRepository = expenseRepository;
         this.claimRepository = claimRepository;
+        this.paymentRepository = paymentRepository;
         this.events = events;
     }
 
@@ -80,13 +84,22 @@ public class SettleService {
                     "장보기 · " + c.getItem().getLabel(), c.getAmount(), true, null));
         }
 
+        // 보냈어요/받았어요: 보낸 사람이 받은 사람 몫을 낸 것으로 셈한다. 그러면 남은 보낼 줄에서 저절로 빠진다
+        var paidRows = new ArrayList<SettleDto.Paid>();
+        for (var p : paymentRepository.findByTripIdOrderById(tripId)) {
+            paid.merge(p.getSender().getId(), (double) p.getAmount(), Double::sum);
+            owed.merge(p.getReceiver().getId(), (double) p.getAmount(), Double::sum);
+            paidRows.add(new SettleDto.Paid(p.getId(), p.getSender().getId(), p.getSender().getName(), p.getReceiver().getId(),
+                    p.getReceiver().getName(), p.getAmount(), p.getMarkedBy().getId(), p.getMarkedBy().getName()));
+        }
+
         var balances = members.stream().map(m -> {
             var p = paid.getOrDefault(m.getId(), 0.0);
             var o = owed.getOrDefault(m.getId(), 0.0);
             return new SettleDto.Balance(m.getId(), m.getName(), (int) Math.round(p), (int) Math.round(o), (int) Math.round(p - o));
         }).toList();
         var total = lines.stream().mapToInt(SettleDto.Line::amount).sum();
-        return new SettleDto.Board(total, lines, balances, transfers(members, paid, owed), trip.getDriverPaysFuel(),
+        return new SettleDto.Board(total, lines, balances, transfers(members, paid, owed), paidRows, trip.getDriverPaysFuel(),
                 trip.getDrinksSeparate());
     }
 
@@ -104,8 +117,9 @@ public class SettleService {
         var debtors = new ArrayList<Side>();
         for (var m : members) {
             var diff = paid.getOrDefault(m.getId(), 0.0) - owed.getOrDefault(m.getId(), 0.0);
-            if (diff >= 1) creditors.add(new Side(m, new double[]{diff}));
-            else if (diff <= -1) debtors.add(new Side(m, new double[]{-diff}));
+            // 보낼 줄을 100원 단위로 올려 보내면 몇십 원씩 남는다. 100원 아래는 끝난 것으로 본다
+            if (diff >= UNIT) creditors.add(new Side(m, new double[]{diff}));
+            else if (diff <= -UNIT) debtors.add(new Side(m, new double[]{-diff}));
         }
         Comparator<Side> big = Comparator.comparingDouble((Side s) -> s.left()[0]).reversed();
         creditors.sort(big);
@@ -121,8 +135,8 @@ public class SettleService {
                     to.member().getId(), to.member().getName(), won));
             to.left()[0] -= x;
             from.left()[0] -= x;
-            if (to.left()[0] < 1) c++;
-            if (from.left()[0] < 1) d++;
+            if (to.left()[0] < UNIT) c++;
+            if (from.left()[0] < UNIT) d++;
         }
         return out;
     }
@@ -155,9 +169,39 @@ public class SettleService {
         return board(tripId);
     }
 
-    // 방을 나간 사람이 적은 돈도 같이 빠진다(남은 사람끼리 다시 나눈다)
+    // 보냈어요/받았어요. 보낸 사람·받은 사람이 한 번 누르면 된다(방장은 대신 눌러 줄 수 있다)
+    @Transactional
+    public SettleDto.Board markPaid(Long tripId, Member me, SettleDto.PaymentRequest req) {
+        var trip = tripRepository.findWithMembersById(tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (!me.isHost() && !me.getId().equals(req.fromId()) && !me.getId().equals(req.toId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        var byId = trip.getMembers().stream().collect(Collectors.toMap(Member::getId, m -> m));
+        var from = byId.get(req.fromId());
+        var to = byId.get(req.toId());
+        if (from == null || to == null || from == to) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이 방 두 사람 사이만 돼요");
+        paymentRepository.save(new Payment(trip, from, to, byId.get(me.getId()), req.amount()));
+        events.publishEvent(new TripChanged(tripId, "settle"));
+        return board(tripId);
+    }
+
+    // 잘못 누른 것 되돌리기: 누른 사람, 보낸·받은 사람, 방장
+    @Transactional
+    public SettleDto.Board unmarkPaid(Long tripId, Long paymentId, Member me) {
+        var p = paymentRepository.findByIdAndTripId(paymentId, tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        var mine = Stream.of(p.getSender(), p.getReceiver(), p.getMarkedBy()).anyMatch(m -> m.getId().equals(me.getId()));
+        if (!mine && !me.isHost()) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        paymentRepository.delete(p);
+        events.publishEvent(new TripChanged(tripId, "settle"));
+        return board(tripId);
+    }
+
+    // 방을 나간 사람이 적은 돈과 보냈어요 표시도 같이 빠진다(남은 사람끼리 다시 나눈다)
     @EventListener
     public void onMemberLeaving(MemberLeaving e) {
         expenseRepository.deleteByPayerId(e.memberId());
+        paymentRepository.deleteBySenderIdOrReceiverIdOrMarkedById(e.memberId(), e.memberId(), e.memberId());
     }
 }

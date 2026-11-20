@@ -163,4 +163,40 @@ class SettleTest {
     void 방에_없는_사람은_나눌_사람으로_못_고른다() throws Exception {
         pay("재현", "{ \"kind\": \"FOOD\", \"amount\": 10000, \"sharerIds\": [1, 9999] }").andExpect(status().isBadRequest());
     }
+
+    private ResultActions markPaid(String who, int from, int to, int amount) throws Exception {
+        return mvc.perform(post("/api/trips/1/payments").session(TestLogin.as(mvc, who)).contentType(MediaType.APPLICATION_JSON)
+                .content("{ \"fromId\": " + from + ", \"toId\": " + to + ", \"amount\": " + amount + " }"));
+    }
+
+    @Test
+    void 보냈어요_받았어요를_누르면_남은_줄에서_빠지고_되돌릴_수_있다() throws Exception {
+        pay("재현", "{ \"kind\": \"FOOD\", \"amount\": 80000 }");
+        assertThat(board("시우").get("transfers").size()).isEqualTo(7);
+
+        markPaid("민지", 2, 1, 10000).andExpect(status().isCreated());                 // 보낸 사람이 "보냈어요"
+        var b = JSON.readTree(markPaid("재현", 3, 1, 10000).andExpect(status().isCreated())  // 받은 사람이 "받았어요"
+                .andReturn().getResponse().getContentAsString());
+        assertThat(b.get("transfers").size()).isEqualTo(5);
+        assertThat(b.get("payments").size()).isEqualTo(2);
+        for (var t : b.get("transfers")) assertThat(t.get("fromName").asString()).isNotIn("민지", "도윤");
+
+        markPaid("시우", 4, 1, 10000).andExpect(status().isForbidden());                // 남의 줄은 못 누른다
+        markPaid("재현", 1, 1, 10000).andExpect(status().isBadRequest());
+
+        // 잘못 누른 것 되돌리기
+        var paymentId = b.get("payments").get(0).get("id").asLong();
+        mvc.perform(delete("/api/trips/1/payments/" + paymentId).session(TestLogin.as(mvc, "시우"))).andExpect(status().isForbidden());
+        mvc.perform(delete("/api/trips/1/payments/" + paymentId).session(TestLogin.as(mvc, "민지")))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.transfers.length()").value(6));
+    }
+
+    @Test
+    void 다_보내면_남은_줄이_없다_100원_올림_자투리는_끝난_것으로() throws Exception {
+        pay("재현", "{ \"kind\": \"FOOD\", \"amount\": 70000 }");   // 8명 → 8,750, 보낼 줄은 8,800
+        for (var t : board("재현").get("transfers")) {
+            markPaid("재현", t.get("fromId").asInt(), t.get("toId").asInt(), t.get("amount").asInt()).andExpect(status().isCreated());
+        }
+        assertThat(board("시우").get("transfers").size()).isZero();
+    }
 }

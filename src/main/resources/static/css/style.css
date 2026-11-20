@@ -61,7 +61,7 @@
 
 * { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; overflow-x: clip; } /* 화면 폭 띠(사진·권유)가 가로 스크롤을 만들지 않게 */
 
 body {
   margin: 0;
@@ -113,7 +113,6 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 /* 상자 */
 .box { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
 .box.dashed { border-style: dashed; }
-.box.scroll { overflow-x: auto; padding: 0; }
 .card { background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 8px 12px; font-size: var(--fs-sm); }
 /* 상자 안을 또 상자로 나누지 않고 줄과 구분선으로 나눈다 */
 .rows > li { padding: 12px 0; border-bottom: 1px solid var(--line); }
@@ -417,14 +416,12 @@ tr:last-child td { border-bottom: 0; }
 
 
 .faq details { border-bottom: 1px solid var(--line); }
-.faq details p { padding-bottom: 16px; }
 .faq summary { display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 56px; cursor: pointer; font-weight: 600; list-style: none; } /* 줄 전체가 누름 칸(30 → 56px) */
 .faq summary::-webkit-details-marker { display: none; } /* 브라우저 기본 ▶ 대신 오른쪽 + 하나 */
 .faq summary::after { content: "+"; font-size: var(--fs-lg); font-weight: 400; color: var(--muted); transition: transform var(--dur) var(--ease); }
 .faq details[open] summary::after { transform: rotate(45deg); }
-.faq details p { margin-top: 8px; color: var(--muted); }
+.faq details p { margin-top: 8px; padding-bottom: 16px; color: var(--muted); }
 
-.cta { text-align: center; padding: 96px 0 16px; }
 .cta p { margin-inline: auto; } /* 본문 줄 길이 제한(68ch) 때문에 왼쪽으로 붙지 않게 */
 .site-footer { border-top: 1px solid var(--line); margin-top: 48px; padding: 24px 0; color: var(--muted); font-size: var(--fs-xs); }
 
@@ -455,7 +452,6 @@ body:has(.sticky-cta) .site-header .btn { display: none; } /* 아래 붙은 버�
 
 @media (min-width: 720px) {
   .section { padding-top: 120px; }
-  .cta { padding-top: 128px; }
   .page > main.stack > * + * { margin-top: 24px; }
   .page { padding: 28px 24px 64px; }
   .hero { grid-template-columns: 1.1fr 1fr; align-items: center; padding: 56px 0 24px; }
@@ -499,7 +495,6 @@ body:has(.sticky-cta) .site-header .btn { display: none; } /* 아래 붙은 버�
 /* 표·그림 아래 출처 한 줄. 상자 밖, 오른쪽 끝, 위 8px */
 .caption { margin-top: 8px; margin-left: auto; text-align: right; font-size: var(--fs-xs); color: var(--muted); }
 /* 마지막 권유도 다른 절 제목과 같은 크기 */
-.cta h2 { font-size: var(--fs-xl); }
 /* 단계 그림의 단추는 그림이라 눌러도 안 됐다. 그림 전체를 체험 방 링크로 두고, 누를 수 있다는 걸 아래 한 줄로 알린다 */
 .mini-phone .mini-go { margin-top: auto; padding-top: 4px; font-size: var(--fs-sm); font-weight: 600; color: var(--accent); }
 @media (hover: hover) {
@@ -509,7 +504,6 @@ body:has(.sticky-cta) .site-header .btn { display: none; } /* 아래 붙은 버�
 .split p.chosen { border-color: var(--accent); background: var(--accent-soft); }
 .split p.chosen span { color: var(--accent); font-weight: 600; }
 /* 화면 폭 전체로 펼치는 띠(사진 띠, 마지막 권유). 가로 스크롤은 html 의 overflow-x: clip 이 막는다 */
-html { overflow-x: clip; }
 .photo-band, .cta { width: 100vw; margin-left: calc(50% - 50vw); }
 
 /* 사진 띠: 사진 위 아래쪽을 어둡게 깔고 흰 글씨 한 줄. 사진이 늦게 와도 글이 읽히게 바탕색을 둔다 */
@@ -519,7 +513,7 @@ html { overflow-x: clip; }
   background: linear-gradient(transparent, rgb(0 0 0 / 0.65)); color: #fff; font-size: var(--fs-xl); font-weight: 700; line-height: 1.35; }
 
 /* 마지막 권유: 친구들이 모인 모닥불 사진 위에 어둡게 한 겹, 흰 글씨. 단추만 브랜드 색 */
-.cta { margin-top: 96px; padding: 96px 16px; color: #fff;
+.cta { margin-top: 96px; padding: 96px 16px; text-align: center; color: #fff;
   background: linear-gradient(rgb(0 0 0 / 0.55), rgb(0 0 0 / 0.55)), url("/img/photo/bonfire.jpg") center / cover, #2a1a10; }
 .cta h2 { font-size: var(--fs-2xl); letter-spacing: -0.02em; }
 .cta .muted { color: inherit; opacity: 0.85; }
@@ -555,9 +549,8 @@ body:has(.cta) .site-footer { margin-top: 0; }
 .cal-day.between { background: var(--accent-soft); }
 .cal-day.band-right { background: linear-gradient(90deg, transparent 50%, var(--accent-soft) 50%); }
 .cal-day.band-left { background: linear-gradient(90deg, var(--accent-soft) 50%, transparent 50%); }
-.cal-day.start, .cal-day.end { color: var(--accent-ink); font-weight: 700; }
+.cal-day.start, .cal-day.end { z-index: 0; isolation: isolate; color: var(--accent-ink); font-weight: 700; }
 .cal-day.start::before, .cal-day.end::before { content: ""; position: absolute; inset: 2px 50%; margin-inline: -20px; border-radius: 50%; background: var(--accent); z-index: -1; }
-.cal-day.start, .cal-day.end { z-index: 0; isolation: isolate; }
 @media (hover: hover) { .cal-day:not(:disabled):not(.start):not(.end):hover { background-color: var(--surface-2); border-radius: var(--radius-sm); } }
 @media (prefers-color-scheme: dark) { .cal-day.sat, .cal-week:last-child { color: #7aa7ff; } }
 .period { font-weight: 600; color: var(--muted); }
@@ -587,3 +580,13 @@ body:has(.cta) .site-footer { margin-top: 0; }
 .stats li > span { font-size: var(--fs-xl); font-weight: 700; color: var(--accent); }
 .stats li p { grid-column: 1 / -1; margin-top: 4px; color: var(--muted); }
 @media (min-width: 720px) { .stats ul { grid-template-columns: repeat(3, 1fr); gap: 48px; } }
+
+/* 날짜 맞추기 달력: 내가 고른 날은 청록 테, 많이 겹친 날일수록 진한 바탕(4단계), 아래 작은 숫자는 되는 사람 수 */
+.cal-day.avail { display: grid; place-content: center; height: 52px; border-radius: var(--radius-sm); line-height: 1.1; }
+.cal-day.avail small { font-size: 10px; color: var(--muted); }
+.cal-day.avail[data-heat="1"] { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.cal-day.avail[data-heat="2"] { background: color-mix(in srgb, var(--accent) 24%, transparent); }
+.cal-day.avail[data-heat="3"] { background: color-mix(in srgb, var(--accent) 38%, transparent); }
+.cal-day.avail[data-heat="4"] { background: color-mix(in srgb, var(--accent) 55%, transparent); }
+.cal-day.avail[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--accent); font-weight: 700; }
+.best-date { padding: 12px 0; border-top: 1px solid var(--line); }

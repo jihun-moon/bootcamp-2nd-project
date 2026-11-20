@@ -9,8 +9,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.TreeMap;
 
 @Service
 public class TripService {
@@ -54,6 +57,47 @@ public class TripService {
         tripRepository.save(trip);
         roleRepository.saveAll(Role.defaultsFor(trip));
         return TripDto.Response.of(trip, me);
+    }
+
+    // 날짜 맞추기 판. 날짜별로 되는 사람 id 를 모은다(8명 × 많아야 60일이라 한 번 읽어 메모리에서 센다)
+    @Transactional(readOnly = true)
+    public TripDto.DatesBoard dates(Long tripId) {
+        var members = tripRepository.findWithMembersById(tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)).getMembers();
+        var available = new TreeMap<LocalDate, List<Long>>();
+        var responded = 0;
+        for (var m : members) {
+            if (!m.getAvailableDates().isEmpty()) responded++;
+            for (var d : m.getAvailableDates()) available.computeIfAbsent(d, k -> new ArrayList<>()).add(m.getId());
+        }
+        return new TripDto.DatesBoard(members.size(), responded, available);
+    }
+
+    // 내 되는 날을 통째로 바꾼다. 지난 날과 1년 넘게 먼 날은 받지 않는다
+    @Transactional
+    public TripDto.DatesBoard saveDates(Long tripId, Long memberId, TripDto.DatesRequest req) {
+        var today = LocalDate.now();
+        if (req.dates().stream().anyMatch(d -> d.isBefore(today) || d.isAfter(today.plusYears(1)))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "오늘부터 1년 안의 날만 고를 수 있어요");
+        }
+        var member = memberRepository.findByIdAndTripId(memberId, tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        member.changeAvailableDates(req.dates());
+        events.publishEvent(new TripChanged(tripId, "dates"));
+        return dates(tripId);
+    }
+
+    // 방장이 후보 하나를 골라 방 날짜로 정한다. 모두의 방 머리(날짜)가 바뀐다
+    @Transactional
+    public TripDto.Response setPeriod(Long tripId, Member host, TripDto.PeriodRequest req) {
+        if (req.endDate().isBefore(req.startDate())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "도착일이 출발일보다 앞이에요");
+        }
+        var trip = tripRepository.findWithMembersById(tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        trip.updatePeriod(req.startDate(), req.endDate());
+        events.publishEvent(new TripChanged(tripId, "trip"));
+        return TripDto.Response.of(trip, host);
     }
 
     // 방장이 방 규칙을 바꾸면 모두의 화면(개요·역할 보드의 교통비·결과 글)이 다시 읽는다

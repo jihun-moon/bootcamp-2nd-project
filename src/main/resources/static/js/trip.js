@@ -13,6 +13,7 @@ function render(t) {
   $('#survey-bar').css('width', (done / trip.members.length * 100) + '%');
   renderNext(me, notYet);
   renderRules(me);
+  renderDates(me);
 
   var list = $('#members').empty();
   trip.members.forEach(function (m) {
@@ -54,6 +55,58 @@ function renderNext(me, notYet) {
     $('#next-text').text('설문으로 역할이 정해졌어요. 마음에 안 들면 보드에서 눌러 바꿀 수 있어요.');
     actions.append(link('역할 보드', '/trips/' + tripId + '/roles', true), link('숙소 투표', '/trips/' + tripId + '/stays'));
   }
+}
+
+// 날짜 맞추기. 방에 날짜가 정해지면 숨는다. 누를 때마다 0.6초 기다렸다 한 번에 저장(연달아 눌러도 요청 하나)
+var myDates = null;
+var datesTimer = null;
+function renderDates(me) {
+  $('#dates-card').prop('hidden', !!trip.startDate);
+  if (trip.startDate) return;
+  api('GET', '/api/trips/' + tripId + '/dates').done(function (board) { drawDates(me, board); });
+}
+
+function drawDates(me, board) {
+  if (myDates === null) {
+    myDates = new Set(Object.keys(board.available).filter(function (k) { return board.available[k].indexOf(me.id) >= 0; }));
+  }
+  $('#dates-count').text(board.responded + '/' + board.memberCount + '명 답함');
+  availabilityCalendar($('#dates-cal'), {
+    mine: myDates, available: board.available, total: board.memberCount, editable: true,
+    onChange: function (set) {
+      clearTimeout(datesTimer);
+      datesTimer = setTimeout(function () {
+        api('PUT', '/api/trips/' + tripId + '/members/' + me.id + '/dates', { dates: Array.from(set) })
+          .done(function (b) { drawBest(me, b); $('#dates-count').text(b.responded + '/' + b.memberCount + '명 답함'); });
+      }, 600);
+    }
+  });
+  drawBest(me, board);
+}
+
+// "1월 15일(금) ~ 17일(일) · 2박 3일 · 8명 중 7명 (하준 안 됨)". 방장은 옆 단추로 바로 정한다
+function drawBest(me, board) {
+  var list = $('#dates-best').empty();
+  var best = bestWindows(board, trip.members, 3);
+  if (!best.length) {
+    list.append($('<li class="hint">').text('겹치는 날이 생기면 여기 좋은 날짜가 떠요.'));
+    return;
+  }
+  best.forEach(function (w) {
+    var who = w.missing.length ? ' (' + w.missing.map(function (m) { return m.name; }).join(', ') + ' 안 됨)' : ' 모두 돼요';
+    var row = $('<li class="between best-date">').append($('<div>').append(
+      $('<div class="strong">').text(formatPeriod(w.start, w.end)),
+      $('<div class="muted small">').text(trip.members.length + '명 중 ' + w.ok.length + '명' + who)));
+    if (me.host) {
+      row.append($('<button type="button" class="btn primary">').text('이 날짜로').click(function () {
+        api('PUT', '/api/trips/' + tripId + '/period', { startDate: w.start, endDate: w.end }).done(function (t) {
+          showToast('날짜를 정했어요. 모두의 화면에 바로 보여요.');
+          loadTrip(tripId).done(render);
+        });
+      }));
+    }
+    list.append(row);
+  });
 }
 
 // 방 규칙 카드. 방장은 눌러서 고르고, 참여자는 정해진 것을 읽기만 한다

@@ -49,6 +49,11 @@ public class Trip {
         return member;
     }
 
+    public void updatePeriod(LocalDate startDate, LocalDate endDate) {
+        this.startDate = startDate;
+        this.endDate = endDate;
+    }
+
     public void updateRules(Boolean driverPaysFuel, Boolean refundNoShow, Boolean drinksSeparate) {
         this.driverPaysFuel = driverPaysFuel;
         this.refundNoShow = refundNoShow;

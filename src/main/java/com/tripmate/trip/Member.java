@@ -3,6 +3,10 @@ package com.tripmate.trip;
 import com.tripmate.user.AppUser;
 import jakarta.persistence.*;
 
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
+
 // 그 방의 참여자. 계정(AppUser)과 따로 두어 방마다 이름이 달라도 되고, 예시 방처럼 계정 없는 참여자도 있을 수 있다
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = {"trip_id", "user_id"}))
@@ -22,6 +26,12 @@ public class Member {
     private boolean host;
     private boolean surveyDone;
 
+    // 날짜 맞추기: 이 사람이 되는 날. 방에 날짜가 아직 없을 때 모아서 겹치는 날을 찾는다
+    @ElementCollection
+    @CollectionTable(name = "member_available_date")
+    @Column(name = "available_date")
+    private Set<LocalDate> availableDates = new HashSet<>();
+
     protected Member() {
     }
 
@@ -31,6 +41,13 @@ public class Member {
         this.name = name;
         this.host = host;
     }
+
+    public void changeAvailableDates(Set<LocalDate> dates) {
+        availableDates.clear();
+        availableDates.addAll(dates);
+    }
+
+    public Set<LocalDate> getAvailableDates() { return availableDates; }
 
     public void finishSurvey() {
         surveyDone = true;

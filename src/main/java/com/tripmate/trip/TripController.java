@@ -43,6 +43,28 @@ public class TripController {
         return ResponseEntity.ok(tripService.updateRules(tripId, host, rules));
     }
 
+    // GET: /api/trips/1/dates   날짜 맞추기 판(참여자 누구나)
+    @GetMapping("/trips/{tripId}/dates")
+    public ResponseEntity<TripDto.DatesBoard> dates(@PathVariable Long tripId) {
+        tripAccess.me(tripId);
+        return ResponseEntity.ok(tripService.dates(tripId));
+    }
+
+    // PUT: /api/trips/1/members/2/dates  body = { "dates": ["2027-01-15", "2027-01-16"] }   본인 것만
+    @PutMapping("/trips/{tripId}/members/{memberId}/dates")
+    public ResponseEntity<TripDto.DatesBoard> saveDates(@PathVariable Long tripId, @PathVariable Long memberId,
+                                                        @Valid @RequestBody TripDto.DatesRequest req) {
+        tripAccess.self(tripId, memberId);
+        return ResponseEntity.ok(tripService.saveDates(tripId, memberId, req));
+    }
+
+    // PUT: /api/trips/1/period  body = { "startDate": "2027-01-15", "endDate": "2027-01-17" }   방장만
+    @PutMapping("/trips/{tripId}/period")
+    public ResponseEntity<TripDto.Response> setPeriod(@PathVariable Long tripId, @Valid @RequestBody TripDto.PeriodRequest req) {
+        var host = tripAccess.host(tripId);
+        return ResponseEntity.ok(tripService.setPeriod(tripId, host, req));
+    }
+
     // GET: /api/me/trips   첫 화면의 "내 여행방". 로그인 안 했으면 401(화면은 이걸로 로그인 여부도 안다)
     @GetMapping("/me/trips")
     public ResponseEntity<List<TripDto.Summary>> myTrips() {

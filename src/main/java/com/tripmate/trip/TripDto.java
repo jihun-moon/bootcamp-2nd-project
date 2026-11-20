@@ -2,10 +2,13 @@ package com.tripmate.trip;
 
 import com.tripmate.user.AppUser;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public final class TripDto {
 
@@ -47,6 +50,19 @@ public final class TripDto {
             return new Summary(trip.getId(), trip.getTitle(), trip.getDestination(), trip.getStartDate(), trip.getEndDate(),
                     members.size(), members.stream().filter(Member::isSurveyDone).count(), host);
         }
+    }
+
+    // PUT /api/trips/1/members/2/dates  { "dates": ["2027-01-15", "2027-01-16", "2027-01-17"] }
+    public record DatesRequest(@NotNull @Size(max = 62) Set<LocalDate> dates) {
+    }
+
+    // GET /api/trips/1/dates -> { "memberCount": 8, "responded": 5, "available": { "2027-01-15": [1, 2, 5] } }
+    // 화면이 겹치는 날과 좋은 날짜 후보(2박·1박·당일)를 센다
+    public record DatesBoard(int memberCount, int responded, Map<LocalDate, List<Long>> available) {
+    }
+
+    // PUT /api/trips/1/period  { "startDate": "2027-01-15", "endDate": "2027-01-17" }  방장이 후보 하나를 고른다
+    public record PeriodRequest(@NotNull LocalDate startDate, @NotNull LocalDate endDate) {
     }
 
     // POST /api/invites/{inviteCode} 의 응답. 화면이 이 방으로 옮겨 간다

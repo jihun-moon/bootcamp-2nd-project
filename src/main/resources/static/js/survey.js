@@ -5,6 +5,9 @@ var tripId = $('body').data('trip-id');
 
 // key 와 value 는 Spring SurveyDto.Request 의 칸 이름·enum 값과 같아야 한다
 var QUESTIONS = [
+  // 방에 날짜가 아직 없을 때만. 친구들이 설문하는 김에 되는 날도 같이 누른다(따로 할 일이 늘지 않게)
+  { key: 'dates', title: '언제 돼요?', type: 'dates', note: '되는 날을 모두 눌러 주세요. 겹치는 날로 방장이 정해요.',
+    when: function () { return trip && !trip.startDate; } },
   { key: 'activity', title: '여행 가서 더 끌리는 쪽은?', options: [
     { label: '숙소에서 쉬기', value: 'INDOOR' }, { label: '반반', value: 'BOTH' }, { label: '밖에서 놀기', value: 'OUTDOOR' }] },
   { key: 'planning', title: '일정은 어떻게 짜는 편?', options: [
@@ -33,6 +36,9 @@ var LEVELS = [{ label: '없어도 돼', value: 1 }, { label: '상관없어', val
 
 var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 var me = null;
+var trip = null;
+var board = null;   // 날짜 맞추기 판
+var myDates = new Set();
 var step = 0;
 var answers = { separateDeparture: false, mobilityLimited: false, avoid: [] };
 var preferences = {};
@@ -55,8 +61,7 @@ function go(next) {
   step = next;
   var q = QUESTIONS[step];
   if (q && q.when && !q.when()) {
-    answers.departure = null;
-    answers.separateDeparture = false;
+    if (q.key === 'departure') { answers.departure = null; answers.separateDeparture = false; }
     go(forward ? step + 1 : step - 1);
     return;
   }
@@ -79,7 +84,8 @@ function go(next) {
   $('#q-title').text(q.title);
   $('#q-note').text(q.note || '').prop('hidden', !q.note);
   var box = $('#q-options').empty();
-  if (q.type === 'departure') renderDeparture(box);
+  if (q.type === 'dates') renderDates(box);
+  else if (q.type === 'departure') renderDeparture(box);
   else if (q.type === 'avoid') renderAvoid(box);
   else renderChoices(q, box);
 }
@@ -115,6 +121,21 @@ function renderDeparture(box) {
   field.on('keydown', function (e) { if (e.key === 'Enter') next.click(); });
   box.append(field, together, next);
   if (!answers.departure) field.trigger('focus');
+}
+
+// 되는 날 달력. 다음을 누르면 바로 저장한다(설문 저장과 따로라 중간에 나가도 날짜는 남는다)
+function renderDates(box) {
+  var cal = $('<div>');
+  var next = $('<button type="button" class="btn primary block">');
+  var refresh = function () { next.text(myDates.size ? myDates.size + '일 골랐어요 · 다음' : '아직 몰라요 · 다음'); };
+  availabilityCalendar(cal, { mine: myDates, available: board ? board.available : {}, total: trip.members.length,
+    editable: true, onChange: refresh });
+  next.click(function () {
+    if (myDates.size) api('PUT', '/api/trips/' + tripId + '/members/' + me.id + '/dates', { dates: Array.from(myDates) });
+    go(step + 1);
+  });
+  refresh();
+  box.append(cal, next);
 }
 
 // 여러 개 고르는 장. 고른 게 없으면 단추가 "빼 줄 것 없어요"라서 한 번에 넘어간다
@@ -212,10 +233,19 @@ $(function () {
   $('#go-roles').attr('href', '/trips/' + tripId + '/roles');
   $('#go-stays').attr('href', '/trips/' + tripId + '/stays');
 
-  loadTrip(tripId).done(function (trip) {
+  loadTrip(tripId).done(function (t) {
+    trip = t;
     me = trip.members.find(function (m) { return m.id === trip.meId; });
-    if (me.surveyDone) loadMine().done(showSaved).fail(function () { go(0); });
-    else go(0);
+    var start = function () {
+      if (me.surveyDone) loadMine().done(showSaved).fail(function () { go(0); });
+      else go(0);
+    };
+    if (trip.startDate) { start(); return; }
+    // 날짜가 없으면 지금까지 모인 되는 날을 먼저 읽어 둔다(내가 고른 날도 칠해 두려고)
+    api('GET', '/api/trips/' + tripId + '/dates').done(function (b) {
+      board = b;
+      Object.keys(b.available).forEach(function (k) { if (b.available[k].indexOf(me.id) >= 0) myDates.add(k); });
+    }).always(start);
   });
 
   $('.btn-back').click(function () { go(step - 1); });

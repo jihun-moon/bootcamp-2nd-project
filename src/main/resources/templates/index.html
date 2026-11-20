@@ -168,7 +168,7 @@
           <span class="choice">어려워요</span>
           <span class="mini-go">직접 해 보기 →</span>
         </a>
-        <div class="step-text"><h3>친구들은 다섯 번 누르면 끝</h3><p class="muted">차 있어? 계획형이야? 이건 빼 줘. 한 번 누르면 다음 장으로 넘어가요.</p></div>
+        <div class="step-text"><h3>친구들은 되는 날 누르고 다섯 번 탭</h3><p class="muted">언제 돼? 차 있어? 계획형이야? 이건 빼 줘. 한 번 누르면 다음 장으로 넘어가요.</p></div>
       </li>
       <li data-reveal>
         <a th:href="@{/demo}" class="mini-phone" aria-label="체험 방에서 직접 해 보기">
@@ -225,6 +225,7 @@
     <!-- 다섯 칸 표는 휴대폰에서 옆으로 밀려 읽히지 않았다. 기능 한 줄 + 우리 값 + 다른 곳 한 줄로 바꿨다.
          근거는 docs/11·12 의 조사 주소. 지는 칸도 숨기지 않는다 -->
     <ul class="vs">
+      <li><div class="vs-head"><b>날짜, 몇 박이면 누가 빠지는지까지</b><span class="vs-us win">✓</span></div><p class="vs-others">카톡 투표·넛지는 되는 날 표만 · 숙박 길이 계산은 없음</p></li>
       <li><div class="vs-head"><b>운전·총무 역할을 근거와 함께</b><span class="vs-us win">✓</span></div><p class="vs-others">카톡 — · 토스·카뱅 총무만 · 정산 앱 총무만 · 예약 앱 —</p></li>
       <li><div class="vs-head"><b>숙소 값, 1인 얼마인지 미리</b><span class="vs-us win">✓</span></div><p class="vs-others">예약 앱 방 총액만 · 정산 앱 다녀와서 N빵 · 카톡·토스 —</p></li>
       <li><div class="vs-head"><b>교통비, 운전자 빼고 나누기</b><span class="vs-us win">✓</span></div><p class="vs-others">카톡 통행료만 · 예약 앱 렌터카 값 · 정산 앱 —</p></li>
@@ -234,7 +235,6 @@
     </ul>
     <h3 class="vs-lose-title">아직 못 하는 것</h3>
     <ul class="vs lose">
-      <li><div class="vs-head"><b>날짜 맞추기</b><span class="vs-us">아직</span></div><p class="vs-others">카톡 투표·톡캘린더, 넛지가 잘해요</p></li>
       <li><div class="vs-head"><b>실제 송금</b><span class="vs-us">계산만</span></div><p class="vs-others">토스·카카오페이로 보내요</p></li>
       <li><div class="vs-head"><b>숙소 예약·결제</b><span class="vs-us">—</span></div><p class="vs-others">NOL·여기어때에서 해요</p></li>
     </ul>

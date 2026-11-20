@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class GuestTest {
 
     private static final JsonMapper JSON = JsonMapper.builder().build();
-    // 같은 곳(IP)에서 한 시간 10번 제한이 시험끼리 섞이지 않게 시험마다 다른 주소
+    // 같은 곳(IP)에서 한 시간 40번 제한이 시험끼리 섞이지 않게 시험마다 다른 주소
     private static final AtomicInteger IP = new AtomicInteger(10);
 
     @Autowired
@@ -125,11 +125,16 @@ class GuestTest {
     }
 
     @Test
-    void 같은_곳에서_한_시간_11번째는_429() throws Exception {
-        var code = inviteCode();
+    void 같은_곳에서_한_시간_41번째는_429() throws Exception {
+        // 통신사 데이터는 여럿이 한 IP 를 나눠 쓴다. 한 방(30명 상한)을 꽉 채우고 다른 방까지 40번은 들어오고 41번째에 막힌다
         var ip = freshIp();
-        for (var i = 0; i < 10; i++) assertThat(guest(code, "손님" + i, ip).getResponse().getStatus()).isEqualTo(200);
-        assertThat(guest(code, "손님10", ip).getResponse().getStatus()).isEqualTo(429);
+        var first = inviteCode();
+        for (var i = 0; i < 30; i++) assertThat(guest(first, "손님" + i, ip).getResponse().getStatus()).isEqualTo(200);
+        var body = mvc.perform(post("/api/trips").session(TestLogin.as(mvc, "재현")).contentType(MediaType.APPLICATION_JSON)
+                .content("{ \"title\": \"둘째 방\" }")).andReturn().getResponse().getContentAsString();
+        var second = JSON.readTree(body).get("inviteCode").asString();
+        for (var i = 30; i < 40; i++) assertThat(guest(second, "손님" + i, ip).getResponse().getStatus()).isEqualTo(200);
+        assertThat(guest(second, "손님40", ip).getResponse().getStatus()).isEqualTo(429);
     }
 
     @Test

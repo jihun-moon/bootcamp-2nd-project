@@ -27,8 +27,9 @@ public class GuestService {
 
     // 카카오 로그인이 끝났을 때 "이 브라우저는 손님이었다"를 알려고 세션에 손님 loginId 를 남긴다
     public static final String GUEST_SESSION_KEY = "tripmate.guest";
-    // 링크만 있으면 누구나 손님이 될 수 있어 같은 곳(IP)에서 한 시간에 10번까지. 방마다 30명 상한은 TripService
-    private static final int PER_IP_PER_HOUR = 10;
+    // 링크만 있으면 누구나 손님이 될 수 있어 같은 곳(IP)에서 한 시간에 40번까지. 방마다 30명 상한은 TripService.
+    // 10번이었는데, 통신사 데이터는 여러 사람이 한 IP 를 나눠 써서(CGNAT) 같은 카페·같은 통신사 친구 열한 명째가 막힐 수 있었다
+    private static final int PER_IP_PER_HOUR = 40;
     private static final Duration WINDOW = Duration.ofHours(1);
 
     private final AppUserRepository appUserRepository;

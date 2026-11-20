@@ -22,6 +22,10 @@ function render(t) {
   renderGuestBand(me);
   renderDraw();
   renderRules(me);
+  // 참여자는 모이는 곳·규칙이 하나도 안 정해졌으면 상자째 숨긴다(방장만 정할 수 있는 빈 칸)
+  var anyRule = ROOM_RULES.some(function (r) { return trip.rules[r.key] !== null && trip.rules[r.key] !== undefined; });
+  $('.ov-rules').prop('hidden', !me.host && !anyRule && $('#meet').prop('hidden'));
+  renderCars(me);
   renderDues(me);
   renderDates(me);
 
@@ -184,6 +188,13 @@ function drawBest(me, board) {
     list.append($('<li class="hint">').text('겹치는 날이 생기면 여기 좋은 날짜가 떠요.'));
     return;
   }
+  // 맨 위가 고른 박 수가 아니면 까닭 한 줄(더 많이 되는 쪽을 먼저 보여 준다)
+  var target = best.find(function (w) { return w.nights === datesNights; });
+  if (best[0].nights !== datesNights) {
+    list.append($('<li class="muted small">').text(target
+      ? (datesNights ? datesNights + '박' : '당일') + '이면 ' + target.ok.length + '명이라, 더 많이 되는 날을 먼저 보여 줘요.'
+      : (datesNights ? datesNights + '박' : '당일') + '으로 다 같이 되는 날은 아직 없어요.'));
+  }
   best.forEach(function (w) {
     // 날짜는 굵은 한 줄, 박 수와 되는 사람은 아래 작은 줄(한 줄에 몰면 "2박 / 3일"로 꺾였다)
     var who = w.missing.length
@@ -225,9 +236,12 @@ function renderMeet(me) {
   var meet = trip.meet || {};
   var text = meet.time || meet.place ? [meet.time ? koreanTime(meet.time.slice(0, 5)) : null, meet.place].filter(Boolean).join(' · ') : null;
   if (!me.host) {
-    box.empty().append($('<h2>').text('모이는 곳'), $('<p>').text(text || '방장이 아직 안 정했어요.'));
+    // 참여자에게 빈 칸("아직 안 정했어요")은 할 일이 아니라 읽을 거리만 늘린다. 정해진 것만 보인다
+    box.empty().prop('hidden', !text);
+    if (text) box.append($('<h2>').text('모이는 곳'), $('<p>').text(text));
     return;
   }
+  box.prop('hidden', false);
   if (box.find('input').length) return;   // 방장이 적는 중에 SSE 로 다시 그려 입력이 끊기지 않게
   var value = meet.time ? meet.time.slice(0, 5) : null;
   var place = $('<input type="text" maxlength="40" placeholder="예: 합정역 2번 출구" aria-label="모일 곳">').val(meet.place || '');
@@ -278,7 +292,8 @@ function renderRules(me) {
     var row = $('<li>').addClass(me.host ? 'pref' : 'between').append($('<span class="strong">').text(r.title));
     if (!me.host) {
       var picked = r.options.find(function (o) { return o.value === value; });
-      row.append($('<span>').toggleClass('muted', !picked).text(picked ? picked.label : '아직 안 정함'));
+      if (!picked) return; // 참여자에게는 정해진 규칙만
+      row.append($('<span>').text(picked.label));
     } else {
       var group = $('<div class="segmented" role="group">').attr('aria-label', r.title);
       r.options.forEach(function (o) {
@@ -290,6 +305,79 @@ function renderRules(me) {
       row.append(group);
     }
     list.append(row);
+  });
+}
+
+// 차 나누기. 운전 칸에 사람이 들어가야 차가 생긴다. 안 고른 사람은 서버가 차마다 고르게 나눠 둬서
+// 대부분은 아무것도 안 눌러도 되고, 다른 차가 편한 사람만 "이 차 탈래요", 기차·버스면 "따로 가요" 한 번
+var CAR_TIMES = ['07:00', '08:00', '09:00', '10:00'];
+var carEditing = null;
+function renderCars(me) {
+  api('GET', '/api/trips/' + tripId + '/cars').done(function (c) { drawCars(me, c); });
+}
+
+function drawCars(me, data) {
+  var box = $('#cars-card').empty();
+  if (!data.cars.length) { box.prop('hidden', true); return; }
+  box.prop('hidden', false).append($('<h2>').text('차'),
+    $('<p class="muted small">').text(data.cars.length > 1 ? '차마다 가까운 곳에서 태워요. 기름값은 그 차에 탄 사람끼리 나눠요.' : '기름값은 이 차에 탄 사람끼리 나눠요.'));
+  var name = function (id) { var m = trip.members.find(function (x) { return x.id === id; }); return m ? m.name : ''; };
+  var driving = data.cars.some(function (car) { return car.driverId === me.id; });
+  data.cars.forEach(function (car) {
+    var mine = car.driverId === me.id || car.riderIds.indexOf(me.id) >= 0;
+    var block = $('<div class="car stack">').toggleClass('mine', mine);
+    block.append($('<div class="between">').append($('<span class="strong">').text(car.driverName + ' 차'),
+      $('<span class="muted small">').text((car.riderIds.length + 1) + '명')));
+    // 태우는 곳: 운전자·방장이 정한다
+    var canEdit = car.driverId === me.id || me.host;
+    var when = (car.meetTime ? koreanTime(car.meetTime.slice(0, 5)) : '') + (car.meetPlace ? (car.meetTime ? ' · ' : '') + car.meetPlace : '');
+    if (carEditing === car.driverId) block.append(carMeetForm(car));
+    else if (when) block.append($('<div class="between">').append($('<span class="small">').text('태우는 곳 ' + when),
+      canEdit ? $('<button type="button" class="link small">').text('고치기').click(function () { carEditing = car.driverId; drawCars(me, data); }) : null));
+    else if (canEdit) block.append($('<button type="button" class="link small">').text('태우는 곳·시간 정하기').click(function () { carEditing = car.driverId; drawCars(me, data); }));
+    else block.append($('<p class="muted small">').text('태우는 곳은 ' + withSubject(car.driverName) + ' 정해요.'));
+    block.append($('<div class="row wrap">').append(car.riderIds.map(function (id) {
+      return $('<span class="chip">').toggleClass('on', id === me.id).text(name(id));
+    })));
+    if (!driving && !mine) {
+      block.append($('<button type="button" class="btn small">').text('이 차 탈래요').click(function () { ride(me, car.driverId); }));
+    }
+    box.append(block);
+  });
+  if (data.separateIds.length) {
+    box.append($('<p class="small">').text('따로 가요: ' + data.separateIds.map(name).join(', ')));
+  }
+  if (!driving) {
+    var separate = data.separateIds.indexOf(me.id) >= 0;
+    box.append($('<button type="button" class="link small">').text(separate ? '나도 차 탈래요' : '나는 따로 가요(기차·버스)')
+      .click(function () { ride(me, separate ? data.cars[0].driverId : null); }));
+  }
+}
+
+// 태우는 시간은 자주 쓰는 넷 중 하나를 누르고, 곳은 한 줄로
+function carMeetForm(car) {
+  var time = car.meetTime ? car.meetTime.slice(0, 5) : null;
+  var quick = $('<div class="toggles meet-quick" role="group" aria-label="태우는 시간">');
+  CAR_TIMES.forEach(function (t) {
+    $('<button type="button" class="toggle">').text(koreanTime(t)).attr('aria-pressed', t === time).click(function () {
+      time = time === t ? null : t;
+      quick.children().each(function () { $(this).attr('aria-pressed', $(this).data('t') === time); });
+    }).data('t', t).appendTo(quick);
+  });
+  var place = $('<input type="text" maxlength="40" placeholder="예: 수원역 4번 출구" aria-label="태우는 곳">').val(car.meetPlace || '');
+  var save = $('<button type="button" class="btn primary small">').text('저장').click(function () {
+    api('PUT', '/api/trips/' + tripId + '/cars/' + car.driverId + '/meet', { time: time, place: place.val().trim() || null })
+      .done(function () { carEditing = null; loadTrip(tripId).done(render); });
+  });
+  var cancel = $('<button type="button" class="btn small">').text('닫기').click(function () { carEditing = null; loadTrip(tripId).done(render); });
+  return $('<div class="stack">').append(quick, place, $('<div class="row">').append(save, cancel));
+}
+
+// PUT: /api/trips/1/cars/rides/3  { "driverId": 1 }   null 이면 따로 가요
+function ride(me, driverId) {
+  api('PUT', '/api/trips/' + tripId + '/cars/rides/' + me.id, { driverId: driverId }).done(function (c) {
+    drawCars(me, c);
+    showToast(driverId === null ? '따로 가요로 했어요. 기름값에서 빠져요.' : '이 차로 옮겼어요.');
   });
 }
 

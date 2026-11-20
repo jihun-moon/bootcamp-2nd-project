@@ -69,6 +69,9 @@
 | | 먼저 낸 돈 적기 | POST | `/api/trips/{id}/expenses` | `{"kind": "STAY", "memo": "잔금", "amount": 476000, "sharerIds": [1, 2]}` (sharerIds 없으면 모두·규칙대로) | 201 판 / 금액 0 이하·종류 없음·방에 없는 사람 400 | `SettleService.add` |
 | | 보냈어요·받았어요 | POST | `/api/trips/{id}/payments` | `{"fromId": 2, "toId": 1, "amount": 20000}` | 201 판 / 보낸·받은 사람·방장 아니면 403 / 같은 사람·방에 없는 사람·금액 0 이하 400 | `SettleService.markPaid`, `Payment` |
 | | 보냈어요 되돌리기 | DELETE | `/api/trips/{id}/payments/{paymentId}` | | 200 판 / 누른 사람·보낸·받은 사람·방장 아니면 403 | `SettleService.unmarkPaid` |
+| | 차 나누기 | GET | `/api/trips/{id}/cars` | | 200 `{cars: [{driverId, driverName, meetTime, meetPlace, riderIds}], separateIds}` | `CarService.cars`(안 고른 사람은 들어온 순서대로 차를 번갈아) |
+| | 이 차 탈래요·따로 가요 | PUT | `/api/trips/{id}/cars/rides/{memberId}` | `{"driverId": 1}` 또는 `null` | 200 / 본인·방장 아니면 403 / 운전자 본인·운전 안 하는 사람 차 400 | `CarService.ride`, `Ride` |
+| | 차마다 태우는 곳 | PUT | `/api/trips/{id}/cars/{driverId}/meet` | `{"time": "08:30", "place": "수원역 4번 출구"}` | 200 / 그 운전자·방장 아니면 403 / 운전 안 하는 사람 404 | `CarService.meet`, `CarMeet` |
 | | 회비 정하기 | PUT | `/api/trips/{id}/dues` | `{"amount": 100000, "collectorId": 3}` | 200 판(`dues`) / 방장·지금 총무 아니면 403 / 금액 범위 밖·방에 없는 사람 400 | `SettleService.setDues`, `Dues` |
 | | 회비 냈어요·되돌리기 | PUT / DELETE | `/api/trips/{id}/dues/paid/{memberId}` | | 200 판 / 본인·총무·방장 아니면 403 / 총무 본인 400 / 회비 없음 404 | `SettleService.markDues`·`unmarkDues`, `Payment.dues` |
 | | 정산 받는 링크 코드 | PUT | `/api/trips/{id}/settlement/link` | | 200 `{"code"}`(몇 번 불러도 같은 코드) / 방 사람 아니면 404 / 둘이 동시에 처음 만들면 409 | `SettleService.linkCode`, `SettleLink` |

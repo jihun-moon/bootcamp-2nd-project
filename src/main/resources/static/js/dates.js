@@ -85,5 +85,14 @@ function bestWindows(board, members, wanted, nights) {
   found.forEach(function (w) {
     if (picked.length < (wanted || 3) && !picked.some(function (p) { return w.start <= p.end && w.end >= p.start; })) picked.push(w);
   });
+  // 고른 박 수 창은 사람이 조금 적어도 꼭 하나 보인다. 사람 수로만 고르면 "2박"을 눌렀는데 1박 후보만 떠서
+  // 겹치는 2박 창이 통째로 빠졌다(소개 화면을 찍다 찾음)
+  if (!picked.some(function (w) { return w.nights === target; })) {
+    var sameLength = found.find(function (w) { return w.nights === target; });
+    if (sameLength) {
+      if (picked.length >= (wanted || 3)) picked.pop();
+      picked.push(sameLength);
+    }
+  }
   return picked;
 }

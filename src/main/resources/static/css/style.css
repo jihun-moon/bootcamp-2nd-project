@@ -751,3 +751,7 @@ button.link::after { content: ""; position: absolute; inset: -12px -8px; } /* �
 .settle-form .row input { flex: 1; min-width: 0; }
 .settle-lines li { gap: 8px; }
 .settle-lines li > span:first-child { flex: 1; min-width: 0; }
+
+/* 방 만들기 사진: 지역·철을 고르면 그 사진으로. 사라졌다 나타나는 시간은 짧게(누름에 바로 반응하는 느낌) */
+.cover { transition: opacity 0.18s var(--ease); }
+.cover.fading { opacity: 0; }

@@ -68,6 +68,15 @@ public class TripController {
         return ResponseEntity.noContent().build();
     }
 
+    // PUT: /api/trips/1/members/2/drinks  body = { "drinks": false }   본인이나 방장(못 오는 사람 대신 끄기)
+    @PutMapping("/trips/{tripId}/members/{memberId}/drinks")
+    public ResponseEntity<TripDto.Response> drinks(@PathVariable Long tripId, @PathVariable Long memberId,
+                                                   @RequestBody TripDto.DrinksRequest req) {
+        var me = tripAccess.me(tripId);
+        if (!me.getId().equals(memberId) && !me.isHost()) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        return ResponseEntity.ok(tripService.setDrinks(tripId, memberId, req.drinks(), me));
+    }
+
     // GET: /api/trips/1/dates   날짜 맞추기 판(참여자 누구나)
     @GetMapping("/trips/{tripId}/dates")
     public ResponseEntity<TripDto.DatesBoard> dates(@PathVariable Long tripId) {

@@ -105,4 +105,45 @@ class SettleTest {
         assertThat(b.get("balances").size()).isEqualTo(7);
         for (var t : b.get("transfers")) assertThat(t.get("amount").asInt()).isEqualTo(2_000);
     }
+
+    private void drinkStory(boolean drinksSeparate) throws Exception {
+        mvc.perform(put("/api/trips/1/rules").session(TestLogin.as(mvc, "재현")).contentType(MediaType.APPLICATION_JSON)
+                .content("{ \"driverPaysFuel\": null, \"refundNoShow\": null, \"drinksSeparate\": " + drinksSeparate + " }"));
+        // 예린(7)은 본인이 끄고, 시우(8)는 방장이 대신 끈다
+        mvc.perform(put("/api/trips/1/members/7/drinks").session(TestLogin.as(mvc, "예린"))
+                .contentType(MediaType.APPLICATION_JSON).content("{ \"drinks\": false }")).andExpect(status().isOk());
+        mvc.perform(put("/api/trips/1/members/8/drinks").session(TestLogin.as(mvc, "재현"))
+                .contentType(MediaType.APPLICATION_JSON).content("{ \"drinks\": false }")).andExpect(status().isOk());
+        pay("민지", "{ \"kind\": \"DRINK\", \"memo\": \"편의점 술\", \"amount\": 60000 }").andExpect(status().isCreated());
+        mvc.perform(put("/api/trips/1/shopping/items/SOJU").session(TestLogin.as(mvc, "도윤"))
+                .contentType(MediaType.APPLICATION_JSON).content("{ \"amount\": 12000 }"));
+    }
+
+    @Test
+    void 술값은_마신_사람만_규칙이면_안_마신_사람은_안_낸다() throws Exception {
+        drinkStory(true);
+        var b = board("재현");
+        assertThat(b.get("drinksSeparate").asBoolean()).isTrue();
+        // 마신 6명이 60,000 + 12,000 을 나눈다 → 1인 12,000. 시우·예린은 0
+        for (var bal : b.get("balances")) {
+            var name = bal.get("name").asString();
+            if (name.equals("시우") || name.equals("예린")) assertThat(bal.get("share").asInt()).isZero();
+            if (name.equals("재현")) assertThat(bal.get("share").asInt()).isEqualTo(12_000);
+        }
+        for (var t : b.get("transfers")) assertThat(t.get("fromName").asString()).isNotIn("시우", "예린");
+        // 장보기 술 양도 마시는 6명으로 센다(방장이 따로 정하지 않았으니)
+        mvc.perform(get("/api/trips/1/shopping").session(TestLogin.as(mvc, "시우"))).andExpect(jsonPath("$.drinkers").value(6));
+    }
+
+    @Test
+    void 규칙을_안_켰으면_술값도_모두_똑같이() throws Exception {
+        drinkStory(false);
+        for (var bal : board("재현").get("balances")) assertThat(bal.get("share").asInt()).isEqualTo(9_000);
+    }
+
+    @Test
+    void 남의_술_표시는_방장만_바꾼다() throws Exception {
+        mvc.perform(put("/api/trips/1/members/8/drinks").session(TestLogin.as(mvc, "민지"))
+                .contentType(MediaType.APPLICATION_JSON).content("{ \"drinks\": false }")).andExpect(status().isForbidden());
+    }
 }

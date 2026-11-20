@@ -158,6 +158,18 @@ public class TripService {
         events.publishEvent(new TripChanged(tripId, "members"));
     }
 
+    // 술 마시나 바꾸기. 장보기 술 양과 정산(규칙 "술값은 마신 사람만")이 다시 센다
+    @Transactional
+    public TripDto.Response setDrinks(Long tripId, Long memberId, boolean drinks, Member me) {
+        var trip = tripRepository.findWithMembersById(tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        trip.getMembers().stream().filter(m -> m.getId().equals(memberId)).findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND))
+                .changeDrinks(drinks);
+        events.publishEvent(new TripChanged(tripId, "members"));
+        return TripDto.Response.of(trip, me);
+    }
+
     // 초대 링크를 두 번 눌러도 참여자는 한 번만 들어간다
     @Transactional
     public TripDto.Joined join(AppUser user, String inviteCode) {

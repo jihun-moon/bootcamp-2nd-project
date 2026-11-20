@@ -60,6 +60,7 @@
 | | 양 정하기(방장) | PUT | `/api/trips/{id}/shopping/plan` | `{"drinkers": 6, "meatGrams": 300}` | 200 / 403 / 범위 밖 400 | `ShoppingService.savePlan` |
 | | 내가 살게·쓴 돈 | PUT | `/api/trips/{id}/shopping/items/{item}` | `{"amount": 12000}` (null = 아직) | 200 / 남이 맡은 줄 409 | `ShoppingService.claim` |
 | | 내려놓기 | DELETE | `/api/trips/{id}/shopping/items/{item}` | | 200 / 맡은 사람·방장 아니면 403 | `ShoppingService.release` |
+| | 술 마셔요 표시 | PUT | `/api/trips/{id}/members/{memberId}/drinks` | `{"drinks": false}` | 200 방 / 남의 것은 방장만(아니면 403) | `TripService.setDrinks`, `Member.drinks` |
 | | 정산 판(누가 누구에게 얼마) | GET | `/api/trips/{id}/settlement` | | 200 `{total, lines, balances, transfers: [{fromName, toName, amount}], driverPaysFuel}` | `SettleController`, `SettleService` |
 | | 먼저 낸 돈 적기 | POST | `/api/trips/{id}/expenses` | `{"kind": "STAY", "memo": "잔금", "amount": 476000}` | 201 판 / 금액 0 이하·종류 없음 400 | `SettleService.add` |
 | | 적은 돈 지우기 | DELETE | `/api/trips/{id}/expenses/{expenseId}` | | 200 판 / 낸 사람·방장 아니면 403 | `SettleService.remove` |

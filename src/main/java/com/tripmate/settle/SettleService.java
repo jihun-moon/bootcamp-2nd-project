@@ -20,7 +20,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 // 다녀와서 "누가 누구에게 얼마". 낸 돈(직접 적은 것 + 장보기 "내가 살게"에 적은 돈)을 모두 똑같이 나누되,
-// 기름값·톨비는 방 규칙이 "운전자는 안 냄"이면 기름값을 낸 사람(운전자)을 빼고 나눈다.
+// 기름값·톨비는 방 규칙이 "운전자는 안 냄"이면 기름값을 낸 사람(운전자)을 빼고,
+// 술(직접 적은 술, 장보기 소주·맥주)은 규칙이 "술값은 마신 사람만"이면 "술 마셔요"인 사람끼리 나눈다.
 // 보낼 돈은 많이 받을 사람부터 맞춰 보내는 횟수를 줄이고, 100원 단위로 올린다(회비처럼)
 @Service
 public class SettleService {
@@ -55,18 +56,22 @@ public class SettleService {
         var driversExempt = Boolean.FALSE.equals(trip.getDriverPaysFuel());
         var fuelSharers = members.stream().filter(m -> !driversExempt || !driverIds.contains(m.getId())).toList();
         if (fuelSharers.isEmpty()) fuelSharers = members;
+        // 술: 규칙을 켰을 때만 마시는 사람끼리(아무도 안 마시면 모두). 전에는 규칙을 켜도 결과가 같아 오해를 샀다(docs/17 8절)
+        var drinksOnly = Boolean.TRUE.equals(trip.getDrinksSeparate());
+        var drinkers = members.stream().filter(m -> !drinksOnly || m.drinks()).toList();
+        if (drinkers.isEmpty()) drinkers = members;
 
         var paid = new HashMap<Long, Double>();
         var owed = new HashMap<Long, Double>();
         var lines = new ArrayList<SettleDto.Line>();
         for (var e : expenses) {
-            var sharers = e.getKind() == ExpenseKind.FUEL ? fuelSharers : members;
+            var sharers = e.getKind() == ExpenseKind.FUEL ? fuelSharers : e.getKind() == ExpenseKind.DRINK ? drinkers : members;
             add(paid, owed, e.getPayer(), e.getAmount(), sharers);
             var label = e.getMemo() == null || e.getMemo().isBlank() ? e.getKind().getLabel() : e.getKind().getLabel() + " · " + e.getMemo();
             lines.add(new SettleDto.Line(e.getId(), e.getPayer().getId(), e.getPayer().getName(), e.getKind().name(), label, e.getAmount(), false));
         }
         for (var c : claims) {
-            add(paid, owed, c.getMember(), c.getAmount(), members);
+            add(paid, owed, c.getMember(), c.getAmount(), c.getItem().isDrink() ? drinkers : members);
             lines.add(new SettleDto.Line(null, c.getMember().getId(), c.getMember().getName(), "SHOPPING",
                     "장보기 · " + c.getItem().getLabel(), c.getAmount(), true));
         }
@@ -77,7 +82,8 @@ public class SettleService {
             return new SettleDto.Balance(m.getId(), m.getName(), (int) Math.round(p), (int) Math.round(o), (int) Math.round(p - o));
         }).toList();
         var total = lines.stream().mapToInt(SettleDto.Line::amount).sum();
-        return new SettleDto.Board(total, lines, balances, transfers(members, paid, owed), trip.getDriverPaysFuel());
+        return new SettleDto.Board(total, lines, balances, transfers(members, paid, owed), trip.getDriverPaysFuel(),
+                trip.getDrinksSeparate());
     }
 
     private static void add(Map<Long, Double> paid, Map<Long, Double> owed, Member payer, int amount, List<Member> sharers) {

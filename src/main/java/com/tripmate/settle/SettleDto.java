@@ -20,7 +20,7 @@ public final class SettleDto {
     // GET /api/trips/1/settlement
     // { "total": 612000, "lines": [...], "balances": [...], "transfers": [ { "fromName": "민지", "toName": "준호", "amount": 32000 } ] }
     public record Board(int total, List<Line> lines, List<Balance> balances, List<Transfer> transfers,
-                        Boolean driverPaysFuel) {
+                        Boolean driverPaysFuel, Boolean drinksSeparate) {
     }
 
     // 낸 돈 한 줄. shopping 이 true 면 장보기 표에서 온 줄이라 여기서는 못 지운다(장보기 화면에서 고친다)

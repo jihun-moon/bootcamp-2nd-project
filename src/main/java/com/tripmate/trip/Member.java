@@ -26,6 +26,10 @@ public class Member {
     private boolean host;
     private boolean surveyDone;
 
+    // 술 마시나. null 은 아직 안 고름 = 마신다고 본다(대부분 마신다, 안 마시는 사람만 끄게).
+    // 장보기 술 양과, 규칙 "술값은 마신 사람만"일 때 정산에 쓴다
+    private Boolean drinks;
+
     // 날짜 맞추기: 이 사람이 되는 날. 방에 날짜가 아직 없을 때 모아서 겹치는 날을 찾는다
     @ElementCollection
     @CollectionTable(name = "member_available_date")
@@ -52,6 +56,12 @@ public class Member {
     void makeHost() {
         host = true;
     }
+
+    public void changeDrinks(boolean drinks) {
+        this.drinks = drinks;
+    }
+
+    public boolean drinks() { return !Boolean.FALSE.equals(drinks); }
 
     public void finishSurvey() {
         surveyDone = true;

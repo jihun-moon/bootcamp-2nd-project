@@ -4,7 +4,7 @@
 // DELETE /api/trips/1/expenses/3
 var settle = null;
 var settleKind = 'STAY';
-var SETTLE_KINDS = [['STAY', '숙소'], ['FUEL', '기름값·톨비'], ['FOOD', '식비·술'], ['OTHER', '기타']];
+var SETTLE_KINDS = [['STAY', '숙소'], ['FUEL', '주유·톨비'], ['FOOD', '식비'], ['DRINK', '술'], ['OTHER', '기타']];
 
 function renderSettle(board, trip) {
   settle = board;
@@ -36,7 +36,35 @@ function renderSettle(board, trip) {
     }
     lines.append(row);
   });
-  $('#settle-rule').text(board.driverPaysFuel === false ? '우리 규칙: 기름값·톨비는 운전한 사람 빼고 나눠요.' : '');
+  var rules = [];
+  if (board.driverPaysFuel === false) rules.push('기름값·톨비는 운전한 사람 빼고');
+  if (board.drinksSeparate === true) rules.push('술은 마신 사람끼리');
+  $('#settle-rule').text(rules.length ? '우리 규칙: ' + rules.join(', ') + ' 나눠요.' : '');
+  renderDrinkers(board, trip);
+}
+
+// 규칙 "술값은 마신 사람만"일 때만 보인다. 누를 때마다 바로 저장하고 보낼 줄을 다시 센다.
+// 내 것은 내가, 남의 것은 방장이(못 온 사람 대신) 바꾼다
+// PUT /api/trips/1/members/2/drinks  { "drinks": false }
+function renderDrinkers(board, trip) {
+  var box = $('#settle-drinkers').prop('hidden', board.drinksSeparate !== true);
+  if (board.drinksSeparate !== true) return;
+  var me = trip.members.find(function (m) { return m.id === trip.meId; });
+  var list = $('#settle-drinkers-list').empty();
+  trip.members.forEach(function (m) {
+    var mine = m.id === trip.meId;
+    $('<button type="button" class="toggle">').text(m.name)
+      .attr('aria-pressed', m.drinks).attr('aria-label', m.name + (m.drinks ? ' 마심' : ' 안 마심'))
+      .prop('disabled', !mine && !me.host)
+      .click(function () {
+        var button = $(this).prop('disabled', true);
+        api('PUT', '/api/trips/' + tripId + '/members/' + m.id + '/drinks', { drinks: !m.drinks }).done(function (t) {
+          delight(button[0]);
+          settleTripChanged(t);
+        }).always(function () { button.prop('disabled', false); });
+      }).appendTo(list);
+  });
+  box.find('.muted').text(me.host ? '누르면 바뀌어요. 안 마신 사람을 꺼 주세요.' : '내 것만 바꿀 수 있어요.');
 }
 
 function settledStamp(on) {
@@ -54,6 +82,9 @@ function settleText(trip) {
   return '[' + trip.title + ' 정산] 모두 ' + won(settle.total) + '\n' + rows.join('\n')
     + '\n토스·카카오페이로 보내 주세요. 자세히 → ' + location.origin + '/trips/' + tripId + '/receipt';
 }
+
+// 술 표시처럼 내가 방을 바꿨을 때: 바뀐 방으로 다시 센다(SSE 로도 오지만 내 화면은 바로)
+var settleTripChanged = function (t) { loadSettle(t); };
 
 function loadSettle(trip) {
   return api('GET', '/api/trips/' + tripId + '/settlement').done(function (b) { renderSettle(b, trip); });
@@ -85,7 +116,11 @@ function initSettle(trip) {
   $('#btn-settle-share').text(shareLabel('카톡으로 정산 보내기', '정산 글 복사하기')).click(function () {
     shareText(settleText(trip), '정산 글을 복사했어요. 단톡방에 붙여 넣어 주세요.');
   });
+  settleTripChanged = function (t) { trip = t; loadSettle(t); };
   loadSettle(trip);
-  // 누가 돈을 적거나 장보기 금액을 고치면 모두의 화면이 다시 센다
-  listen(tripId, function (kind) { if (kind !== 'roles' && kind !== 'stays') loadSettle(trip); });
+  // 누가 돈을 적거나 장보기 금액을 고치면 모두의 화면이 다시 센다. 사람·규칙이 바뀌면(술 표시, 나가기) 방부터 다시 읽는다
+  listen(tripId, function (kind) {
+    if (kind === 'members' || kind === 'trip' || kind === 'all') loadTrip(tripId).done(function (t) { trip = t; loadSettle(t); });
+    else if (kind !== 'roles' && kind !== 'stays') loadSettle(trip);
+  });
 }

@@ -27,6 +27,9 @@ public enum ShoppingItem {
     public String getLabel() { return label; }
     public String getGroup() { return group; }
 
+    // 방 규칙 "술값은 마신 사람만"이면 이 줄들은 술 마시는 사람끼리 나눈다(정산)
+    public boolean isDrink() { return "술".equals(group); }
+
     // 사는 양을 사람이 읽는 글로. 고기는 100g 단위로 올려 kg, 나머지는 개수
     String quantity(int people, int drinkers, int nights, int meatGrams) {
         var bbq = nights;

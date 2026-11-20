@@ -777,3 +777,7 @@ button.link::after { content: ""; position: absolute; inset: -12px -8px; } /* �
 /* 내 여행방: "하러 가기"가 두 줄로 꺾이지 않게, "+ 새 방"은 손가락 크기만큼 누르는 영역 */
 .trip-item .link { white-space: nowrap; }
 #my-trips .between .link { padding: 12px 6px; margin: -12px -6px; }
+
+/* 술 마신 사람: 정산 칸 안 고르기 줄. 보낼 줄과 적기 사이에 선 하나로 나눈다 */
+.settle-drinkers { padding-top: 16px; border-top: 1px solid var(--line); }
+.settle-drinkers .muted { font-weight: 400; margin-left: 4px; }

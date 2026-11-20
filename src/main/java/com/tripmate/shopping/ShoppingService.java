@@ -42,7 +42,9 @@ public class ShoppingService {
         var nights = (trip.getStartDate() == null || trip.getEndDate() == null) ? 1
                 : (int) Math.max(1, ChronoUnit.DAYS.between(trip.getStartDate(), trip.getEndDate()));
         var plan = planRepository.findByTripId(tripId);
-        var drinkers = Math.min(people, plan.map(ShoppingPlan::getDrinkers).filter(d -> d != null).orElse(people));
+        // 방장이 따로 정하지 않았으면 각자 고른 "술 마셔요"로 센다(전에는 모두 마신다고 보고 방장이 손으로 줄였다)
+        var drinking = (int) trip.getMembers().stream().filter(Member::drinks).count();
+        var drinkers = Math.min(people, plan.map(ShoppingPlan::getDrinkers).filter(d -> d != null).orElse(drinking));
         var meatGrams = plan.map(ShoppingPlan::getMeatGrams).orElse(ShoppingPlan.DEFAULT_MEAT_GRAMS);
 
         var claims = claimRepository.findByTripId(tripId).stream()

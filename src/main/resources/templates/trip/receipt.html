@@ -24,6 +24,11 @@
       <div class="between"><h2 id="settle-title">누가 누구에게 얼마</h2><span id="settle-total" class="muted small"></span></div>
       <ol id="settle-transfers" class="settle-list" aria-live="polite"></ol>
       <button type="button" id="btn-settle-share" class="btn primary block" hidden>정산 글 복사하기</button>
+      <!-- 방 규칙이 "술값은 마신 사람만"일 때만: 누가 마셨는지 눌러 고르면 술값이 그 사람들끼리 나뉜다 -->
+      <div id="settle-drinkers" class="stack settle-drinkers" hidden>
+        <p class="strong">술 마신 사람 <span class="muted small"></span></p>
+        <div id="settle-drinkers-list" class="toggles"></div>
+      </div>
       <form id="settle-form" class="stack settle-form">
         <p class="strong">내가 먼저 낸 돈 적기</p>
         <div id="settle-kind" class="segmented" role="group" aria-label="무엇에 냈나"></div>

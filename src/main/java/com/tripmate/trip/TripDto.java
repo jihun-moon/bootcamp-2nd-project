@@ -88,10 +88,14 @@ public final class TripDto {
     public record Joined(Long tripId) {
     }
 
-    public record MemberResponse(Long id, String name, boolean host, boolean surveyDone, String imageUrl) {
+    public record MemberResponse(Long id, String name, boolean host, boolean surveyDone, String imageUrl, boolean drinks) {
 
         static MemberResponse from(Member m) {
-            return new MemberResponse(m.getId(), m.getName(), m.isHost(), m.isSurveyDone(), m.getImageUrl());
+            return new MemberResponse(m.getId(), m.getName(), m.isHost(), m.isSurveyDone(), m.getImageUrl(), m.drinks());
         }
+    }
+
+    // PUT /api/trips/1/members/2/drinks  { "drinks": false }
+    public record DrinksRequest(boolean drinks) {
     }
 }

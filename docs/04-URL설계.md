@@ -23,7 +23,12 @@
 | REQ-11 | 바뀜 알림(SSE) | GET | `/api/trips/{id}/events` | | `event: change` / `ping` | `TripController`, `TripEvents` |
 | REQ-05 | 방 고치기 *(남은 일)* | PATCH | `/api/trips/{id}` | 바꿀 칸 | 200 | |
 | REQ-05 | 방 지우기 *(남은 일)* | DELETE | `/api/trips/{id}` | | 204 | |
-| REQ-06 | 나가기·내보내기 *(남은 일)* | DELETE | `/api/trips/{id}/members/{memberId}` | | 204 | |
+| REQ-06 | 나가기(본인)·빼기(방장) | DELETE | `/api/trips/{id}/members/{memberId}` | | 204 / 남을 빼려는 참여자 403 / 혼자 남은 방 400 | `TripController`, `TripService.leave`, `MemberLeaving` 이벤트(설문·역할·숙소 표·장보기·정산이 각자 지움) |
+| | 날짜 맞추기 판 | GET | `/api/trips/{id}/dates` | | 200 `{memberCount, responded, available: {"2027-01-15": [1, 2]}}` | `TripController`, `TripService.dates` |
+| | 내 되는 날 | PUT | `/api/trips/{id}/members/{memberId}/dates` | `{"dates": ["2027-01-15"]}` | 200 판 / 남의 것 403 / 지난 날·1년 넘음 400 | `TripService.saveDates` |
+| | 날짜 정하기(방장) | PUT | `/api/trips/{id}/period` | `{"startDate", "endDate"}` | 200 방 / 403 / 도착이 출발보다 앞 400 | `TripService.setPeriod` |
+| | 방 규칙(방장) | PUT | `/api/trips/{id}/rules` | `{"driverPaysFuel", "refundNoShow", "drinksSeparate"}` | 200 방 / 403 | `TripService.updateRules` |
+| | 같은 멤버로 다음 여행 | POST | `/api/trips/{id}/next` | | 201 `{tripId, created, memberCount}` / 이미 있으면 200 같은 방 / 동시에 겹치면 409 | `TripService.next`, `Trip.previousTripId`(unique) |
 
 ## 설문·역할 (문지훈)
 
@@ -45,5 +50,18 @@
 | REQ-13 | 숙소 올리기 | POST | `/api/trips/{id}/stays` | `{"url", "title", "amenities": []}` | 201 | `StayController`, `LinkPreview` |
 | REQ-14 | 투표·바꾸기·취소 | PUT | `/api/trips/{id}/votes/{memberId}` | `{"stayId": 3}` (null 이면 취소) | 204 | `StayController` |
 | REQ-16 | 숙소 고치기·지우기 *(남은 일)* | PATCH / DELETE | `/api/trips/{id}/stays/{stayId}` | 조건 | 200 / 204 | |
+| | 숙소 링크 미리보기 | POST | `/api/trips/{id}/stays/preview` | `{"url"}` | 200 `{title, imageUrl, price, amenities}` | `StayController`, `LinkPreview` |
+
+### 장보기·정산
+
+| 요구사항 | 기능 | 메서드 | 주소 | 요청 본문 | 응답 | 코드 |
+|---|---|---|---|---|---|---|
+| | 장보기 목록 | GET | `/api/trips/{id}/shopping` | | 200 `{people, nights, drinkers, meatGrams, items, spent, perPerson}` | `ShoppingController`, `ShoppingService` |
+| | 양 정하기(방장) | PUT | `/api/trips/{id}/shopping/plan` | `{"drinkers": 6, "meatGrams": 300}` | 200 / 403 / 범위 밖 400 | `ShoppingService.savePlan` |
+| | 내가 살게·쓴 돈 | PUT | `/api/trips/{id}/shopping/items/{item}` | `{"amount": 12000}` (null = 아직) | 200 / 남이 맡은 줄 409 | `ShoppingService.claim` |
+| | 내려놓기 | DELETE | `/api/trips/{id}/shopping/items/{item}` | | 200 / 맡은 사람·방장 아니면 403 | `ShoppingService.release` |
+| | 정산 판(누가 누구에게 얼마) | GET | `/api/trips/{id}/settlement` | | 200 `{total, lines, balances, transfers: [{fromName, toName, amount}], driverPaysFuel}` | `SettleController`, `SettleService` |
+| | 먼저 낸 돈 적기 | POST | `/api/trips/{id}/expenses` | `{"kind": "STAY", "memo": "잔금", "amount": 476000}` | 201 판 / 금액 0 이하·종류 없음 400 | `SettleService.add` |
+| | 적은 돈 지우기 | DELETE | `/api/trips/{id}/expenses/{expenseId}` | | 200 판 / 낸 사람·방장 아니면 403 | `SettleService.remove` |
 
 API 는 IntelliJ HTTP Client 나 Talend API Tester 로 시험할 수 있다. 로그인이 필요하니 브라우저에서 카카오로 로그인한 뒤 `JSESSIONID` 쿠키를 붙인다.

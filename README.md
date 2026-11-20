@@ -39,7 +39,7 @@ JDK 17 이상만 있으면 된다. DB 는 메모리 H2 라 설치할 것이 없�
 | 여행방 만들기 | POST | `/api/trips` | 201 방 JSON(만든 사람이 방장)<br>요청 `{"title": "겨울 펜션", "destination": "가평", "startDate": "2027-01-15", "endDate": "2027-01-17"}` | 여행 이름이 비면 400 | 박재현 |
 | 여행방 보기 | GET | `/api/trips/{id}` | 200 `{"id": 1, "title": "...", "inviteCode": "...", "meId": 2, "members": [...]}` | | 박재현 |
 | 초대 링크로 참여 | POST | `/api/invites/{inviteCode}` | 200 `{"tripId": 1}` (이미 있으면 그대로) | 코드가 틀리면 404 | 박재현 |
-| 바뀜 알림 (SSE) | GET | `/api/trips/{id}/events` | `event: change` `data: roles` \| `members` \| `stays`, 15초마다 `ping` | | 박재현 |
+| 바뀜 알림 (SSE) | GET | `/api/trips/{id}/events` | `event: change` `data: roles` \| `members` \| `stays` \| `dates` \| `trip` \| `shopping` \| `settle`, 15초마다 `ping` | | 박재현 |
 | 설문 저장 | PUT | `/api/trips/{id}/members/{memberId}/survey` | 200 저장한 설문<br>요청 `{"activity": "INDOOR", "planning": "PLANNER", "hasCar": true, ..., "preferences": {"DETACHED": 5}}` | activity·planning 이 없거나 점수가 1~5 밖이면 400<br>남의 설문이면 403 | 문지훈 |
 | 설문 보기 | GET | `/api/trips/{id}/members/{memberId}/survey` | 200 설문(본인·방장이 아니면 `mobilityLimited` 칸이 빠진다) | 설문 전이면 404 | 문지훈 |
 | 역할 보드 | GET | `/api/trips/{id}/roles` | 200 `{"roles": [...], "assignments": [{"roleId": 4, "memberId": 2, "reasons": ["차 있음 +4"], "version": 0}]}` | | 문지훈 |
@@ -50,6 +50,16 @@ JDK 17 이상만 있으면 된다. DB 는 메모리 H2 라 설치할 것이 없�
 | 숙소 링크 미리보기 | POST | `/api/trips/{id}/stays/preview` | 200 `{"title": "가평 무지개 독채펜션", "imageUrl": "https://...", "price": 238640, "amenities": ["DETACHED"]}`<br>요청 `{"url": "https://..."}` | url 이 `http(s)://` 가 아니면 400 | 김현수 |
 | 숙소 올리기 | POST | `/api/trips/{id}/stays` | 201 숙소<br>요청 `{"url": "https://...", "title": "숲속 독채", "price": 240000, "amenities": ["DETACHED"]}` | url 이 `http(s)://` 가 아니거나 가격이 음수면 400 | 김현수 |
 | 숙소 투표 | PUT | `/api/trips/{id}/votes/{memberId}` | 204<br>요청 `{"stayId": 3}` (null = 취소) | 남의 표면 403, 숙소가 없으면 404 | 김현수 |
+| 내 여행방 | GET | `/api/me/trips` | 200 `[{"id": 1, "title": "...", "memberCount": 8, "surveyDone": 5, "host": true}]` | 로그인 안 했으면 401 | 박재현 |
+| 날짜 맞추기 판 | GET | `/api/trips/{id}/dates` | 200 `{"memberCount": 8, "responded": 5, "available": {"2027-01-15": [1, 2]}}` | | 문지훈 |
+| 내 되는 날 | PUT | `/api/trips/{id}/members/{memberId}/dates` | 200 판<br>요청 `{"dates": ["2027-01-15", "2027-01-16"]}` | 남의 것 403, 지난 날·1년 넘는 날 400 | 문지훈 |
+| 날짜 정하기 | PUT | `/api/trips/{id}/period` | 200 방<br>요청 `{"startDate": "2027-01-15", "endDate": "2027-01-17"}` | 방장이 아니면 403, 도착이 출발보다 앞이면 400 | 문지훈 |
+| 방 규칙 | PUT | `/api/trips/{id}/rules` | 200 방<br>요청 `{"driverPaysFuel": false, "refundNoShow": false, "drinksSeparate": true}` | 방장이 아니면 403 | 문지훈 |
+| 같은 멤버로 다음 여행 | POST | `/api/trips/{id}/next` | 201 `{"tripId": 7, "created": true, "memberCount": 8}` (이미 있으면 200 같은 방) | 방에 없으면 404, 동시에 겹치면 409 | 문지훈 |
+| 나가기·빼기 | DELETE | `/api/trips/{id}/members/{memberId}` | 204 (설문·역할·숙소 표·장보기·정산이 같이 빠짐) | 남을 빼려는 참여자 403, 혼자 남은 방 400 | 문지훈 |
+| 장보기 | GET / PUT / DELETE | `/api/trips/{id}/shopping`, `/shopping/plan`, `/shopping/items/{item}` | 200 `{"people": 8, "items": [...], "spent": 52000, "perPerson": 6500}` | 남이 맡은 줄 409, 범위 밖 400 | 문지훈 |
+| 누가 누구에게 얼마 | GET | `/api/trips/{id}/settlement` | 200 `{"total": 560000, "transfers": [{"fromName": "도윤", "toName": "재현", "amount": 53200}]}` | | 문지훈 |
+| 먼저 낸 돈 적기·지우기 | POST / DELETE | `/api/trips/{id}/expenses`, `/expenses/{expenseId}` | 201 / 200 판<br>요청 `{"kind": "FUEL", "memo": "주유", "amount": 64000}` | 금액 0 이하 400, 남이 적은 것 403 | 문지훈 |
 
 화면 주소(`/trips/1/roles` 같은 것)는 [화면 설계](docs/02-화면설계.md)에 있다. API 를 직접 불러 보려면 브라우저에서 카카오로 로그인한 뒤 `JSESSIONID` 쿠키를 IntelliJ HTTP Client 나 Talend API Tester 에 붙인다. 테스트는 `TestLogin`(src/test)이 같은 세션을 바로 만든다.
 

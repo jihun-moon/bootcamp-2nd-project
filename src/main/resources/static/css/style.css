@@ -740,3 +740,14 @@ button.link::after { content: ""; position: absolute; inset: -12px -8px; } /* �
 
 /* 사람 줄 끝의 "빼기": 이름 줄을 밀지 않게 오른쪽 끝에 작게 */
 #members .member-out { margin-left: auto; color: var(--muted); }
+
+/* 정산: 보낼 줄은 크게 한 줄씩, 내가 보내거나 받는 줄은 청록 테로 먼저 눈에 */
+.settle-list { display: grid; gap: 8px; }
+.settle-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius-sm); font-size: var(--fs-md); }
+.settle-row .arrow { color: var(--muted); }
+.settle-row.mine { border-color: var(--accent); background: var(--accent-soft); }
+.settle-amount { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.settle-form { padding-top: 16px; border-top: 1px solid var(--line); }
+.settle-form .row input { flex: 1; min-width: 0; }
+.settle-lines li { gap: 8px; }
+.settle-lines li > span:first-child { flex: 1; min-width: 0; }

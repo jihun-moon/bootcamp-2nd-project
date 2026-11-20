@@ -162,6 +162,7 @@ $(function () {
   $('#btn-receipt-share').text(shareLabel('카톡으로 영수증 보내기', '영수증 그림 저장하기')).click(shareReceipt);
   $('#btn-next-trip').click(function () { startNextTrip(tripId, this); });
   loadTrip(tripId).done(function (trip) {
+    initSettle(trip);
     if (trip.nextTripId) $('.again h2').text('2탄 방이 열려 있어요');
     if (trip.nextTripId) $('#btn-next-trip').text('2탄 방으로').off('click').click(function () { location.href = '/trips/' + trip.nextTripId; });
     // 교통비는 길찾기를 부르니 느리거나 안 될 수 있다. 실패해도 나머지로 영수증을 뽑는다

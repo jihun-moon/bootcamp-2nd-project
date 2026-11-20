@@ -19,6 +19,24 @@
       <button type="button" id="btn-receipt-share" class="btn primary big block">카톡으로 영수증 보내기</button>
       <p class="muted small center">휴대폰은 그림으로 바로 보내고, PC 는 그림을 저장해요.</p>
     </div>
+    <!-- 다녀와서 정산: 먼저 낸 돈을 적으면 누가 누구에게 얼마 보낼지가 바로 나온다. 송금은 각자 토스·카카오페이로(우리는 돈을 만지지 않는다) -->
+    <section class="settle box stack" aria-labelledby="settle-title">
+      <div class="between"><h2 id="settle-title">누가 누구에게 얼마</h2><span id="settle-total" class="muted small"></span></div>
+      <ol id="settle-transfers" class="settle-list" aria-live="polite"></ol>
+      <button type="button" id="btn-settle-share" class="btn primary block" hidden>정산 글 복사하기</button>
+      <form id="settle-form" class="stack settle-form">
+        <p class="strong">내가 먼저 낸 돈 적기</p>
+        <div id="settle-kind" class="segmented" role="group" aria-label="무엇에 냈나"></div>
+        <div class="row">
+          <input id="settle-amount" type="number" inputmode="numeric" min="1" max="100000000" step="1" placeholder="금액(원)" aria-label="금액(원)" required>
+          <button type="submit" class="btn">적기</button>
+        </div>
+        <input id="settle-memo" type="text" maxlength="40" placeholder="메모(예: 숲속 독채 잔금, 주유 + 톨비)" aria-label="메모">
+      </form>
+      <ul id="settle-lines" class="stack small settle-lines"></ul>
+      <p id="settle-rule" class="muted small"></p>
+      <p class="muted small">장보기에서 "내가 살게" 하고 적은 돈은 저절로 들어와요. 100원 단위로 올려 보여 줘요.</p>
+    </section>
     <!-- 영수증까지 뽑았으면 다음은 2탄. 같은 사람·규칙으로 새 방을 연다(이미 있으면 그 방으로) -->
     <section class="again box stack center">
       <h2>이 멤버로 2탄 갈까요?</h2>
@@ -28,5 +46,6 @@
   </main>
 </div>
 <script th:src="@{/js/receipt.js}"></script>
+<script th:src="@{/js/settle.js}"></script>
 </body>
 </html>

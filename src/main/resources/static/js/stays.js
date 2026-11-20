@@ -1,4 +1,4 @@
-// 숙소: 그룹 취향(평균·최솟값), 숙소 표(점수·투표·조건), 링크 올리기. 다른 사람이 바꾸면(SSE stays) 다시 그린다
+// 숙소: 그룹 취향(평균·최솟값), 숙소 카드(점수·투표·조건), 링크 올리기. 다른 사람이 바꾸면(SSE stays) 다시 그린다
 var tripId = $('body').data('trip-id');
 
 var trip = null;
@@ -36,33 +36,48 @@ function renderPreferences() {
   });
 }
 
-function renderTable() {
-  $('#stay-table').prop('hidden', board.stays.length === 0);
-  var head = $('#stay-head').empty().append('<th>숙소</th><th>점수</th><th>투표</th>');
-  board.amenities.forEach(function (a) { head.append($('<th class="muted">').text(a.label)); });
-
+// 그룹 취향 점수가 높은 순으로 카드를 그린다. 1등은 테를 칠해 "지금 가장 맞는 곳"이 바로 보이게
+function renderStays() {
   var myVote = board.stays.find(function (s) { return s.voterIds.indexOf(trip.meId) >= 0; });
   var ranked = board.stays.slice().sort(function (a, b) {
     return score(b.amenities) - score(a.amenities) || a.id - b.id;
   });
+  $('#stay-empty').prop('hidden', ranked.length > 0);
+  $('#stay-count').text(ranked.length ? ranked.length + '곳 · 내 표 ' + (myVote ? '1' : '0') + '/1' : '');
 
-  var rows = $('#stay-rows').empty();
-  ranked.forEach(function (stay) {
-    var link = $('<a target="_blank" rel="noopener noreferrer" class="row strong">').attr('href', stay.url);
-    if (stay.imageUrl) link.append($('<img class="thumb" alt="" referrerpolicy="no-referrer">').attr('src', stay.imageUrl));
-    link.append($('<span>').text(stay.title));
-
+  var list = $('#stay-list').empty();
+  ranked.forEach(function (stay, i) {
     var mine = myVote && myVote.id === stay.id;
-    var voteCell = $('<td class="center">').append(
-      $('<button type="button" class="btn">').toggleClass('primary', mine).text(stay.voterIds.length + '표')
-        .click(function () { vote(mine ? null : stay.id); }));
-    if (stay.voterIds.length) voteCell.append($('<div class="muted small">').text(stay.voterIds.map(nameOf).join(', ')));
+    var card = $('<li class="box stay">').toggleClass('best', i === 0 && board.surveyed > 0);
+    if (stay.imageUrl) card.append($('<img class="photo" alt="" loading="lazy" referrerpolicy="no-referrer">').attr('src', stay.imageUrl));
 
-    var row = $('<tr>').append($('<td>').append(link), $('<td class="center">').text(score(stay.amenities).toFixed(1)), voteCell);
+    var title = $('<a target="_blank" rel="noopener noreferrer" class="strong">').attr('href', stay.url).text(stay.title + ' ↗');
+    card.append($('<div class="between">').append(title,
+      board.surveyed > 0 ? $('<span class="rank">').text((i + 1) + '위 · ' + score(stay.amenities).toFixed(1) + '점') : null));
+
+    var chips = $('<div class="row wrap">');
     board.amenities.forEach(function (a) {
-      row.append($('<td class="center">').text(stay.amenities.indexOf(a.key) >= 0 ? '✓' : ''));
+      if (stay.amenities.indexOf(a.key) >= 0) chips.append($('<span class="chip on">').text(a.label));
     });
-    rows.append(row);
+    // 그룹에서 "꼭 있어야" 한 사람이 있는(최솟값 4 이상) 조건이 이 숙소에 없으면 따로 짚어 준다
+    missingMust(stay).forEach(function (a) { chips.append($('<span class="chip warn">').text(a.label + ' 없음')); });
+    card.append(chips);
+
+    var voters = stay.voterIds.map(nameOf).filter(Boolean);
+    card.append($('<div class="between">').append(
+      $('<span class="muted small">').text(voters.length ? voters.join(', ') : '아직 표 없음'),
+      $('<button type="button" class="btn">').toggleClass('primary', !!mine)
+        .text(mine ? '내 표 ✓ ' + stay.voterIds.length : '투표 ' + stay.voterIds.length)
+        .attr('aria-pressed', !!mine)
+        .click(function () { vote(mine ? null : stay.id); })));
+    list.append(card);
+  });
+}
+
+function missingMust(stay) {
+  return board.amenities.filter(function (a) {
+    var p = board.preferences[a.key];
+    return p && p.min >= 4 && stay.amenities.indexOf(a.key) < 0;
   });
 }
 
@@ -70,7 +85,7 @@ function renderForm() {
   var box = $('#stay-amenities');
   if (box.children().length) return; // 체크해 둔 것이 다시 그릴 때 지워지지 않게 한 번만
   board.amenities.forEach(function (a) {
-    $('<label class="row">').append($('<input type="checkbox" name="amenities">').val(a.key), $('<span>').text(a.label)).appendTo(box);
+    $('<label class="row chip">').append($('<input type="checkbox" name="amenities">').val(a.key), $('<span>').text(a.label)).appendTo(box);
   });
 }
 
@@ -79,7 +94,7 @@ function loadBoard() {
   return api('GET', '/api/trips/' + tripId + '/stays').done(function (res) {
     board = res;
     renderPreferences();
-    renderTable();
+    renderStays();
     renderForm();
   });
 }
@@ -106,7 +121,9 @@ function addStay(e) {
     $('#stay-form')[0].reset();
     loadBoard();
   }).fail(function (xhr) {
-    if (xhr.status !== 401) showNotice('숙소를 올리지 못했어요. 링크가 https:// 로 시작하는지 확인해 주세요.');
+    if (xhr.status !== 401) showNotice(xhr.status === 400
+      ? '링크가 https:// 로 시작하는지 확인해 주세요. 숙소는 방마다 30곳까지 올릴 수 있어요.'
+      : '숙소를 올리지 못했어요. 다시 눌러 주세요.');
   }).always(function () {
     $('#btn-add').prop('disabled', false).text('올리기');
   });

@@ -45,6 +45,7 @@ public class Member {
         return user != null && user.getId().equals(other.getId());
     }
 
+    Trip getTrip() { return trip; }
     public Long getId() { return id; }
     public String getName() { return name; }
     public boolean isHost() { return host; }

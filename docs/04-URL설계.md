@@ -20,6 +20,7 @@
 | REQ-02 | 방 만들기 | POST | `/api/trips` | `{"title", "destination", "startDate", "endDate"}` | 201 방 | `TripController`, `TripService` |
 | REQ-04 | 방 보기 | GET | `/api/trips/{id}` | | 200 방(참여자, `meId`, `inviteCode`) | `TripController`, `TripService` |
 | REQ-03 | 초대 링크로 참여 | POST | `/api/invites/{inviteCode}` | | 200 `{tripId}` | `TripController`, `TripService` |
+| REQ-02 | 내 여행방 | GET | `/api/me/trips` | | 200 `[{id, title, destination, startDate, memberCount, surveyDone, host}]` 최근 50개 / 401 | `TripController`, `TripService.myTrips` |
 | REQ-11 | 바뀜 알림(SSE) | GET | `/api/trips/{id}/events` | | `event: change` / `ping` | `TripController`, `TripEvents` |
 | REQ-05 | 방 고치기 *(남은 일)* | PATCH | `/api/trips/{id}` | 바꿀 칸 | 200 | |
 | REQ-05 | 방 지우기 *(남은 일)* | DELETE | `/api/trips/{id}` | | 204 | |

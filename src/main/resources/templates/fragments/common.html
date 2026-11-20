@@ -2,11 +2,19 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <body>
 
-<!-- 모든 화면의 <head>. 쓰는 곳: <head th:replace="~{fragments/common :: head('제목')}"></head> -->
+<!-- 모든 화면의 <head>. 쓰는 곳: <head th:replace="~{fragments/common :: head('제목')}"></head>
+     og 태그는 카톡·문자에 링크를 붙였을 때 뜨는 미리보기다. 초대 화면만 컨트롤러가 ogTitle 로 방 이름을 넣는다 -->
 <head th:fragment="head(title)">
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0e7c72">
   <title th:text="${title} + ' | TripMate'">TripMate</title>
+  <meta name="description" content="7~8명 여행에서 운전·총무·장보기를 설문 1분으로 근거 있게 나누고, 숙소는 누가 싫어하는지까지 보고 고른다. 앱 설치 없이 카톡 링크로.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TripMate">
+  <meta property="og:title" th:content="${ogTitle} ?: 'TripMate | 단체 여행, 눈치 싸움 없이 정하기'">
+  <meta property="og:description" th:content="${ogDescription} ?: '설문 1분이면 역할은 근거와 함께, 숙소는 의견 갈림까지 보여요. 앱 설치 없이 카톡 링크로.'">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230e7c72'/%3E%3Ctext x='16' y='23' font-size='20' font-family='sans-serif' font-weight='700' fill='white' text-anchor='middle'%3ET%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" th:href="@{/css/style.css}">
   <!-- integrity: CDN 파일이 바뀌어 들어와도 브라우저가 실행하지 않게 해시를 박아 둔다 -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"
@@ -14,10 +22,20 @@
   <script th:src="@{/js/common.js}"></script>
 </head>
 
+<!-- 방 밖 화면(첫 화면·로그인·방 만들기)의 위쪽 -->
+<header th:fragment="siteHeader" class="site-header">
+  <div class="inner">
+    <a th:href="@{/}" class="logo">Trip<span>Mate</span></a>
+    <nav class="row">
+      <a th:href="@{/trips/new}" class="btn primary">여행방 만들기</a>
+    </nav>
+  </div>
+</header>
+
 <!-- 방 화면(개요·설문·역할·숙소) 위쪽. 방 이름·인원은 common.js 의 loadTrip() 이 채운다 -->
 <header th:fragment="tripHeader" class="trip-header">
   <div class="top">
-    <a th:href="@{/}" class="muted">TripMate</a>
+    <a th:href="@{/}" class="logo">Trip<span>Mate</span></a>
     <div class="user-menu">
       <span id="me-name"></span>
       <button type="button" id="btn-logout" class="link">로그아웃</button>

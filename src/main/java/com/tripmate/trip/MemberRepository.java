@@ -12,6 +12,9 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     Optional<Member> findByTripIdAndUserId(Long tripId, Long userId);
 
+    // 첫 화면 "내 여행방". 오래된 방까지 끝없이 읽지 않게 최근 50개만
+    List<Member> findTop50ByUserIdOrderByIdDesc(Long userId);
+
     // 개발용 로그인이 계정 없는 예시 참여자를 찾을 때만 쓴다
     List<Member> findByNameAndUserIsNull(String name);
 }

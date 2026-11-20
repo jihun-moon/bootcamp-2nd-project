@@ -285,19 +285,8 @@ function resultText() {
   return lines.join('\n');
 }
 
-// clipboard API 는 https·localhost 에서만 된다. 그 밖(같은 와이파이 휴대폰으로 http://192.168... 접속 등)은 옛 방식으로 복사한다
 function copyResult() {
-  var text = resultText();
-  var copied;
-  if (navigator.clipboard && window.isSecureContext) {
-    copied = navigator.clipboard.writeText(text);
-  } else {
-    var area = $('<textarea readonly>').val(text).css({ position: 'fixed', opacity: 0 }).appendTo('body');
-    area[0].select();
-    copied = document.execCommand('copy') ? Promise.resolve() : Promise.reject();
-    area.remove();
-  }
-  copied.then(
+  copyText(resultText()).then(
     function () { showNotice('복사했어요. 단톡방에 붙여 넣어 주세요.'); },
     function () { showNotice('복사하지 못했어요. 다시 눌러 주세요.'); }
   );

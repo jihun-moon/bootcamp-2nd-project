@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api")
@@ -32,6 +33,12 @@ public class TripController {
     public ResponseEntity<TripDto.Response> getTrip(@PathVariable Long tripId) {
         var me = tripAccess.me(tripId);
         return ResponseEntity.ok(tripService.find(tripId, me));
+    }
+
+    // GET: /api/me/trips   첫 화면의 "내 여행방". 로그인 안 했으면 401(화면은 이걸로 로그인 여부도 안다)
+    @GetMapping("/me/trips")
+    public ResponseEntity<List<TripDto.Summary>> myTrips() {
+        return ResponseEntity.ok(tripService.myTrips(currentUser.get()));
     }
 
     // POST: /api/trips  body = { "title": "겨울 펜션 2박 3일", "destination": "가평", "startDate": "2027-01-15", "endDate": "2027-01-17" }

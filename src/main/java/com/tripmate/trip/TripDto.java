@@ -1,5 +1,6 @@
 package com.tripmate.trip;
 
+import com.tripmate.user.AppUser;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -24,6 +25,18 @@ public final class TripDto {
             var members = trip.getMembers().stream().map(MemberResponse::from).toList();
             return new Response(trip.getId(), trip.getTitle(), trip.getDestination(),
                     trip.getStartDate(), trip.getEndDate(), trip.getInviteCode(), me.getId(), members);
+        }
+    }
+
+    // GET /api/me/trips 의 한 줄. 첫 화면에서 들어갈 방을 고르는 데 필요한 것만
+    public record Summary(Long id, String title, String destination, LocalDate startDate, LocalDate endDate,
+                          int memberCount, long surveyDone, boolean host) {
+
+        static Summary of(Trip trip, AppUser user) {
+            var members = trip.getMembers();
+            var host = members.stream().anyMatch(m -> m.isHost() && m.belongsTo(user));
+            return new Summary(trip.getId(), trip.getTitle(), trip.getDestination(), trip.getStartDate(), trip.getEndDate(),
+                    members.size(), members.stream().filter(Member::isSurveyDone).count(), host);
         }
     }
 

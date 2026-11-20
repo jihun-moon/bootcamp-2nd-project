@@ -5,15 +5,24 @@
 <div class="page">
   <header th:replace="~{fragments/common :: tripHeader}"></header>
   <main class="stack">
-    <section class="box">
-      <div class="between small"><span>설문 진행</span><span id="survey-count" class="muted"></span></div>
-      <div class="bar"><div id="survey-bar" class="fill"></div></div>
+    <!-- 지금 나에게 맞는 다음 할 일 하나. 처음 들어온 사람이 "여기서 뭘 하지?"를 고민하지 않게 trip.js 가 고른다 -->
+    <section id="next" class="box stack">
+      <h2 id="next-title"></h2>
+      <p id="next-text" class="muted"></p>
+      <div id="next-actions" class="row wrap"></div>
     </section>
-    <section class="box">
-      <div class="between">
-        <h2>참여자</h2>
-        <button type="button" id="btn-invite" class="link">초대 링크 복사</button>
+
+    <section class="box stack">
+      <div class="between"><h2>초대 링크</h2><span class="muted small">단톡방에 붙여 넣으면 돼요</span></div>
+      <div class="row">
+        <input type="text" id="invite-link" readonly aria-label="초대 링크">
+        <button type="button" id="btn-invite" class="btn primary">복사</button>
       </div>
+    </section>
+
+    <section class="box stack">
+      <div class="between small"><span class="strong">설문 진행</span><span id="survey-count" class="muted"></span></div>
+      <div class="bar"><div id="survey-bar" class="fill"></div></div>
       <ul id="members" class="grid4"></ul>
     </section>
   </main>

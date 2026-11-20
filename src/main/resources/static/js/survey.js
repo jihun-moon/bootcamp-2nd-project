@@ -71,7 +71,9 @@ function go(next) {
       return;
     }
     q.options.forEach(function (o) {
-      $('<button type="button" class="choice">').text(o.label).click(function () {
+      // 지난 답을 칠해 둔다. avoid 는 배열이라 글자로 바꿔 견준다
+      var picked = JSON.stringify(answers[q.key]) === JSON.stringify(o.value);
+      $('<button type="button" class="choice">').toggleClass('on', picked).text(o.label).click(function () {
         answers[q.key] = o.value;
         go(step + 1);
       }).appendTo(box);
@@ -108,21 +110,37 @@ function save() {
   $('#save-error').prop('hidden', true);
   var body = $.extend({}, answers, { preferences: preferences });
   api('PUT', '/api/trips/' + tripId + '/members/' + me.id + '/survey', body)
-    .done(function () {
-      $('#step-question, #step-preferences').prop('hidden', true);
-      $('#saved-title').text(me.name + '님 설문을 저장했어요');
-      $('#step-saved').prop('hidden', false);
-    })
+    .done(showSaved)
     .fail(function () { $('#save-error').prop('hidden', false); })
     .always(function () { $('#btn-save').prop('disabled', false).text('저장하기'); });
 }
 
+// GET: /api/trips/1/members/2/survey  -> SurveyDto.Response (처음이면 404)
+// 다시 들어온 사람이 처음부터 다시 고르지 않게 지난 답을 채워 두고, 이미 했으면 저장 화면부터 보여 준다
+function loadMine() {
+  return api('GET', '/api/trips/' + tripId + '/members/' + me.id + '/survey').done(function (s) {
+    answers = { activity: s.activity, planning: s.planning, hasCar: s.hasCar, separateDeparture: s.separateDeparture,
+      departure: s.departure || null, mobilityLimited: !!s.mobilityLimited, avoid: s.avoid };
+    $.extend(preferences, s.preferences);
+  });
+}
+
+function showSaved() {
+  $('#step-question, #step-preferences').prop('hidden', true);
+  $('#saved-title').text(me.name + '님 설문을 저장했어요');
+  $('#progress').css('width', '100%');
+  $('#step-saved').prop('hidden', false);
+}
+
 $(function () {
   AMENITIES.forEach(function (a) { preferences[a.key] = 3; });
+  $('#go-roles').attr('href', '/trips/' + tripId + '/roles');
+  $('#go-stays').attr('href', '/trips/' + tripId + '/stays');
 
   loadTrip(tripId).done(function (trip) {
     me = trip.members.find(function (m) { return m.id === trip.meId; });
-    go(0);
+    if (me.surveyDone) loadMine().done(showSaved).fail(function () { go(0); });
+    else go(0);
   });
 
   $('.btn-back').click(function () { go(step - 1); });

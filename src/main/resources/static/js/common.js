@@ -30,6 +30,17 @@ function api(method, url, body) {
   });
 }
 
+// 초대 링크·카톡용 글을 복사한다. clipboard API 는 https·localhost 에서만 돼서
+// 같은 와이파이 휴대폰으로 http://192.168... 에 들어온 경우는 옛 방식(execCommand)으로 복사한다
+function copyText(text) {
+  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+  var area = $('<textarea readonly>').val(text).css({ position: 'fixed', opacity: 0 }).appendTo('body');
+  area[0].select();
+  var ok = document.execCommand('copy');
+  area.remove();
+  return ok ? Promise.resolve() : Promise.reject();
+}
+
 function showNotice(message) {
   $('#notice').text(message).prop('hidden', !message);
 }

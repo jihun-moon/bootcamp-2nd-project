@@ -64,7 +64,9 @@ class LeaveTripTest {
                 .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
         var stayId = JSON.readTree(stay).get("id").asLong();
         send(minji, "PUT", "/api/trips/1/votes/2", "{ \"stayId\": " + stayId + " }").andExpect(status().is2xxSuccessful());
-        send(minji, "PUT", "/api/trips/1/shopping/items/SOJU", "{ \"amount\": 12000 }").andExpect(status().is2xxSuccessful());
+        // 소주는 "내가 살게"만(아직 안 삼), 맥주는 이미 사서 8,000 을 적었다
+        send(minji, "PUT", "/api/trips/1/shopping/items/SOJU", "{ \"amount\": null }").andExpect(status().is2xxSuccessful());
+        send(minji, "PUT", "/api/trips/1/shopping/items/BEER", "{ \"amount\": 8000 }").andExpect(status().is2xxSuccessful());
         send(minji, "PUT", "/api/trips/1/members/2/survey", """
                 { "activity": "BOTH", "planning": "OUTLINE", "hasCar": false, "separateDeparture": false,
                   "departure": null, "mobilityLimited": false, "avoid": [] }""").andExpect(status().is2xxSuccessful());
@@ -81,9 +83,21 @@ class LeaveTripTest {
                 .andExpect(jsonPath("$.stays[0].voterIds", hasSize(0)));
         mvc.perform(get("/api/trips/1/shopping").session(siwoo))
                 .andExpect(jsonPath("$.people").value(7))
-                .andExpect(jsonPath("$.items[?(@.key == 'SOJU')].buyerId").value(org.hamcrest.Matchers.contains((Object) null)));
+                .andExpect(jsonPath("$.items[?(@.key == 'SOJU')].buyerId").value(org.hamcrest.Matchers.contains((Object) null)))
+                // 이미 산 줄은 남는다. 그 돈은 정산에서 민지가 돌려받는다
+                .andExpect(jsonPath("$.items[?(@.key == 'BEER')].buyerId").value(org.hamcrest.Matchers.contains(2)));
         // 나간 사람은 방을 못 본다
         mvc.perform(get("/api/trips/1").session(minji)).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void 나갔다가_초대_링크로_다시_오면_돌아온다() throws Exception {
+        var code = JSON.readTree(mvc.perform(get("/api/trips/1").session(TestLogin.as(mvc, "민지")))
+                .andReturn().getResponse().getContentAsString()).get("inviteCode").asString();
+        leave("민지", 2).andExpect(status().isNoContent());
+        mvc.perform(post("/api/invites/" + code).session(TestLogin.as(mvc, "민지"))).andExpect(status().isOk());
+        mvc.perform(get("/api/trips/1").session(TestLogin.as(mvc, "민지")))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.members", hasSize(8)));
     }
 
     @Test

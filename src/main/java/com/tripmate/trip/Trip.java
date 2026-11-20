@@ -71,10 +71,12 @@ public class Trip {
         return member;
     }
 
-    // 방장이 나가면 그다음에 들어온 사람이 방장(방이 주인 없이 남지 않게)
+    // 나가기: 행은 남기고 나감 표시(Member.departed). 방장이 나가면 남은 사람 중 먼저 들어온 사람이 방장
     void removeMember(Member member) {
-        members.remove(member);
-        if (member.isHost() && !members.isEmpty()) members.get(0).makeHost();
+        var wasHost = member.isHost();
+        member.depart();
+        var rest = getMembers();
+        if (wasHost && !rest.isEmpty()) rest.get(0).makeHost();
     }
 
     public void updatePeriod(LocalDate startDate, LocalDate endDate) {
@@ -95,7 +97,11 @@ public class Trip {
     public String getDestination() { return destination; }
     public LocalDate getStartDate() { return startDate; }
     public LocalDate getEndDate() { return endDate; }
-    public List<Member> getMembers() { return members; }
+    // 지금 방에 있는 사람. 화면·역할·숙소·장보기·인원 셈은 모두 이것만 본다
+    public List<Member> getMembers() { return members.stream().filter(m -> !m.isDeparted()).toList(); }
+
+    // 나간 사람까지. 정산만 쓴다(먼저 낸 돈, 보낸 돈, 예약금 규칙)
+    public List<Member> getEveryone() { return members; }
     public Boolean getDriverPaysFuel() { return driverPaysFuel; }
     public Boolean getRefundNoShow() { return refundNoShow; }
     public Boolean getDrinksSeparate() { return drinksSeparate; }

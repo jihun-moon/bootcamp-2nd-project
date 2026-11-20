@@ -96,14 +96,43 @@ class SettleTest {
     }
 
     @Test
-    void 방을_나간_사람이_적은_돈은_빠지고_남은_사람끼리_나눈다() throws Exception {
+    void 먼저_낸_사람이_나가도_그_돈은_남아_돌려받는다() throws Exception {
+        // 리뷰 #10: 전에는 나가면 그 사람이 낸 돈이 정산에서 사라져 못 돌려받았다
         pay("민지", "{ \"kind\": \"FOOD\", \"amount\": 70000 }");
         pay("재현", "{ \"kind\": \"FOOD\", \"amount\": 14000 }");
         mvc.perform(delete("/api/trips/1/members/2").session(TestLogin.as(mvc, "민지"))).andExpect(status().isNoContent());
         var b = board("시우");
-        assertThat(b.get("total").asInt()).isEqualTo(14_000);
-        assertThat(b.get("balances").size()).isEqualTo(7);
-        for (var t : b.get("transfers")) assertThat(t.get("amount").asInt()).isEqualTo(2_000);
+        assertThat(b.get("total").asInt()).isEqualTo(84_000);
+        // 식비는 남은 7명이 12,000씩. 민지(나감)는 몫 0, 낸 70,000 을 돌려받는다
+        var toMinji = 0;
+        for (var t : b.get("transfers")) if (t.get("toName").asString().equals("민지(나감)")) toMinji += t.get("amount").asInt();
+        assertThat(toMinji).isEqualTo(70_000);
+        assertThat(b.get("balances").size()).isEqualTo(8);
+    }
+
+    @Test
+    void 예약금_안_돌려줘요_규칙이면_나간_사람도_숙소_몫을_낸다() throws Exception {
+        mvc.perform(put("/api/trips/1/rules").session(TestLogin.as(mvc, "재현")).contentType(MediaType.APPLICATION_JSON)
+                .content("{ \"driverPaysFuel\": null, \"refundNoShow\": false, \"drinksSeparate\": null }"));
+        pay("재현", "{ \"kind\": \"STAY\", \"amount\": 80000 }");
+        mvc.perform(delete("/api/trips/1/members/8").session(TestLogin.as(mvc, "재현"))).andExpect(status().isNoContent());
+        var b = board("민지");
+        var fromSiwoo = 0;
+        for (var t : b.get("transfers")) if (t.get("fromName").asString().equals("시우(나감)")) fromSiwoo += t.get("amount").asInt();
+        assertThat(fromSiwoo).isEqualTo(10_000);   // 8명 몫 10,000 을 그대로 진다
+        assertThat(b.get("refundNoShow").asBoolean()).isFalse();
+    }
+
+    @Test
+    void 예약금_돌려줘요_규칙이면_나간_사람_몫은_남은_사람이_나눈다() throws Exception {
+        mvc.perform(put("/api/trips/1/rules").session(TestLogin.as(mvc, "재현")).contentType(MediaType.APPLICATION_JSON)
+                .content("{ \"driverPaysFuel\": null, \"refundNoShow\": true, \"drinksSeparate\": null }"));
+        pay("재현", "{ \"kind\": \"STAY\", \"amount\": 70000 }");
+        mvc.perform(delete("/api/trips/1/members/8").session(TestLogin.as(mvc, "재현"))).andExpect(status().isNoContent());
+        for (var t : board("민지").get("transfers")) {
+            assertThat(t.get("fromName").asString()).doesNotContain("시우");
+            assertThat(t.get("amount").asInt()).isEqualTo(10_000);   // 남은 7명이 10,000씩
+        }
     }
 
     private void drinkStory(boolean drinksSeparate) throws Exception {

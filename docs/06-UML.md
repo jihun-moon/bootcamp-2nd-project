@@ -123,7 +123,7 @@ classDiagram
 
 | 패키지 | 화면 컨트롤러 | API 컨트롤러 | 서비스 | 엔티티 |
 |---|---|---|---|---|
-| `user` | `LoginPageController` | `AuthController`, `DevLoginController` | `KakaoUserService` | `AppUser` |
+| `user` | `LoginPageController` | `AuthController` | `KakaoUserService` | `AppUser` |
 | `trip` | `TripPageController` | `TripController` | (박재현 1주 차) | `Trip`, `Member` |
 | `survey` | `SurveyPageController` | `SurveyController` | `SurveyService` | `SurveyAnswer` |
 | `role` | `RolePageController` | `RoleController` | `RoleService` | `Role`, `Assignment` |

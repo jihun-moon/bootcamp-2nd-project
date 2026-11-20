@@ -77,6 +77,7 @@ function renderSettle(board, trip) {
   var rules = [];
   if (board.driverPaysFuel === false) rules.push('기름값·톨비는 운전한 사람 빼고');
   if (board.drinksSeparate === true) rules.push('술은 마신 사람끼리');
+  if (board.refundNoShow === false) rules.push('숙소는 빠진 사람 몫까지');
   $('#settle-rule').text(rules.length ? '우리 규칙: ' + rules.join(', ') + ' 나눠요.' : '');
   renderDrinkers(board, trip);
 }

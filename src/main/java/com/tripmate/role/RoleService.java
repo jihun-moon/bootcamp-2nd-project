@@ -2,6 +2,7 @@ package com.tripmate.role;
 
 import org.springframework.context.event.EventListener;
 import com.tripmate.trip.MemberLeaving;
+import com.tripmate.trip.MemberLeft;
 import com.tripmate.survey.SurveyAnswer;
 import com.tripmate.survey.SurveyAnswerRepository;
 import com.tripmate.trip.Member;
@@ -138,16 +139,22 @@ public class RoleService {
         return new TravelDto.Plan(trip.getDestination(), trip.getMembers().size(), cars);
     }
 
-    // 마지막 사람이 설문을 끝내면 방장이 단추를 누르지 않아도 역할이 정해진다.
     // 방을 나간 사람의 역할 카드. 빈자리는 보드에서 다시 추천하거나 손으로 채운다
     @EventListener
     public void onMemberLeaving(MemberLeaving e) {
         assignmentRepository.findByMemberId(e.memberId()).ifPresent(assignmentRepository::delete);
     }
 
+    // 나간 사람이 마지막 설문 전 사람이었으면 이제 다 모인 것이라 자동 추천을 다시 본다(리뷰 #10)
+    @EventListener
+    public void onMemberLeft(MemberLeft e) {
+        recommendWhenAllDone(e.tripId());
+    }
+
+    // 마지막 사람이 설문을 끝내면 방장이 단추를 누르지 않아도 역할이 정해진다.
     // 혼자 있는 방은 아직 부를 친구가 남아 기다린다.
     // 방장과 제일 빠른 친구 둘이 먼저 끝내면 그때 "모두 끝남"이라 둘만 배정되고, 저녁에 들어온 다섯은 빈손이었다(7명 시뮬레이션).
-    // 그래서 배정 없는 사람이 생기면 다시 짠다. 다만 누가 카드를 손으로 옮겼으면그 뜻을 지우지 않게 둔다
+    // 그래서 배정 없는 사람이 생기면 다시 짠다. 다만 누가 카드를 손으로 옮겼으면 그 뜻을 지우지 않게 둔다
     @Transactional
     public void recommendWhenAllDone(Long tripId) {
         var members = tripRepository.findWithMembersById(tripId)

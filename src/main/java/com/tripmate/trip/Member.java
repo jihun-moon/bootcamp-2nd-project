@@ -30,6 +30,11 @@ public class Member {
     // 장보기 술 양과, 규칙 "술값은 마신 사람만"일 때 정산에 쓴다
     private Boolean drinks;
 
+    // 방을 나갔나. 행을 지우지 않는다: 먼저 낸 돈·보낸 돈은 정산에 남아야 하고(돌려받을 사람),
+    // 규칙 "전날 빠지면 예약금 안 돌려줘요"면 숙소 몫도 그대로 진다. 그 밖의 화면·계산에서는 빠진다.
+    // null 은 안 나감(기존 행에 NOT NULL 열을 더하면 운영 DB 갱신이 실패해서 Boolean)
+    private Boolean departed;
+
     // 날짜 맞추기: 이 사람이 되는 날. 방에 날짜가 아직 없을 때 모아서 겹치는 날을 찾는다
     @ElementCollection
     @CollectionTable(name = "member_available_date")
@@ -56,6 +61,17 @@ public class Member {
     void makeHost() {
         host = true;
     }
+
+    void depart() {
+        departed = true;
+        host = false;
+    }
+
+    void rejoin() {
+        departed = null;
+    }
+
+    public boolean isDeparted() { return Boolean.TRUE.equals(departed); }
 
     public void changeDrinks(boolean drinks) {
         this.drinks = drinks;

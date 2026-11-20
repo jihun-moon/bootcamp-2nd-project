@@ -13,7 +13,4 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     List<Payment> findByTripIdOrderById(Long tripId);
 
     Optional<Payment> findByIdAndTripId(Long id, Long tripId);
-
-    // 방을 나간 사람이 보내거나 받거나 누른 표시
-    void deleteBySenderIdOrReceiverIdOrMarkedById(Long senderId, Long receiverId, Long markedById);
 }

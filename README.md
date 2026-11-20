@@ -156,7 +156,7 @@ API 와 화면 테스트 56개. PR 을 올리기 전에 통과해야 한다.
 
 ## 카카오 로그인 켜기 (키가 있는 사람만)
 
-키가 없어도 개발용 로그인으로 모든 기능을 쓴다.
+키가 없으면 로그인을 할 수 없다(개발용 로그인은 2026-11-20 에 지웠다). 시험은 키 없이 `TestLogin` 으로 돈다.
 
 1. 저장소 맨 위 폴더에 `secrets.properties` 를 만든다. git 에 안 올라간다. 값은 팀장에게 따로 받는다
 
@@ -175,4 +175,4 @@ OPINET_KEY=오피넷 오픈 API 키
 ```
 
 카카오 개발자 콘솔의 Redirect URI 는 `http://localhost:8080/login/oauth2/code/kakao` 다.
-배포할 때는 `{배포 주소}/login/oauth2/code/kakao` 를 하나 더 넣고, `DEV_LOGIN` 은 켜지 않는다.
+배포할 때는 `{배포 주소}/login/oauth2/code/kakao` 를 하나 더 넣는다.

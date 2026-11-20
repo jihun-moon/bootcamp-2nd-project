@@ -96,9 +96,12 @@ public class ShoppingService {
         return board(tripId);
     }
 
-    // 방을 나간 사람이 "내가 살게" 한 줄은 다시 빈 줄로(누가 사기로 했는지 남아 있으면 아무도 안 산다)
+    // 방을 나간 사람이 "내가 살게"만 하고 아직 안 산 줄은 다시 빈 줄로(남아 있으면 아무도 안 산다).
+    // 이미 사서 금액을 적은 줄은 남긴다. 그 돈은 정산에서 나간 사람이 돌려받아야 한다
     @EventListener
     public void onMemberLeaving(MemberLeaving e) {
-        claimRepository.deleteByMemberId(e.memberId());
+        claimRepository.findByMemberId(e.memberId()).stream()
+                .filter(c -> c.getAmount() == null || c.getAmount() == 0)
+                .forEach(claimRepository::delete);
     }
 }

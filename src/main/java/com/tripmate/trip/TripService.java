@@ -46,7 +46,10 @@ public class TripService {
         var existing = tripRepository.findByPreviousTripId(tripId);
         if (existing.isPresent()) {
             var next = existing.get();
-            if (next.getMembers().stream().noneMatch(m -> m.belongsTo(user))) {
+            var mine = next.getEveryone().stream().filter(m -> m.belongsTo(user)).findFirst();
+            // 새 방에서 방장이 뺀 사람은 지난 방 단추로 다시 못 들어온다(리뷰 #10). 처음 보는 사람만 넣는다
+            if (mine.isPresent() && mine.get().isDeparted()) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            if (mine.isEmpty()) {
                 next.addMember(user, user.getNickname(), false);
                 events.publishEvent(new TripChanged(next.getId(), "members"));
             }
@@ -71,7 +74,7 @@ public class TripService {
     @Transactional(readOnly = true)
     public List<TripDto.Summary> myTrips(AppUser user) {
         var ids = memberRepository.findTop50ByUserIdOrderByIdDesc(user.getId()).stream()
-                .map(m -> m.getTrip().getId()).toList();
+                .filter(m -> !m.isDeparted()).map(m -> m.getTrip().getId()).toList();
         return tripRepository.findByIdIn(ids).stream()
                 .sorted(Comparator.comparingInt((Trip t) -> ids.indexOf(t.getId())))
                 .map(t -> TripDto.Summary.of(t, user))
@@ -144,6 +147,7 @@ public class TripService {
     // 혼자 남은 방은 나갈 수 없다
     @Transactional
     public void leave(Long tripId, Long memberId) {
+        tripRepository.lockById(tripId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         var trip = tripRepository.findWithMembersById(tripId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         var member = trip.getMembers().stream().filter(m -> m.getId().equals(memberId)).findFirst()
@@ -152,9 +156,8 @@ public class TripService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "혼자 남은 방은 나갈 수 없어요");
         }
         events.publishEvent(new MemberLeaving(tripId, memberId));
-        // 참여자 삭제(orphanRemoval)가 다른 표 삭제보다 먼저 나가면 외래 키에 걸린다. 지운 것을 먼저 내보낸다
-        memberRepository.flush();
         trip.removeMember(member);
+        events.publishEvent(new MemberLeft(tripId));
         events.publishEvent(new TripChanged(tripId, "members"));
     }
 
@@ -175,9 +178,13 @@ public class TripService {
     public TripDto.Joined join(AppUser user, String inviteCode) {
         var trip = tripRepository.findByInviteCode(inviteCode)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        var already = trip.getMembers().stream().anyMatch(m -> m.belongsTo(user));
-        if (!already) {
+        // 나갔던 사람이 초대 링크로 다시 오면 그 행을 되살린다(방마다 한 사람 한 행)
+        var before = trip.getEveryone().stream().filter(m -> m.belongsTo(user)).findFirst();
+        if (before.isEmpty()) {
             trip.addMember(user, user.getNickname(), false);
+            events.publishEvent(new TripChanged(trip.getId(), "members"));
+        } else if (before.get().isDeparted()) {
+            before.get().rejoin();
             events.publishEvent(new TripChanged(trip.getId(), "members"));
         }
         return new TripDto.Joined(trip.getId());

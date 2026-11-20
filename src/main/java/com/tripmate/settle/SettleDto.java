@@ -23,7 +23,7 @@ public final class SettleDto {
     // { "total": 612000, "lines": [...], "balances": [...], "transfers": [ { "fromName": "민지", "toName": "준호", "amount": 32000 } ] }
     // transfers 는 아직 남은 보낼 줄, payments 는 "보냈어요/받았어요"로 끝난 줄
     public record Board(int total, List<Line> lines, List<Balance> balances, List<Transfer> transfers,
-                        List<Paid> payments, Boolean driverPaysFuel, Boolean drinksSeparate) {
+                        List<Paid> payments, Boolean driverPaysFuel, Boolean drinksSeparate, Boolean refundNoShow) {
     }
 
     // POST /api/trips/1/payments  { "fromId": 2, "toId": 1, "amount": 20000 }   보낸 사람·받은 사람·방장만

@@ -1,6 +1,5 @@
 package com.tripmate.trip;
 
-import org.springframework.web.server.ResponseStatusException;
 import com.tripmate.user.CurrentUser;
 import jakarta.validation.Valid;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -62,8 +61,7 @@ public class TripController {
     // DELETE: /api/trips/1/members/7   본인이면 나가기, 방장이면 남을 빼기. 그 밖은 403. -> 204
     @DeleteMapping("/trips/{tripId}/members/{memberId}")
     public ResponseEntity<Void> leave(@PathVariable Long tripId, @PathVariable Long memberId) {
-        var me = tripAccess.me(tripId);
-        if (!me.getId().equals(memberId) && !me.isHost()) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        tripAccess.selfOrHost(tripId, memberId);
         tripService.leave(tripId, memberId);
         return ResponseEntity.noContent().build();
     }
@@ -72,8 +70,7 @@ public class TripController {
     @PutMapping("/trips/{tripId}/members/{memberId}/drinks")
     public ResponseEntity<TripDto.Response> drinks(@PathVariable Long tripId, @PathVariable Long memberId,
                                                    @RequestBody TripDto.DrinksRequest req) {
-        var me = tripAccess.me(tripId);
-        if (!me.getId().equals(memberId) && !me.isHost()) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        var me = tripAccess.selfOrHost(tripId, memberId);
         return ResponseEntity.ok(tripService.setDrinks(tripId, memberId, req.drinks(), me));
     }
 

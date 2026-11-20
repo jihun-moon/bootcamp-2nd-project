@@ -72,6 +72,17 @@ class NextTripTest {
     }
 
     @Test
+    void 새_방에서_빠진_사람은_지난_방_단추로_다시_못_들어온다() throws Exception {
+        var next = nextOf("재현", 201);
+        var minjiInNext = JSON.readTree(mvc.perform(get("/api/trips/" + next).session(TestLogin.as(mvc, "민지")))
+                .andReturn().getResponse().getContentAsString()).get("meId").asLong();
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/api/trips/" + next + "/members/" + minjiInNext)
+                .session(TestLogin.as(mvc, "재현"))).andExpect(status().isNoContent());
+        nextOf("민지", 403);
+        mvc.perform(get("/api/trips/" + next).session(TestLogin.as(mvc, "민지"))).andExpect(status().isNotFound());
+    }
+
+    @Test
     void 방에_없는_사람은_못_만든다() throws Exception {
         mvc.perform(post("/api/trips/1/next").session(TestLogin.as(mvc, "모르는사람")))
                 .andExpect(status().isNotFound());

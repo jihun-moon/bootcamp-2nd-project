@@ -13,6 +13,4 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     List<Expense> findByTripIdOrderById(Long tripId);
 
     Optional<Expense> findByIdAndTripId(Long id, Long tripId);
-
-    void deleteByPayerId(Long payerId);
 }

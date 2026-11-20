@@ -4,3 +4,4 @@ package com.tripmate.trip;
 // 방 쪽이 남의 표를 직접 만지지 않게(기능은 사람마다 나뉘어 있다, docs/05)
 public record MemberLeaving(Long tripId, Long memberId) {
 }
+

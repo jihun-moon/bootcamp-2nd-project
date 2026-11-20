@@ -122,8 +122,31 @@ button { font: inherit; cursor: pointer; }
 .board { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
 .column { min-height: 8rem; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
 .column.empty-required { border-color: var(--error); }
-.column .card { cursor: grab; }
+.column .card { cursor: grab; padding: 0; }
 .tag { margin-left: 6px; font-size: 0.75rem; font-weight: normal; color: var(--muted); }
+.tag.me { color: var(--accent); font-weight: 600; }
+.between.wrap { flex-wrap: wrap; }
+/* 카드 전체가 단추. 손가락으로 누르기 좋게 44px 이상 */
+.member-card {
+  display: block; width: 100%; min-height: 44px; padding: 8px 12px; border: 0; border-radius: 8px;
+  background: none; color: inherit; text-align: left;
+}
+.member-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.card.moved { border-color: var(--accent); animation: moved 1.5s ease-out; }
+@keyframes moved { from { background: var(--accent); color: #fff; } }
+
+/* 역할 고르기 창 */
+.sheet {
+  width: min(420px, calc(100% - 32px)); border: 1px solid var(--line); border-radius: 12px; padding: 16px;
+  background: var(--card); color: var(--foreground);
+}
+.sheet::backdrop { background: rgb(0 0 0 / 0.4); }
+.sheet .choice { width: 100%; min-height: 48px; }
+.sheet .choice:disabled { opacity: 0.6; cursor: default; }
+/* 휴대폰에서는 엄지가 닿게 화면 아래에 붙인다 */
+@media (max-width: 600px) {
+  .sheet { width: 100%; max-width: none; margin: auto 0 0; border-radius: 16px 16px 0 0; }
+}
 
 /* 숙소 표 */
 table { width: 100%; min-width: 760px; border-collapse: collapse; font-size: 0.9rem; }

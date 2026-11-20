@@ -5,15 +5,25 @@
 <div class="page">
   <header th:replace="~{fragments/common :: tripHeader}"></header>
   <main class="stack">
-    <div class="between">
-      <p class="muted small">카드를 끌어 다른 역할로 옮길 수 있어요.</p>
-      <!-- 추천은 모두의 배정을 갈아엎으니 방장에게만 보인다(서버도 막는다) -->
-      <button type="button" id="btn-recommend" class="btn primary" hidden>설문으로 추천받기</button>
+    <div class="between wrap">
+      <p class="muted small">카드를 누르면 역할을 바꿀 수 있어요. PC 에서는 끌어서 옮겨도 돼요.</p>
+      <div class="row">
+        <button type="button" id="btn-copy" class="btn">카톡용 글 복사</button>
+        <!-- 추천은 모두의 배정을 갈아엎으니 방장에게만 보인다(서버도 막는다) -->
+        <button type="button" id="btn-recommend" class="btn primary" hidden>설문으로 추천받기</button>
+      </div>
     </div>
     <!-- 역할 칸들. roles.js 가 그린다 -->
     <div id="board" class="board"></div>
   </main>
 </div>
+
+<!-- 카드를 누르면 뜨는 역할 고르기 창. 휴대폰에서는 화면 아래에 붙는다 -->
+<dialog id="role-picker" class="sheet">
+  <h2 id="picker-title"></h2>
+  <ul id="picker-options" class="stack"></ul>
+  <button type="button" id="btn-picker-close" class="btn block">닫기</button>
+</dialog>
 <script th:src="@{/js/roles.js}"></script>
 </body>
 </html>

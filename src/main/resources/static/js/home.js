@@ -218,15 +218,15 @@ function tourSwipe() {
   var next = nav.querySelector('[data-tour-go="1"]');
   var count = nav.querySelector('.tour-count');
   var step = function () { return cards[1] ? cards[1].offsetLeft - cards[0].offsetLeft : list.clientWidth; };
-  var current = 0;
+  // 넘길 수 있는지는 실제로 남은 거리로 본다. 처음에 PC 폭으로 열렸다가 창을 줄이면 목록이 안 넘어가는 상태로 셌다가
+  // "10 / 10"에 › 가 꺼진 채 남았다(창 크기가 바뀔 때도 다시 센다)
   var update = function () {
-    var i = Math.min(cards.length - 1, Math.round(list.scrollLeft / step()));
-    if (list.scrollLeft + list.clientWidth >= list.scrollWidth - 4) i = cards.length - 1; // 마지막 카드는 끝까지 못 밀려도 10 으로
-    if (i === current && count.dataset.ready) return;
-    current = i; count.dataset.ready = '1';
+    var max = list.scrollWidth - list.clientWidth;
+    var atEnd = max <= 4 || list.scrollLeft >= max - 4;
+    var i = max <= 4 ? 0 : atEnd ? cards.length - 1 : Math.min(cards.length - 1, Math.round(list.scrollLeft / step()));
     count.innerHTML = '<b>' + (i + 1) + '</b> / ' + cards.length + (i === 0 ? ' · 옆으로 넘겨 보세요' : '');
-    prev.disabled = i === 0;
-    next.disabled = i === cards.length - 1;
+    prev.disabled = list.scrollLeft <= 4;
+    next.disabled = atEnd;
   };
   var ticking = false;
   list.addEventListener('scroll', function () {
@@ -237,6 +237,7 @@ function tourSwipe() {
   $(nav).on('click', '[data-tour-go]', function () {
     list.scrollBy({ left: Number(this.dataset.tourGo) * step(), behavior: reduceMotion ? 'auto' : 'smooth' });
   });
+  window.addEventListener('resize', update);
   update();
 }
 

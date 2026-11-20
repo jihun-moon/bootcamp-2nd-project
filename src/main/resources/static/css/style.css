@@ -697,6 +697,9 @@ button.link::after { content: ""; position: absolute; inset: -12px -8px; } /* �
 .settle-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius-sm); font-size: var(--fs-md); }
 .settle-row .arrow { color: var(--muted); }
 .settle-row.mine { border-color: var(--accent); background: var(--accent-soft); }
+/* 좁은 칸에서도 이름은 한 줄로. 자리가 모자라면 금액·단추가 아래 줄로 내려간다(글자 하나씩 세로로 꺾이지 않게) */
+.settle-row { flex-wrap: wrap; }
+.settle-row > span:first-child { white-space: nowrap; }
 .settle-amount { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .settle-form { padding-top: 16px; border-top: 1px solid var(--line); }
 .settle-form .row input { flex: 1; min-width: 0; }
@@ -964,7 +967,7 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
 
 /* 영수증 화면 PC: 왼쪽 영수증(스크롤해도 붙어 있음) · 오른쪽 정산·2탄 */
 @media (min-width: 960px) {
-  .receipt-page { max-width: 1040px; }
+  .page.narrow.receipt-page { max-width: 1040px; } /* .page.narrow(480) 보다 세게. 전에는 져서 오른쪽 정산 칸이 240px 로 눌려 "도윤 → 민지"가 세로로 꺾였다 */
   .receipt-page > main { display: grid; grid-template-columns: 420px 1fr; column-gap: 48px; align-items: start; }
   .receipt-page > main > .receipt-left { grid-row: 1 / span 6; position: sticky; top: 24px; }
   .receipt-page > main > :not(.receipt-left) { grid-column: 2; margin-top: 0; }

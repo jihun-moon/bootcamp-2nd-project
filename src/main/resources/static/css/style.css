@@ -791,3 +791,6 @@ button.link::after { content: ""; position: absolute; inset: -12px -8px; } /* �
 .btn.small.settle-done { min-height: 36px; padding: 6px 12px; font-size: var(--fs-sm); }
 .settle-paid li { gap: 8px; color: var(--muted); }
 .settle-paid li > span:first-child { flex: 1; min-width: 0; }
+
+/* 설문의 달력·출발 동네·여러 개 고르기: 한 줄로, 넓은 화면에서도 480px 까지만(달력이 너무 넓으면 날짜 칸이 납작해진다) */
+.grid2.single { grid-template-columns: minmax(0, 480px); }

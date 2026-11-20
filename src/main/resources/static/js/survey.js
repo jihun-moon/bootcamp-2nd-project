@@ -83,7 +83,9 @@ function go(next) {
   $('#q-count').text(counterText());
   $('#q-title').text(q.title);
   $('#q-note').text(q.note || '').prop('hidden', !q.note);
-  var box = $('#q-options').empty();
+  // 고르기 단추만 두 칸 격자. 달력·입력칸·여러 개 고르기는 한 줄로(격자에 넣으면 PC 에서 달력이 좁은 칸에 끼고
+  // "다음" 단추가 옆 칸을 세로로 다 채웠다)
+  var box = $('#q-options').empty().toggleClass('single', !!q.type && q.type !== 'choice');
   if (q.type === 'dates') renderDates(box);
   else if (q.type === 'departure') renderDeparture(box);
   else if (q.type === 'avoid') renderAvoid(box);

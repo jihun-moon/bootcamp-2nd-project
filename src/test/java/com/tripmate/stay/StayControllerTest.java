@@ -42,7 +42,7 @@ class StayControllerTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        when(linkPreview.fetch(anyString())).thenReturn(new LinkPreview.Result("미리보기 제목", "https://img.example.com/a.jpg"));
+        when(linkPreview.fetch(anyString())).thenReturn(new LinkPreview.Result("미리보기 제목", "https://img.example.com/a.jpg", "개별 바베큐가 있는 독채", 238640));
         minji = TestLogin.as(mvc, "민지");
         doyun = TestLogin.as(mvc, "도윤");
     }
@@ -69,6 +69,32 @@ class StayControllerTest {
                 .andExpect(jsonPath("$.title").value("미리보기 제목"))
                 .andExpect(jsonPath("$.imageUrl").value("https://img.example.com/a.jpg"))
                 .andExpect(jsonPath("$.amenities", containsInAnyOrder("DETACHED", "PRIVATE_BBQ")));
+    }
+
+    @Test
+    void 링크를_붙이면_소개_글에서_조건을_찾아_준다() throws Exception {
+        mvc.perform(post("/api/trips/1/stays/preview").session(minji).contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"url\": \"https://stay.example.com/1\" }"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("미리보기 제목"))
+                .andExpect(jsonPath("$.amenities", containsInAnyOrder("DETACHED", "PRIVATE_BBQ")));
+    }
+
+    @Test
+    void 네이버_지도_공유_글을_붙이면_링크만_저장하고_이름은_글에서() throws Exception {
+        // 네이버는 미리보기를 막아 빈 값이 온다(429)
+        when(linkPreview.fetch("https://naver.me/5abc")).thenReturn(LinkPreview.Result.EMPTY);
+        postStay("{ \"url\": \"[네이버 지도]\\n강변 펜션\\n경기 가평군 청평면 1\\nhttps://naver.me/5abc\" }")
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.title").value("강변 펜션"))
+                .andExpect(jsonPath("$.url").value("https://naver.me/5abc"));
+    }
+
+    @Test
+    void 방_사람이_아니면_미리보기도_못_한다() throws Exception {
+        mvc.perform(post("/api/trips/1/stays/preview").session(TestLogin.as(mvc, "남"))
+                        .contentType(MediaType.APPLICATION_JSON).content("{ \"url\": \"https://stay.example.com/1\" }"))
+                .andExpect(status().isNotFound());
     }
 
     @Test

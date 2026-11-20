@@ -10,7 +10,7 @@ function showTab(name) {
 
 $(function () {
   $('.tab').on('click', function () { showTab(this.dataset.tab); });
-  $('[data-goto]').on('click', function () { showTab(this.dataset.goto); });
+  $('[data-goto]').on('click', function (e) { e.preventDefault(); showTab(this.dataset.goto); });
   $('.member-card, [data-demo-action]').on('click', function () {
     showToast('체험 방이라 바뀌지 않아요. 내 여행방을 만들면 바로 쓸 수 있어요.');
   });

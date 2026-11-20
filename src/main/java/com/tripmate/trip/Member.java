@@ -3,6 +3,10 @@ package com.tripmate.trip;
 import com.tripmate.user.AppUser;
 import jakarta.persistence.*;
 
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
+
 // 그 방의 참여자. 계정(AppUser)과 따로 두어 방마다 이름이 달라도 되고, 예시 방처럼 계정 없는 참여자도 있을 수 있다
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = {"trip_id", "user_id"}))
@@ -22,6 +26,21 @@ public class Member {
     private boolean host;
     private boolean surveyDone;
 
+    // 술 마시나. null 은 아직 안 고름 = 마신다고 본다(대부분 마신다, 안 마시는 사람만 끄게).
+    // 장보기 술 양과, 규칙 "술값은 마신 사람만"일 때 정산에 쓴다
+    private Boolean drinks;
+
+    // 방을 나갔나. 행을 지우지 않는다: 먼저 낸 돈·보낸 돈은 정산에 남아야 하고(돌려받을 사람),
+    // 규칙 "전날 빠지면 예약금 안 돌려줘요"면 숙소 몫도 그대로 진다. 그 밖의 화면·계산에서는 빠진다.
+    // null 은 안 나감(기존 행에 NOT NULL 열을 더하면 운영 DB 갱신이 실패해서 Boolean)
+    private Boolean departed;
+
+    // 날짜 맞추기: 이 사람이 되는 날. 방에 날짜가 아직 없을 때 모아서 겹치는 날을 찾는다
+    @ElementCollection
+    @CollectionTable(name = "member_available_date")
+    @Column(name = "available_date")
+    private Set<LocalDate> availableDates = new HashSet<>();
+
     protected Member() {
     }
 
@@ -32,13 +51,48 @@ public class Member {
         this.host = host;
     }
 
-    public void finishSurvey() {
-        surveyDone = true;
+    public void changeAvailableDates(Set<LocalDate> dates) {
+        availableDates.clear();
+        availableDates.addAll(dates);
     }
 
-    // 개발용 로그인이 계정 없는 예시 참여자를 붙잡을 때만 쓴다
-    public void linkTo(AppUser user) {
-        this.user = user;
+    public Set<LocalDate> getAvailableDates() { return availableDates; }
+
+    void makeHost() {
+        host = true;
+    }
+
+    void stepDown() {
+        host = false;
+    }
+
+    // 손님이 카카오로 로그인하면 이 참여 자리(설문·표·장보기·정산이 걸린 행)를 카카오 계정으로 옮긴다
+    void reassign(AppUser account) {
+        this.user = account;
+    }
+
+    // 이름만 쓰고 들어온 손님. 방장이 될 수 없다
+    public boolean isGuest() { return user != null && user.isGuest(); }
+
+    void depart() {
+        departed = true;
+        host = false;
+    }
+
+    void rejoin() {
+        departed = null;
+    }
+
+    public boolean isDeparted() { return Boolean.TRUE.equals(departed); }
+
+    public void changeDrinks(boolean drinks) {
+        this.drinks = drinks;
+    }
+
+    public boolean drinks() { return !Boolean.FALSE.equals(drinks); }
+
+    public void finishSurvey() {
+        surveyDone = true;
     }
 
     public boolean belongsTo(AppUser other) {
@@ -46,6 +100,7 @@ public class Member {
     }
 
     Trip getTrip() { return trip; }
+    AppUser getUser() { return user; }
     public Long getId() { return id; }
     public String getName() { return name; }
     public boolean isHost() { return host; }

@@ -1,43 +1,57 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/common :: head('단체 여행, 눈치 싸움 없이 정하기')}"></head>
+<head th:replace="~{fragments/common :: head('운전 누가 해? 1분이면 정해지는 단체 여행')}"></head>
 <body>
 <header th:replace="~{fragments/common :: siteHeader(true)}"></header>
 
+<!-- 맨 위 진행 막대(스크롤에 따라 차오른다, CSS 만) -->
+<div class="scroll-progress" aria-hidden="true"></div>
 <main class="page">
   <!-- 로그인한 사람에게만 보인다. 다시 온 사람이 첫 화면에서 바로 자기 방으로 가게 -->
   <section id="my-trips" class="box stack" hidden>
     <div class="between">
-      <h2>내 여행방</h2>
-      <a th:href="@{/trips/new}" class="link">+ 새 방</a>
+      <h2>내 여행방 <span id="my-trips-todo" class="todo-pill" hidden></span></h2>
+      <a th:href="@{/trips/new}" class="btn small">+ 새 방</a>
     </div>
+    <p id="my-trips-clear" class="muted small" hidden>할 일 다 했어요. 이제 짐만 싸면 돼요.</p>
     <ul id="trip-list" class="trip-list"></ul>
   </section>
 
   <!-- 처음 온 사람이 3초 안에 "무엇을 해 주는지"를 알게: 문제 한 줄 + 해 주는 일 + 실제 화면 -->
   <section class="hero">
+    <!-- 히어로 뒤 배경: PC 에서만 친구 여행 사진 셋이 옅게 천천히 바뀐다. 실제 사람들이 쓰는 영상이 생기면 이 자리에 video 로 바꾼다 -->
+    <div class="hero-bg" aria-hidden="true">
+      <span style="background-image:url('/img/photo/friends.jpg')"></span>
+      <span style="background-image:url('/img/photo/road-trip.jpg')"></span>
+      <span style="background-image:url('/img/photo/sea.jpg')"></span>
+    </div>
     <div class="stack loose">
-      <h1>단체 여행,<br>눈치 싸움 없이 정해요.</h1>
-      <p class="lead">7~8명이 가는 여행, 설문 1분이면 운전·총무는 <b>근거와 함께</b> 나누고 숙소는 <b>누가 싫어하는지까지</b> 보고 골라요.</p>
+      <h1 id="hero-title">"운전 누가 해?"<br>이제 단톡방에서 안 싸워요.</h1>
+      <p class="lead">친구들은 링크 누르고 1분. 운전·총무는 <b>"왜 나야?"까지</b>, 숙소는 <b>1인 얼마까지</b> 딱 나와요.</p>
       <div class="stack">
         <div class="row wrap">
-          <a th:href="@{/trips/new}" class="btn primary big">무료로 여행방 만들기</a>
+          <a th:href="@{/trips/new}" class="btn primary big">우리 방 만들기 (30초)</a>
           <!-- 방장이 아닌 사람도 가입 전에 안을 볼 수 있게. 로그인 없이 읽기 전용 -->
           <a th:href="@{/demo}" class="btn big">체험 방 둘러보기</a>
         </div>
+        <!-- 휴대폰에서는 아래 휴대폰 장면이 접힌 곳 밑이라, 첫 화면 안에서 "결과가 이렇게 나온다"를 세 줄로 먼저 보인다 -->
+        <div class="proof" aria-label="이렇게 정해져요">
+          <p><b>운전</b> 재현 <span>차 있음 +4</span></p>
+          <p><b>총무</b> 도윤 <span>계획형 +3</span></p>
+          <p><b>숙소</b> 숲속 독채 <span>1인 8만원</span></p>
+        </div>
         <ul class="trust">
-          <li>30초면 만들어요</li>
-          <li>앱 설치 없이 카톡 링크로</li>
+          <li>설치·가입 없이 이름만 쓰고</li>
+          <li>셋이든 열다섯이든</li>
         </ul>
       </div>
     </div>
 
-    <!-- Partiful 첫 화면처럼 "문제(단톡방) → 제품(초대 카드) → 결과(역할 보드)"를 휴대폰 안에서 한 번에 보여 준다.
-         home.js 가 메시지를 하나씩 띄운다. 움직임 줄이기를 켠 사람과 스크립트가 없을 때는 마지막 장면이 그대로 보인다 -->
     <!-- Partiful 첫 화면처럼 "문제(단톡방) → 제품(초대 카드) → 결과(역할 보드)"를 휴대폰 안에서 보여 준다.
          실제 휴대폰·메신저처럼 상태 표시줄, 방 머리, 프로필, 시각, 입력칸까지 둔다(메신저 로고·이름은 쓰지 않는다).
          home.js 가 메시지를 하나씩 띄운다. 움직임 줄이기를 켠 사람과 스크립트가 없을 때는 결과 화면이 그대로 보인다 -->
-    <div class="phone" aria-label="TripMate 를 쓰는 장면">
+    <div class="phone-wrap">
+    <div class="phone" aria-label="겨울 펜션 계획으로 단톡방이 시끄러운 장면">
       <div class="phone-screen">
         <div class="scene chat-scene">
         <div class="status-bar" aria-hidden="true">
@@ -47,159 +61,372 @@
             <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="16" height="8" rx="1.5"/><rect x="23" y="4" width="1.5" height="4" rx=".75" opacity=".4"/></svg>
           </span>
         </div>
-          <div class="room-head"><span class="back" aria-hidden="true">‹</span><b>겨울 펜션 여행</b><span class="count">8</span></div>
+          <div class="room-head"><span class="back" aria-hidden="true">‹</span><b>겨울 펜션 2박 3일 🔥</b><span class="count">8</span></div>
           <ul class="chat-demo">
-            <li class="day"><span>2026년 11월 20일 목요일</span></li>
+            <li class="day"><span>2026년 11월 20일 금요일</span></li>
             <li class="msg" data-step>
-              <span class="pf" style="background:#7fa7d9">도</span>
-              <div><span class="who">도윤</span><div class="line"><p class="bubble">운전은 누가 해…? 차 있는 사람?</p><span class="time">오후 8:41</span></div></div>
+              <span class="pf" style="background:#7fa7d9"><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="14" r="6.5" fill="#fff" fill-opacity=".92"/><path d="M5.5 33c1.6-6.4 6.6-10 12.5-10s10.9 3.6 12.5 10" fill="#fff" fill-opacity=".92"/></svg></span>
+              <div><span class="who">도윤</span><div class="line"><p class="bubble">근데 운전 누가 함?? 🚗 기름값은?</p><span class="time">오후 8:41</span></div></div>
             </li>
             <li class="msg" data-step>
-              <span class="pf" style="background:#e6a57e">서</span>
-              <div><span class="who">서연</span><div class="line"><p class="bubble">숙소 투표 5:3인데 나 온수풀 없으면 좀…</p><span class="time">오후 8:42</span></div></div>
+              <span class="pf" style="background:#e6a57e"><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="14" r="6.5" fill="#fff" fill-opacity=".92"/><path d="M5.5 33c1.6-6.4 6.6-10 12.5-10s10.9 3.6 12.5 10" fill="#fff" fill-opacity=".92"/></svg></span>
+              <div><span class="who">서연</span><div class="line"><p class="bubble">숙소는 아무거나~ 근데 온수풀 없으면 좀…</p><span class="time">오후 8:42</span></div></div>
+            </li>
+            <li class="msg" data-step>
+              <span class="pf" style="background:#b79ad9"><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="14" r="6.5" fill="#fff" fill-opacity=".92"/><path d="M5.5 33c1.6-6.4 6.6-10 12.5-10s10.9 3.6 12.5 10" fill="#fff" fill-opacity=".92"/></svg></span>
+              <div><span class="who">재현</span><div class="line"><p class="bubble">아니 날짜부터 정하자 다들 언제 돼?</p><span class="time">오후 8:42</span></div></div>
+            </li>
+            <li class="msg" data-step>
+              <span class="pf" style="background:#86c5b8"><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="14" r="6.5" fill="#fff" fill-opacity=".92"/><path d="M5.5 33c1.6-6.4 6.6-10 12.5-10s10.9 3.6 12.5 10" fill="#fff" fill-opacity=".92"/></svg></span>
+              <div><span class="who">하준</span><div class="line"><p class="bubble">15일 회식 ㅠㅠ 16일부터 됨</p><span class="time">오후 8:44</span></div></div>
+            </li>
+            <li class="msg" data-step>
+              <span class="pf" style="background:#d9a3b8"><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="14" r="6.5" fill="#fff" fill-opacity=".92"/><path d="M5.5 33c1.6-6.4 6.6-10 12.5-10s10.9 3.6 12.5 10" fill="#fff" fill-opacity=".92"/></svg></span>
+              <div><span class="who">예린</span><div class="line"><p class="bubble">투표 올렸는데 8명 중 3명 참여… 읽씹 실화?</p><span class="time">오후 8:47</span></div></div>
+            </li>
+            <li class="msg" data-step>
+              <span class="pf" style="background:#c9b27a"><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="14" r="6.5" fill="#fff" fill-opacity=".92"/><path d="M5.5 33c1.6-6.4 6.6-10 12.5-10s10.9 3.6 12.5 10" fill="#fff" fill-opacity=".92"/></svg></span>
+              <div><span class="who">시우</span><div class="line"><p class="bubble">나 장롱면허라 운전은 패스 ㅎ 기름값은 1/N 이지?</p><span class="time">오후 8:49</span></div></div>
+            </li>
+            <li class="msg" data-step>
+              <span class="pf" style="background:#e6a57e"><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="14" r="6.5" fill="#fff" fill-opacity=".92"/><path d="M5.5 33c1.6-6.4 6.6-10 12.5-10s10.9 3.6 12.5 10" fill="#fff" fill-opacity=".92"/></svg></span>
+              <div><span class="who">서연</span><div class="line"><p class="bubble">아 또 나만 정리하네 <span class="censor" aria-label="욕은 가렸어요">#@%!</span> 이번엔 안 해 😇</p><span class="time">오후 8:51</span></div></div>
             </li>
             <li class="msg mine" data-step>
-              <div class="line"><span class="time"><span class="unread">7</span>오후 8:43</span>
+              <div class="line"><span class="time"><span class="unread">7</span>오후 8:52</span>
                 <a class="link-card" tabindex="-1">
                   <span class="link-band">TripMate</span>
                   <span class="link-title">'겨울 펜션 2박 3일' 여행에 초대받았어요</span>
-                  <span class="link-desc">설문 1분이면 역할과 숙소를 같이 정해요</span>
+                  <span class="link-desc">다섯 번 누르면 역할·숙소·교통비까지 정해져요</span>
                   <span class="link-domain">tripmate · 초대 링크</span>
                 </a></div>
             </li>
             <li class="msg" data-step>
-              <span class="pf" style="background:#9ccf8f">민</span>
-              <div><span class="who">민지</span><div class="line"><p class="bubble">오 설문 1분이면 끝이네 ㅋㅋ 바로 함</p><span class="time">오후 8:43</span></div></div>
+              <span class="pf" style="background:#9ccf8f"><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="14" r="6.5" fill="#fff" fill-opacity=".92"/><path d="M5.5 33c1.6-6.4 6.6-10 12.5-10s10.9 3.6 12.5 10" fill="#fff" fill-opacity=".92"/></svg></span>
+              <div><span class="who">민지</span><div class="line"><p class="bubble">ㅋㅋ 다섯 번 누르니까 끝남 운전자 기름값 빼 주는 거 ㅇㅈ</p><span class="time">오후 8:53</span></div></div>
+            </li>
+            <li class="msg" data-step>
+              <span class="pf" style="background:#7fa7d9"><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="14" r="6.5" fill="#fff" fill-opacity=".92"/><path d="M5.5 33c1.6-6.4 6.6-10 12.5-10s10.9 3.6 12.5 10" fill="#fff" fill-opacity=".92"/></svg></span>
+              <div><span class="who">도윤</span><div class="line"><p class="bubble">진작 이거 쓸걸 🙏 운전 재현·민지 확정</p><span class="time">오후 8:54</span></div></div>
             </li>
           </ul>
           <div class="chat-input" aria-hidden="true"><span class="plus">+</span><span class="field">메시지 입력</span><span class="send">#</span></div>
         </div>
-        <div class="scene board-scene">
-        <div class="status-bar" aria-hidden="true">
-          <span>9:41</span>
-          <span class="status-icons">
-            <svg width="17" height="11" viewBox="0 0 17 11"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
-            <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="16" height="8" rx="1.5"/><rect x="23" y="4" width="1.5" height="4" rx=".75" opacity=".4"/></svg>
-          </span>
-        </div>
-          <div class="app-head"><span class="logo"><img th:src="@{/img/logo-mark.svg}" width="20" height="20" alt=""><span class="wordmark">Trip<span>Mate</span></span></span><span class="avatar">재</span></div>
-          <p class="app-title">겨울 펜션 2박 3일</p>
-          <p class="app-meta">가평 · 1월 15일 ~ 17일 · 8명</p>
-          <nav class="app-tabs" aria-hidden="true"><span>개요</span><span>설문</span><span class="on">역할</span><span>숙소</span></nav>
-          <ul class="app-board">
-            <li data-step><div class="between"><b>운전</b><span class="tag">2/2</span></div><p>재현 · 민지 <span class="reason">차 있음 +4</span></p></li>
-            <li data-step><div class="between"><b>총무</b><span class="tag">1/1</span></div><p>도윤 <span class="reason">계획형 +3</span></p></li>
-            <li data-step><div class="between"><b>장보기</b><span class="tag">1/1</span></div><p>서연 <span class="reason">밖 활동 선호 +1</span></p></li>
-            <li data-step class="sum"><span>1인 교통비</span><b>약 <span data-count="8800">8,800</span>원</b></li>
-          </ul>
-        </div>
       </div>
+    </div>
+    <p class="phone-caption muted">익숙하죠? 아래에서 TripMate 로 1분 만에 끝내는 걸 보여 드려요</p>
     </div>
   </section>
 
-  <section id="how" class="section">
-    <h2>링크 하나면, 모두 들어와요</h2>
-    <p class="muted">방장 한 명만 알면 돼요. 친구들은 카톡에서 링크를 누르면 바로 열려요.</p>
-    <ol class="steps">
-      <li data-reveal>
-        <div class="mini-phone" aria-hidden="true">
-          <p class="strong">먼저 친구들을 불러요</p>
-          <div class="row"><span class="fake-input">tripmate/join/3f9a…</span><span class="btn primary">복사</span></div>
-          <ul class="rows small"><li>재현 <span class="tag">방장</span></li><li>민지 <span class="chip">설문 전</span></li></ul>
-        </div>
-        <div class="step-text"><h3>방 만들고 링크 보내기</h3><p class="muted">방장 한 명만 하면 돼요. 30초면 끝나요.</p><ul class="points"><li>여행 이름·지역·날짜를 적어요. 지역은 길찾기와 교통비에 써요</li><li>초대 링크를 복사해 단톡방에 붙여 넣어요</li><li>친구는 링크를 누르고 카카오 로그인 한 번이면 들어와요</li></ul><p class="step-note">단톡방에 붙이면 방 이름이 담긴 미리보기가 떠요</p></div>
-      </li>
-      <li data-reveal>
-        <div class="mini-phone" aria-hidden="true">
-          <p class="muted small">재현 · 3 / 8</p>
-          <p class="strong">차를 가져갈 수 있나요?</p>
-          <span class="choice on">가능</span><span class="choice">어려움</span>
-        </div>
-        <div class="step-text"><h3>각자 설문 1분</h3><p class="muted">한 장에 한 질문이라 휴대폰으로 금방 끝나요.</p><ul class="points"><li>차를 가져갈 수 있는지, 어디서 출발하는지</li><li>계획형인지 즉흥형인지, 이것만은 맡기 싫은 일</li><li>숙소에서 이건 꼭 있어야 하는지(1~5점)</li></ul><p class="step-note">이동이 불편한 사정은 본인과 방장만 봐요</p></div>
-      </li>
-      <li data-reveal>
-        <div class="mini-phone" aria-hidden="true">
-          <p class="strong">역할 보드</p>
-          <ul class="rows small">
-            <li class="between"><span><b>운전</b> 재현</span><span class="chip">차 있음 +4</span></li>
-            <li class="between"><span><b>총무</b> 도윤</span><span class="chip">계획형 +3</span></li>
-          </ul>
-          <span class="btn">카톡용 글 복사</span>
-        </div>
-        <div class="step-text"><h3>근거와 함께 결과</h3><p class="muted">모두가 가장 만족하는 배정을 찾아 근거와 함께 보여 줘요.</p><ul class="points"><li>방장이 "설문으로 추천받기"를 누르면 역할이 나뉘어요</li><li>마음에 안 들면 카드를 눌러 바로 옮겨요. 모두의 화면이 같이 바뀌어요</li><li>역할·숙소·1인 교통비를 카톡에 붙일 글로 복사해요</li></ul><p class="step-note">둘이 동시에 옮기면 늦은 쪽에 알려 줘서 엉키지 않아요</p></div>
-      </li>
-    </ol>
+  <!-- 우리 자리: 조사(docs/12)에서 본 시장 지도를 세 줄로. 예약 앱은 "어디서", 정산 앱은 "다녀와서 N빵".
+       우리는 가기 전 "누가 뭘·1인 얼마"부터 다녀와서 "누가 누구에게 얼마"까지, 출발 전에 정한 규칙 그대로 -->
+  <section class="position" aria-label="TripMate 는 어디에 있나">
+    <ul>
+      <li><span>예약 앱</span><b>어디서 잘지</b></li>
+      <li><span>정산 앱</span><b>다녀와서 누가 냈나</b></li>
+      <li class="us"><span>TripMate</span><b>가기 전 "누가 뭘·1인 얼마"부터 다녀와서 "누가 누구에게"까지</b></li>
+    </ul>
+    <p class="muted small">정하기부터 나누기까지, 처음 정한 우리 규칙 그대로 이어지는 곳은 아직 여기뿐이에요.</p>
+  </section>
+
+  <!-- 공감 숫자: 아직 우리 사용자 수가 없어서, 출처 있는 조사 숫자로 "나만 그런 게 아니구나"를 먼저 보인다.
+       스카이스캐너 조사(한국경제 2026-06-09 보도, hankyung.com/article/202606095916g). 표본 수는 기사에 없다 -->
+  <section class="section stats" data-reveal>
+    <h2>단체 여행, 다들 이랬대요</h2>
+    <ul>
+      <li><b data-count-to="76">76</b><span>%</span><p>단체 여행에서 갈등을 겪었다</p></li>
+      <li><b data-count-to="74">74</b><span>%</span><p>한두 명이 계획을 도맡는다</p></li>
+      <li><b data-count-to="82">82</b><span>%</span><p>계획 맡아 본 사람이 부담을 느꼈다</p></li>
+    </ul>
+    <p class="caption">스카이스캐너 조사, 한국경제 2026년 6월 보도</p>
+  </section>
+
+  <!-- 영상 띠: 뒤는 차 안 사진이 천천히 다가오고 빛이 지나가며 영화처럼(AI 영상이 생기면 band-media 안 img 를 video 로 바꾼다, docs/21),
+       앞은 실제 앱을 24초 동안 눌러 가는 영상(build/promo/walk.mjs, 가짜 이름). 영상은 화면에 보일 때만 받고 틀어 준다 -->
+  <section class="photo-band film">
+    <div class="band-media" aria-hidden="true">
+      <img th:src="@{/img/photo/road-trip.jpg}" alt="" width="1600" height="800" loading="lazy">
+      <span class="band-light"></span><span class="band-grain"></span>
+    </div>
+    <div class="band-inner">
+      <div class="band-copy">
+        <p class="band-kicker">실제 화면 그대로, 24초</p>
+        <p class="band-line">"운전은 누가?" 1분이면 정해지고,<br>남은 건 출발뿐.</p>
+        <p class="band-sub">링크 열기 → 되는 날 → 설문 → 역할·차 → 숙소 표 → 영수증까지 진짜로 눌러 봤어요.</p>
+      </div>
+      <div class="device-phone band-phone"><div class="device-screen"><span class="device-status" aria-hidden="true"><b>9:41</b><i></i></span><div class="device-view">
+        <video class="walk-video" muted loop playsinline preload="none" th:poster="@{/video/walk-poster.jpg}" th:attr="data-src=@{/video/walk.mp4}"
+               aria-label="TripMate 를 실제로 쓰는 24초 영상: 초대 링크로 들어와 날짜·설문·역할·차·숙소 표·영수증까지"></video>
+      </div></div></div>
+    </div>
+  </section>
+
+  <!-- 이렇게 굴러가요: 실제 앱 화면(build/promo/tour.mjs 로 8명 예시 방을 돌리며 찍음, 화면이 바뀌면 다시 돌린다).
+       PC 는 휴대폰이 오른쪽에 붙어 있고 왼쪽 글이 지나갈 때마다 화면이 바뀐다. 휴대폰은 글 한 단락 뒤에 그 화면 한 장(붙은 틀은 화면을 다 가린다).
+       동그라미는 그 장면에서 누르는 곳 -->
+  <section id="how" class="section tour">
+    <h2>친구들은 뭘 하면 돼요? 링크 한 번 누르면 끝</h2>
+    <p class="muted">아래는 실제 앱 화면이에요. 8명이 가평 2박 3일을 정하고, 차 두 대로 다녀와서 나누기까지 그대로 찍었어요.</p>
+    <div class="tour-grid">
+      <ol class="tour-steps">
+        <li class="tour-step" data-shot="join" style="--x:50%;--y:64.6%">
+          <span class="tour-no">1</span>
+          <h3>초대 링크 누르고 이름만</h3>
+          <p class="muted">설치도 가입도 없이 이름 한 줄이면 방에 들어와요. 카카오로 이으면 다음 여행에도 나로 기억돼요.</p>
+          <figure class="tour-inline device-phone"><div class="device-screen"><span class="device-status" aria-hidden="true"><b>9:41</b><i></i></span><div class="device-view"><img th:src="@{/img/tour/join.webp}" alt="초대 링크를 연 화면. 이름 칸과 &quot;이름만 쓰고 바로 하기&quot; 단추" width="780" height="1688" loading="lazy" decoding="async"><span class="tap-ring" aria-hidden="true"></span></div></div></figure>
+        </li>
+        <li class="tour-step" data-shot="dates" style="--x:23.6%;--y:23.5%">
+          <span class="tour-no">2</span>
+          <h3>되는 날만 콕콕</h3>
+          <p class="muted">겹친 날이 진해지고 2박이 되는지 1박이 되는지 바로 나와요. 안 누른 친구는 &quot;콕 찌르기&quot;.</p>
+          <figure class="tour-inline device-phone"><div class="device-screen"><span class="device-status" aria-hidden="true"><b>9:41</b><i></i></span><div class="device-view"><img th:src="@{/img/tour/dates.webp}" alt="날짜 맞추기 달력. 여럿이 겹친 날이 진하게 칠해져 있다" width="780" height="1688" loading="lazy" decoding="async"><span class="tap-ring" aria-hidden="true"></span></div></div></figure>
+        </li>
+        <li class="tour-step" data-shot="roles" style="--x:24.6%;--y:3.8%">
+          <span class="tour-no">3</span>
+          <h3>설문 1분, 역할은 저절로</h3>
+          <p class="muted">운전 재현·민지 &quot;차 있음 +4&quot;. 왜 그 사람인지 근거가 같이 나오고, 결과는 카드 한 장으로 보내요.</p>
+          <figure class="tour-inline device-phone"><div class="device-screen"><span class="device-status" aria-hidden="true"><b>9:41</b><i></i></span><div class="device-view"><img th:src="@{/img/tour/roles.webp}" alt="역할 보드. 총무 도윤 계획형 +3, 운전 재현·민지 차 있음 +4" width="780" height="1688" loading="lazy" decoding="async"><span class="tap-ring" aria-hidden="true"></span></div></div></figure>
+        </li>
+        <li class="tour-step" data-shot="cars" style="--x:81.5%;--y:47.4%">
+          <span class="tour-no">4</span>
+          <h3>차가 두 대면 차마다 따로</h3>
+          <p class="muted">사는 동네가 달라도 차마다 가까운 곳에서 태워요. 안 고르면 저절로 나뉘고, 기름값은 그 차에 탄 사람끼리.</p>
+          <figure class="tour-inline device-phone"><div class="device-screen"><span class="device-status" aria-hidden="true"><b>9:41</b><i></i></span><div class="device-view"><img th:src="@{/img/tour/cars.webp}" alt="차 나누기. 재현 차 합정역 오전 9시, 민지 차 수원역 오전 8시, 시우는 따로 가요" width="780" height="1688" loading="lazy" decoding="async"><span class="tap-ring" aria-hidden="true"></span></div></div></figure>
+        </li>
+        <li class="tour-step" data-shot="stays" style="--x:79.8%;--y:37.9%">
+          <span class="tour-no">5</span>
+          <h3>숙소는 1인 얼마로 비교</h3>
+          <p class="muted">지도 앱에서 &quot;공유&quot;만 눌러 붙이면 이름·사진이 채워져요. &quot;독채 없음&quot;처럼 누가 싫어할지도 보여요.</p>
+          <figure class="tour-inline device-phone"><div class="device-screen"><span class="device-status" aria-hidden="true"><b>9:41</b><i></i></span><div class="device-view"><img th:src="@{/img/tour/stays.webp}" alt="숙소 후보 셋. 1박 48만원 8명이면 1인 약 6만원, 표 4" width="780" height="1688" loading="lazy" decoding="async"><span class="tap-ring" aria-hidden="true"></span></div></div></figure>
+        </li>
+        <li class="tour-step" data-shot="shopping" style="--x:78.6%;--y:34.3%">
+          <span class="tour-no">6</span>
+          <h3>장보기는 &quot;내가 살게&quot;</h3>
+          <p class="muted">8명 2박이면 삼겹살 3.4kg, 소주 10병. 누가 무엇을 사는지 겹치지 않아요.</p>
+          <figure class="tour-inline device-phone"><div class="device-screen"><span class="device-status" aria-hidden="true"><b>9:41</b><i></i></span><div class="device-view"><img th:src="@{/img/tour/shopping.webp}" alt="장보기 목록. 삼겹살 3.4kg 서연이 사요, 목살 내가 살게 단추" width="780" height="1688" loading="lazy" decoding="async"><span class="tap-ring" aria-hidden="true"></span></div></div></figure>
+        </li>
+        <li class="tour-step" data-shot="dues" style="--x:50%;--y:37.9%">
+          <span class="tour-no">7</span>
+          <h3>회비는 &quot;냈어요&quot; 한 번</h3>
+          <p class="muted">총무에게 미리 걷고 누가 냈는지 한눈에. 남은 돈은 다녀와서 저절로 돌려줘요.</p>
+          <figure class="tour-inline device-phone"><div class="device-screen"><span class="device-status" aria-hidden="true"><b>9:41</b><i></i></span><div class="device-view"><img th:src="@{/img/tour/dues.webp}" alt="회비 카드. 1인 10만원 도윤에게, 4/7명 냈어요" width="780" height="1688" loading="lazy" decoding="async"><span class="tap-ring" aria-hidden="true"></span></div></div></figure>
+        </li>
+        <li class="tour-step" data-shot="receipt" style="--x:50%;--y:95%">
+          <span class="tour-no">8</span>
+          <h3>정하고 나면 영수증 한 장</h3>
+          <p class="muted">역할·숙소·차마다 교통비·장보기까지 1인 얼마를 그림 한 장으로 단톡방에.</p>
+          <figure class="tour-inline device-phone"><div class="device-screen"><span class="device-status" aria-hidden="true"><b>9:41</b><i></i></span><div class="device-view"><img th:src="@{/img/tour/receipt.webp}" alt="여행 영수증. 역할, 숙소, 차마다 교통비, 1인 합계" width="780" height="1688" loading="lazy" decoding="async"><span class="tap-ring" aria-hidden="true"></span></div></div></figure>
+        </li>
+        <li class="tour-step" data-shot="settle" style="--x:75.6%;--y:35.7%">
+          <span class="tour-no">9</span>
+          <h3>다녀와선 누가 누구에게 얼마</h3>
+          <p class="muted">회비·기름값·장보기를 우리 규칙대로 셈해서 보낼 줄만. &quot;받았어요&quot; 한 번이면 그 줄이 빠져요.</p>
+          <figure class="tour-inline device-phone"><div class="device-screen"><span class="device-status" aria-hidden="true"><b>9:41</b><i></i></span><div class="device-view"><img th:src="@{/img/tour/settle.webp}" alt="정산. 보낼 줄과 받았어요 단추" width="780" height="1688" loading="lazy" decoding="async"><span class="tap-ring" aria-hidden="true"></span></div></div></figure>
+        </li>
+        <li class="tour-step" data-shot="next" style="--x:24.3%;--y:32%">
+          <span class="tour-no">10</span>
+          <h3>이 멤버로 2탄</h3>
+          <p class="muted">사람·규칙은 그대로 새 방을 열어요. 초대 링크를 다시 돌릴 필요 없이 날짜만 맞추면 돼요.</p>
+          <figure class="tour-inline device-phone"><div class="device-screen"><span class="device-status" aria-hidden="true"><b>9:41</b><i></i></span><div class="device-view"><img th:src="@{/img/tour/next.webp}" alt="다녀온 뒤 방 화면. 이 멤버로 2탄, 2탄 방 열기 단추" width="780" height="1688" loading="lazy" decoding="async"><span class="tap-ring" aria-hidden="true"></span></div></div></figure>
+        </li>
+      </ol>
+      <!-- 휴대폰: 열 장을 옆으로 넘긴다(세로로 두면 이 절만 8,000px 였다). PC 는 숨기고 스크롤 무대를 쓴다 -->
+      <div class="tour-nav">
+        <button type="button" class="btn" data-tour-go="-1" aria-label="이전 화면" disabled>‹</button>
+        <span class="tour-count small muted" aria-live="polite"><b>1</b> / 10 · 옆으로 넘겨 보세요</span>
+        <button type="button" class="btn" data-tour-go="1" aria-label="다음 화면">›</button>
+      </div>
+      <div class="tour-stage" aria-hidden="true">
+        <div class="device-phone tour-phone"><div class="device-screen"><span class="device-status" aria-hidden="true"><b>9:41</b><i></i></span><div class="device-view">
+          <img class="tour-shot on" data-shot="join" th:src="@{/img/tour/join.webp}" alt="" width="780" height="1688" decoding="async">
+          <img class="tour-shot" data-shot="dates" th:src="@{/img/tour/dates.webp}" alt="" width="780" height="1688" loading="lazy" decoding="async">
+          <img class="tour-shot" data-shot="roles" th:src="@{/img/tour/roles.webp}" alt="" width="780" height="1688" loading="lazy" decoding="async">
+          <img class="tour-shot" data-shot="cars" th:src="@{/img/tour/cars.webp}" alt="" width="780" height="1688" loading="lazy" decoding="async">
+          <img class="tour-shot" data-shot="stays" th:src="@{/img/tour/stays.webp}" alt="" width="780" height="1688" loading="lazy" decoding="async">
+          <img class="tour-shot" data-shot="shopping" th:src="@{/img/tour/shopping.webp}" alt="" width="780" height="1688" loading="lazy" decoding="async">
+          <img class="tour-shot" data-shot="dues" th:src="@{/img/tour/dues.webp}" alt="" width="780" height="1688" loading="lazy" decoding="async">
+          <img class="tour-shot" data-shot="receipt" th:src="@{/img/tour/receipt.webp}" alt="" width="780" height="1688" loading="lazy" decoding="async">
+          <img class="tour-shot" data-shot="settle" th:src="@{/img/tour/settle.webp}" alt="" width="780" height="1688" loading="lazy" decoding="async">
+          <img class="tour-shot" data-shot="next" th:src="@{/img/tour/next.webp}" alt="" width="780" height="1688" loading="lazy" decoding="async">
+          <span class="tap-ring"></span>
+        </div></div></div>
+      </div>
+    </div>
+    <p class="tour-cta"><a th:href="@{/demo}" class="btn">체험 방에서 직접 눌러 보기</a></p>
   </section>
 
   <section class="section" data-reveal>
-    <h2>다른 방법과 무엇이 다른가요</h2>
-    <p class="muted">정하기 싫은 두 가지(역할, 숙소)를 근거 있게 빨리 끝내는 데만 집중했어요.</p>
-    <div class="core">
-      <article class="box">
-        <div>
-          <h3>근거 있는 역할 추천</h3>
-          <p class="muted">"차 있음 +4"처럼 왜 그 사람인지 카드에 보여요. 한 사람만 좋은 배정이 아니라 모두의 합이 가장 큰 배정을 찾아요.</p>
+    <h2>그냥 카톡 투표 하면 안 돼요?</h2>
+    <p class="muted">같은 질문, 다른 결과.</p>
+    <!-- 왼쪽은 카톡 투표가 실제로 끝나는 모습(표만 있고 이유는 없음), 오른쪽은 같은 방의 TripMate 결과. 들어오면 왼쪽 막대가 차고 오른쪽 줄이 하나씩 -->
+    <div class="duel" data-reveal>
+      <article class="duel-card kakao-side">
+        <p class="duel-label">카톡 투표</p>
+        <div class="kvote">
+          <p class="kvote-title">운전 누가 할래? 🚗</p>
+          <div class="kvote-row"><span>재현</span><i style="--w:38%"></i><b>3</b></div>
+          <div class="kvote-row"><span>민지</span><i style="--w:25%"></i><b>2</b></div>
+          <div class="kvote-row"><span>아무나 ㅋㅋ</span><i style="--w:38%"></i><b>3</b></div>
+          <p class="kvote-foot">8명 중 3명 안 읽음 · 마감 없음</p>
         </div>
-        <ul class="rows small">
-          <li class="between"><span><b>운전</b> 재현</span><span class="muted">차 있음 +4 · 따로 출발 −2</span></li>
-          <li class="between"><span><b>총무</b> 도윤</span><span class="muted">계획형 +3</span></li>
-        </ul>
+        <p class="duel-verdict">표는 셌는데 <b>왜 재현인지</b>는 아무도 몰라요. 결국 "그냥 재현이 해".</p>
       </article>
-      <article class="box">
-        <div>
-          <h3>"의견 갈림"이 보이는 숙소 투표</h3>
-          <p class="muted">평균과 함께 가장 낮은 점수를 보여 줘서, 다수결에 묻히는 한 사람의 "이건 꼭"을 놓치지 않아요.</p>
-        </div>
-        <ul class="rows small">
-          <li class="between"><span><b>1위</b> 숲속 독채</span><span class="chip">개별 바베큐</span></li>
-          <li class="between"><span><b>2위</b> 바다뷰 풀빌라</span><span class="chip warn">독채 없음</span></li>
+      <span class="duel-vs" aria-hidden="true">VS</span>
+      <article class="duel-card tm-side">
+        <p class="duel-label">TripMate</p>
+        <ul class="tm-result">
+          <li><span><b>운전</b> 재현·민지</span><em>차 있음 +4</em></li>
+          <li><span><b>총무</b> 도윤</span><em>계획형 +3</em></li>
+          <li><span><b>숙소</b> 숲속 독채</span><em>"독채 없음" 2위로</em></li>
+          <li class="tm-total"><span>1인 합계</span><strong>143,000원</strong></li>
         </ul>
+        <p class="duel-verdict"><b>근거가 붙어서</b> "왜 나야?"가 없어요. 8명 모두 1분.</p>
       </article>
     </div>
+    <!-- 숙소 붙여 넣기·교통비·장보기·콕 찌르기는 위 "실제 화면 열 장"에 있어 여기서 또 말하지 않는다(같은 말 두 번은 길이만 늘린다) -->
     <ul class="more">
-      <li><h3>1인 교통비까지</h3><p class="muted">출발지부터 거리·통행료를 찾고 그날 기름값으로 회비 근거를 만들어요.</p></li>
-      <li><h3>같이 보는 실시간 보드</h3><p class="muted">누가 카드를 옮기면 모두의 화면이 새로고침 없이 바뀌어요.</p></li>
-      <li><h3>말하기 어려운 사정은 조용히</h3><p class="muted">이동이 불편한 사정은 본인과 방장만 보고, 다른 사람에겐 "이동 적은 역할 우선"으로만 보여요.</p></li>
-      <li><h3>설치 없이 카톡 안에서</h3><p class="muted">링크를 누르면 카톡 안에서 열리고, 결과도 카톡에 붙일 글로 돌려줘요.</p></li>
+      <li><h3>말하기 어려운 사정은 조용히</h3><p class="muted">"오래 걷기 힘들어요" 같은 건 본인과 방장만 봐요.</p></li>
+      <li><h3>술 안 마시면 술값 0원</h3><p class="muted">규칙 하나 켜면 술은 마신 사람끼리 나눠요.</p></li>
     </ul>
   </section>
 
   <section class="section" data-reveal>
-    <h2>한눈에 비교</h2>
-    <div class="box scroll">
-      <table class="compare">
-        <thead><tr><th></th><th>카톡 투표</th><th>여행 앱</th><th class="us">TripMate</th></tr></thead>
-        <tbody>
-          <tr><td>앱 설치 없이 바로</td><td class="yes">✓</td><td class="no">설치 필요</td><td class="us yes">✓</td></tr>
-          <tr><td>역할 추천과 근거</td><td class="no">—</td><td class="no">직접 나눔</td><td class="us yes">✓</td></tr>
-          <tr><td>숙소 "의견 갈림" 표시</td><td class="no">표 수만</td><td class="no">표 수만</td><td class="us yes">✓</td></tr>
-          <tr><td>1인 교통비 근거</td><td class="no">—</td><td class="no">쓴 돈 정산</td><td class="us yes">출발 전 미리</td></tr>
-        </tbody>
-      </table>
+    <h2>다른 데랑 뭐가 달라요?</h2>
+    <p class="muted">카톡, 토스·카카오뱅크, 예약 앱(NOL·여기어때·마이리얼트립), 정산·약속 앱(넛지·엔빵·트랩플랜)과 견줬어요.</p>
+    <!-- 다섯 칸 표는 휴대폰에서 옆으로 밀려 읽히지 않았다. 기능 한 줄 + 우리 값 + 다른 곳 한 줄로 바꿨다.
+         근거는 docs/11·12 의 조사 주소. 지는 칸도 숨기지 않는다 -->
+    <!-- 큰 세 가지만 크게 먼저. 아홉 줄 표는 궁금한 사람만 펼친다(전부 펼쳐 두면 스크롤만 길어졌다) -->
+    <ol class="big3">
+      <li><span class="big3-no">01</span><b>왜 그 사람인지</b><p>역할마다 근거("차 있음 +4"). 카톡 투표엔 이유가 없어요.</p></li>
+      <li><span class="big3-no">02</span><b>우리 규칙대로 1인 얼마</b><p>운전자 기름값·술값·불참까지 미리 정한 대로. N빵 앱은 다녀와서 똑같이 나눠요.</p></li>
+      <li><span class="big3-no">03</span><b>정하기부터 나누기까지 한 방</b><p>날짜·역할·숙소·장보기·회비·정산·2탄. 앱 다섯 개를 오가지 않아요.</p></li>
+    </ol>
+    <details class="compare-more">
+      <summary>카톡·예약 앱·정산 앱과 아홉 가지 다 비교해 보기</summary>
+    <ul class="vs">
+      <li><div class="vs-head"><b>날짜, 몇 박이면 누가 빠지는지까지</b><span class="vs-us win">✓</span></div><p class="vs-others">카톡 투표·넛지는 되는 날 표만 · 숙박 길이 계산은 없음</p></li>
+      <li><div class="vs-head"><b>운전·총무 역할을 근거와 함께</b><span class="vs-us win">✓</span></div><p class="vs-others">카톡 — · 토스·카뱅 총무만 · 정산 앱 총무만 · 예약 앱 —</p></li>
+      <li><div class="vs-head"><b>숙소 값, 1인 얼마인지 미리</b><span class="vs-us win">✓</span></div><p class="vs-others">예약 앱 방 총액만 · 정산 앱 다녀와서 N빵 · 카톡·토스 —</p></li>
+      <li><div class="vs-head"><b>교통비, 운전자 빼고 나누기</b><span class="vs-us win">✓</span></div><p class="vs-others">카톡 통행료만 · 예약 앱 렌터카 값 · 정산 앱 —</p></li>
+      <li><div class="vs-head"><b>불참·술값 같은 돈 규칙 미리</b><span class="vs-us win">✓</span></div><p class="vs-others">카뱅 회비 알림 · 나머지는 단톡방에서 말로</p></li>
+      <li><div class="vs-head"><b>숙소 투표에 "누가 싫어하는지"</b><span class="vs-us win">✓</span></div><p class="vs-others">카톡·넛지는 표 수만</p></li>
+      <li><div class="vs-head"><b>다녀와서 누가 누구에게 얼마, 우리 규칙대로</b><span class="vs-us win">✓</span></div><p class="vs-others">정산 앱은 다녀와서 N빵 · 출발 전 규칙(운전자 기름값)과 이어지진 않아요</p></li>
+      <li><div class="vs-head"><b>같은 멤버로 2탄, 한 번 누르면</b><span class="vs-us win">✓</span></div><p class="vs-others">단톡방은 남지만 날짜·규칙·투표는 처음부터 다시</p></li>
+      <li><div class="vs-head"><b>설치·가입 없이 링크로</b><span class="vs-us win">✓</span></div><p class="vs-others">넛지·카뱅 빵나누기도 돼요 · 카톡은 앱 필요</p></li>
+    </ul>
+    <h3 class="vs-lose-title">아직 못 하는 것</h3>
+    <ul class="vs lose">
+      <li><div class="vs-head"><b>실제 송금</b><span class="vs-us">줄까지</span></div><p class="vs-others">"누가 누구에게 얼마"까지 뽑아 주고, 보내는 건 토스·카카오페이로</p></li>
+      <li><div class="vs-head"><b>숙소 예약·결제</b><span class="vs-us">—</span></div><p class="vs-others">NOL·여기어때에서 해요</p></li>
+    </ul>
+    <p class="caption">2026년 11월 공개 페이지·앱스토어 설명 기준</p>
+    </details>
+  </section>
+
+  <!-- 여행 끝나면 이 한 장: 가장 퍼지기 좋은 그림(단톡방에 그대로 던짐). 체험 방과 같은 예시 값, 화면에 들어오면 프린터에서 뽑혀 나온다 -->
+  <section class="section receipt-show" data-reveal>
+    <h2>정하고 나면, 단톡방에 이 한 장</h2>
+    <p class="muted">역할·숙소·교통비·장보기까지 1인 얼마인지 영수증으로 뽑아 그림째 보내요.</p>
+    <div class="receipt-box">
+      <div class="receipt-printer" aria-hidden="true"></div>
+      <div class="receipt-feed">
+        <article class="receipt" id="home-receipt">
+          <p class="r-title"><span>TripMate 여행 영수증</span></p>
+          <p class="r-meta"><span>가평 · 1월 15일(금) ~ 17일(일) · 2박 3일 · 8명</span></p>
+          <hr class="receipt-cut">
+          <p class="r-row"><span>운전  재현·민지</span><b>차 있음 +4</b></p>
+          <p class="r-row"><span>총무  도윤</span><b>계획형 +3</b></p>
+          <hr class="receipt-cut">
+          <p class="r-row"><span>숙소  숲속 독채 펜션</span><b>80,000원</b></p>
+          <p class="r-row"><span>교통(운전자 빼고)</span><b>8,800원</b></p>
+          <p class="r-row"><span>장보기  11줄</span><b>27,500원</b></p>
+          <p class="r-total"><span>1인 합계</span><b>116,300원</b></p>
+          <hr class="receipt-cut">
+          <p class="r-note"><span>단톡방 싸움 0회 · 정하는 데 걸린 시간 1분</span></p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 쉬어 가는 재미(흐름 사이에 끼면 끊겨서 비교·영수증 뒤로 옮겼다). 30초 미리 보기: 질문 셋으로 "나는 무슨 역할형?"을 바로 보여 준다. 공유하고 싶은 결과 한 줄이 목적.
+       실제 추천(RoleScorer + 헝가리안)은 8명 설문으로 하고, 여기는 같은 점수 규칙 일부로 혼자 보는 미리 보기다 -->
+  <section class="section" id="quiz" data-reveal>
+    <h2>나는 여행 가면 무슨 역할형일까?</h2>
+    <p class="muted">질문 셋, 10초면 나와요.</p>
+    <div class="box stack quiz">
+      <fieldset><legend class="strong">차를 가져갈 수 있어?</legend>
+        <div class="row wrap"><label class="chip"><input type="radio" name="car" value="yes"> 가능</label><label class="chip"><input type="radio" name="car" value="no"> 어려워요</label></div></fieldset>
+      <fieldset><legend class="strong">일정은?</legend>
+        <div class="row wrap"><label class="chip"><input type="radio" name="plan" value="planner"> 분 단위로 짠다</label><label class="chip"><input type="radio" name="plan" value="spont"> 그때그때</label></div></fieldset>
+      <fieldset><legend class="strong">여행 가서 더 끌리는 건?</legend>
+        <div class="row wrap"><label class="chip"><input type="radio" name="act" value="in"> 숙소에서 쉬기</label><label class="chip"><input type="radio" name="act" value="out"> 밖에서 놀기</label></div></fieldset>
+      <!-- 결과 카드: 사진 위에 이름, 아래 한마디·설명·짝꿍. 그대로 캡처해도, 카드 그림(9:16)으로 받아도 되게 -->
+      <div id="quiz-result" class="quiz-result" hidden>
+        <div class="quiz-card">
+          <div class="quiz-photo"><img id="quiz-photo" alt="" width="1080" height="1300"><p><small>나는 여행 가면</small><b id="quiz-role"></b></p></div>
+          <div class="quiz-body">
+            <p id="quiz-line" class="quiz-line"></p>
+            <p id="quiz-desc" class="muted"></p>
+            <p class="quiz-mate">찰떡 짝꿍 <b id="quiz-mate"></b></p>
+            <p id="quiz-why" class="muted small"></p>
+          </div>
+        </div>
+        <button type="button" id="quiz-card" class="btn primary big block">결과 카드 저장하기</button>
+        <button type="button" id="quiz-share" class="btn big block">친구 부를 글 복사하기</button>
+      </div>
     </div>
   </section>
 
   <section class="section faq">
     <h2>자주 묻는 것</h2>
+    <p class="muted faq-lead">더 궁금하면 <a th:href="@{/demo}" class="link">체험 방</a>에서 직접 눌러 보세요.</p>
     <details><summary>돈이 드나요?</summary><p>무료예요. 길찾기·유가 같은 공공 정보도 무료 범위에서 써요.</p></details>
-    <details><summary>친구들도 가입해야 하나요?</summary><p>카카오 로그인 한 번이면 돼요. 비밀번호는 TripMate 가 저장하지 않아요.</p></details>
+    <details><summary>친구들도 가입해야 하나요?</summary><p>아니요. 링크를 누르고 이름만 쓰면 바로 들어와요. 카카오로 이으면 다른 기기에서도 나로 이어지고, 비밀번호는 TripMate 가 저장하지 않아요.</p></details>
     <details><summary>출발 동네 같은 정보는 누가 보나요?</summary><p>출발 동네와 이동이 불편한 사정은 본인과 방장만 봐요. 다른 사람에게는 거리·시간이나 "이동 적은 역할 우선"으로만 보여요.</p></details>
+    <details><summary>돈 문제로 안 싸우려면요?</summary><p>방장이 처음에 방 규칙 세 가지(운전한 사람 기름값, 전날 빠지면 예약금, 술값)를 골라 두면 모두의 화면과 결과 글에 같이 나가요.</p></details>
+    <details><summary>정산·송금도 되나요?</summary><p>다녀와서 먼저 낸 돈(숙소·기름값·식비)을 적으면 "도윤 → 재현 53,200원"처럼 누가 누구에게 얼마 보낼지 바로 나와요. 장보기에서 적은 돈은 저절로 들어가고, 기름값은 우리 규칙대로 운전자를 빼고 나눠요. 보내는 건 그 글을 단톡방에 붙여 토스·카카오페이로 하면 돼요.</p></details>
+    <details><summary>다음 여행도 또 만들어야 하나요?</summary><p>다녀온 방에서 "2탄 방 열기"를 누르면 같은 사람·같은 규칙으로 새 방이 열려요. 초대 링크를 다시 돌릴 필요 없이 날짜만 맞추면 돼요.</p></details>
+    <details><summary>PC 에서도 되나요? 앱을 깔아야 하나요?</summary><p>깔 것 없이 휴대폰·PC 브라우저 어디서나 같은 방이 열려요. 휴대폰에서 고른 게 PC 화면에도 바로 보이고, 홈 화면에 추가하면 앱처럼 열려요.</p></details>
+    <details><summary>몇 명까지 되나요?</summary><p>정해진 인원은 없어요. 셋이 가도, 열다섯이 가도 설문 모인 만큼 나눠요. 역할이 모자라면 방장이 더하면 돼요.</p></details>
     <details><summary>추천이 마음에 안 들면요?</summary><p>역할 카드를 눌러 바로 옮길 수 있어요. 방장은 "설거지" 같은 역할을 더하거나 고칠 수 있어요.</p></details>
   </section>
 
-  <section class="cta stack">
-    <h2>이번 여행, 단톡방 눈치 싸움은 그만</h2>
-    <p class="muted">방 만들기 30초, 친구들 설문 1분.</p>
-    <div><a th:href="@{/trips/new}" class="btn primary big">무료로 여행방 만들기</a></div>
+  <!-- 마지막 권유: 왼쪽은 말과 시작 단추, 오른쪽은 같은 방을 노트북·휴대폰으로 보는 실제 화면(웹앱이라 어디서나).
+       뒤 모닥불 사진은 PC 에서 천천히 다가오게 움직여 영상처럼(움직임 줄이기면 멈춘다) -->
+  <section class="cta">
+    <div class="cta-inner">
+      <div class="cta-copy stack">
+        <h2>정하다 지치는 여행, 여기서 끝</h2>
+        <p class="muted">방 만들기 30초, 친구들은 다섯 번 탭. 무료예요.</p>
+        <ul class="cta-points">
+          <li><b>설치 없이</b> 카톡 링크 하나로 바로</li>
+          <li><b>휴대폰</b>에선 1분, <b>PC</b>에선 큰 화면으로 정리</li>
+          <li>누가 바꾸면 <b>모두의 화면이 바로</b> 바뀌어요</li>
+          <li>홈 화면에 추가하면 <b>앱처럼</b> 열려요</li>
+        </ul>
+        <div class="row wrap cta-actions">
+          <a th:href="@{/trips/new}" class="btn primary big">우리 방 만들기 (30초)</a>
+          <a th:href="@{/demo}" class="btn big ghost">체험 방 둘러보기</a>
+        </div>
+      </div>
+      <div class="devices" aria-hidden="true">
+        <div class="device-laptop">
+          <div class="laptop-lid"><div class="laptop-screen"><img th:src="@{/img/tour/pc.webp}" alt="" width="1920" height="1200" loading="lazy" decoding="async"></div></div>
+          <div class="laptop-base"></div>
+        </div>
+        <div class="device-phone mini-device"><div class="device-screen"><span class="device-status" aria-hidden="true"><b>9:41</b><i></i></span><div class="device-view"><img th:src="@{/img/tour/cars-big.webp}" alt="" width="780" height="1688" loading="lazy" decoding="async"></div></div></div>
+      </div>
+    </div>
   </section>
 
   <footer class="site-footer stack">
-    <p>© 2026 TripMate</p>
+    <p>© 2026 TripMate · 부트캠프 2기 팀 프로젝트</p>
+    <p>개인정보: 계좌·전화번호는 받지 않아요. 출발 동네·사정은 본인과 방장만, 정산 링크는 이름과 금액만 보여요.</p>
     <p>길찾기·통행료: 카카오모빌리티 · 기름값: 한국석유공사 오피넷</p>
   </footer>
 </main>
 <!-- 휴대폰은 스크롤 어디서든 시작 버튼이 엄지 아래에 있게 붙여 둔다(넓은 화면은 머리의 버튼으로 충분) -->
-<div class="sticky-cta"><a th:href="@{/trips/new}" class="btn primary big block">무료로 여행방 만들기</a></div>
+<div class="sticky-cta"><a th:href="@{/trips/new}" class="btn primary big block">우리 방 만들기 (30초)</a></div>
 <script th:src="@{/js/home.js}"></script>
 </body>
 </html>

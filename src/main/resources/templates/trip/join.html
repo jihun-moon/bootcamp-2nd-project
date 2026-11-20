@@ -3,9 +3,22 @@
 <head th:replace="~{fragments/common :: head('여행방 초대')}"></head>
 <body th:data-invite-code="${inviteCode}">
 <header th:replace="~{fragments/common :: siteHeader(false)}"></header>
-<main class="page narrow center stack">
+<main class="page narrow center stack with-photo">
+  <!-- 친구가 초대 링크를 누르면 가장 먼저 보는 화면이라 차가운 로그인 대신 "같이 가자"는 사진. Unsplash 무료 사진(unsplash.com/photos/Z2k2Yod4vCY) -->
+  <img class="cover" th:src="@{/img/photo/friends.jpg}" alt="햇살 아래 함께 웃는 친구들" width="1200" height="600">
   <h1 th:text="${ogTitle} ?: '여행방 초대'">여행방 초대</h1>
   <p id="message" class="muted">방에 들어가는 중…</p>
+  <!-- 로그인 전이면: 이름만 쓰고 바로(손님, docs/19). 카카오 동의 화면이 가장 큰 이탈이라(docs/18) 이쪽을 크게 -->
+  <form id="guest-form" class="stack guest-form" hidden>
+    <label for="guest-name" class="strong">친구들이 알아볼 이름</label>
+    <input type="text" id="guest-name" maxlength="20" placeholder="예: 민재" autocomplete="nickname" enterkeyhint="go" required>
+    <button type="submit" class="btn primary big block">이름만 쓰고 바로 하기</button>
+    <p id="guest-error" class="error" hidden></p>
+    <a id="guest-kakao" href="/oauth2/authorization/kakao" class="kakao-login">
+      <img th:src="@{/img/kakao_login_kr_large.svg}" alt="카카오 로그인" width="336" height="46">
+    </a>
+    <p class="muted small">카카오로 시작하면 다른 기기에서도 나로 이어지고, 다음 여행 방도 만들 수 있어요.</p>
+  </form>
 </main>
 <script th:src="@{/js/join.js}"></script>
 </body>

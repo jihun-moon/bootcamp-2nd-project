@@ -15,4 +15,7 @@ public interface StayRepository extends JpaRepository<Stay, Long> {
     long countByTripId(Long tripId);
 
     Optional<Stay> findByIdAndTripId(Long id, Long tripId);
+
+    // 방을 나간 사람이 올린 숙소. 숙소는 남기고(다른 사람이 표를 줬을 수 있다) 올린 사람만 비운다
+    List<Stay> findByAddedById(Long memberId);
 }

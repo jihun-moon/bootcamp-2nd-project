@@ -32,6 +32,9 @@ public class Assignment {
     @Version
     private Long version;
 
+    // 사람이 손으로 놓거나 옮긴 카드. 늦게 들어온 사람 때문에 다시 짤 때 이 뜻은 지우지 않는다
+    private Boolean byHand;   // null = 추천이 놓음. 기존 행이 있는 DB 에 NOT NULL 열을 더하지 않게 Boolean
+
     protected Assignment() {
     }
 
@@ -41,9 +44,16 @@ public class Assignment {
         this.reasons.addAll(reasons);
     }
 
+    static Assignment placedByHand(Member member, Role role) {
+        var a = new Assignment(member, role, List.of());
+        a.byHand = true;
+        return a;
+    }
+
     public void moveTo(Role role) {
         this.role = role;
         this.reasons.clear();
+        this.byHand = true;
     }
 
     public Long getId() { return id; }
@@ -51,4 +61,5 @@ public class Assignment {
     public Role getRole() { return role; }
     public List<String> getReasons() { return reasons; }
     public Long getVersion() { return version; }
+    public boolean isByHand() { return Boolean.TRUE.equals(byHand); }
 }

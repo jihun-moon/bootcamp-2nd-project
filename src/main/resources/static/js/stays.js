@@ -44,6 +44,11 @@ function renderStays() {
   });
   $('#stay-empty').prop('hidden', ranked.length > 0);
   $('#stay-count').text(ranked.length ? ranked.length + '곳 · 내 표 ' + (myVote ? '1' : '0') + '/1' : '');
+  // 후보가 둘 이상이고(하나면 고를 게 없다) 내가 표를 낸 뒤에만
+  var voted = new Set([].concat.apply([], board.stays.map(function (s) { return s.voterIds; })));
+  renderNudge($('#vote-nudge'), trip, ranked.length < 2 || !myVote ? [] : trip.members
+    .filter(function (m) { return m.id !== trip.meId && !voted.has(m.id); }).map(function (m) { return m.name; }),
+    '숙소 표를 안 냈어요', '숙소 하나만 골라 줘요', '/stays');
 
   var list = $('#stay-list').empty();
   ranked.forEach(function (stay, i) {
@@ -54,6 +59,8 @@ function renderStays() {
     var title = $('<a target="_blank" rel="noopener noreferrer" class="strong">').attr('href', stay.url).text(stay.title + ' ↗');
     card.append($('<div class="between">').append(title,
       board.surveyed > 0 ? $('<span class="rank">').text((i + 1) + '위 · ' + score(stay.amenities).toFixed(1) + '점') : null));
+
+    if (stay.price) card.append(priceLine(stay.price));
 
     var chips = $('<div class="row wrap">');
     board.amenities.forEach(function (a) {
@@ -74,6 +81,17 @@ function renderStays() {
   });
 }
 
+// "1박 23.9만원" 크게, 아래 "2박 8명이면 1인 약 6만원". 예약 사이트에 다시 들어가 나눗셈하지 않게 우리 방 날짜·인원으로 바로 센다
+function priceLine(price) {
+  var man = function (won) { return (Math.round(won / 1000) / 10).toLocaleString('ko-KR') + '만원'; };
+  var nights = (trip.startDate && trip.endDate)
+    ? Math.max(1, Math.round((new Date(trip.endDate) - new Date(trip.startDate)) / 86400000)) : 1;
+  var people = trip.members.length;
+  var line = $('<p class="price">').text('1박 ' + man(price) + ' ');
+  if (people > 1) line.append($('<small>').text(nights + '박 ' + people + '명이면 1인 약 ' + man(price * nights / people)));
+  return line;
+}
+
 function missingMust(stay) {
   return board.amenities.filter(function (a) {
     var p = board.preferences[a.key];
@@ -83,9 +101,43 @@ function missingMust(stay) {
 
 function renderForm() {
   var box = $('#stay-amenities');
-  if (box.children().length) return; // 체크해 둔 것이 다시 그릴 때 지워지지 않게 한 번만
+  if (box.children().length) return; // 골라 둔 것이 다시 그릴 때 지워지지 않게 한 번만
   board.amenities.forEach(function (a) {
-    $('<label class="row chip">').append($('<input type="checkbox" name="amenities">').val(a.key), $('<span>').text(a.label)).appendTo(box);
+    $('<button type="button" class="toggle">').attr('data-key', a.key).attr('aria-pressed', false).text(a.label)
+      .click(function () { $(this).attr('aria-pressed', $(this).attr('aria-pressed') !== 'true'); })
+      .appendTo(box);
+  });
+}
+
+function pickedAmenities() {
+  return $('#stay-amenities .toggle[aria-pressed="true"]').map(function () { return $(this).data('key'); }).get();
+}
+
+// POST: /api/trips/1/stays/preview  { "url": "https://..." 또는 앱 공유 글 } -> { "title", "imageUrl", "amenities": ["DETACHED"] }
+// 링크를 붙여 넣으면 바로 읽어 이름·사진을 보이고, 소개 글에서 찾은 조건을 칠해 둔다. 사람이 이미 고친 칸은 건드리지 않는다
+var previewedUrl = null;
+function previewLink() {
+  var url = $('#stay-url').val().trim();
+  if (!/https?:\/\/\S+\.\S+/.test(url) || url === previewedUrl) return;
+  previewedUrl = url;
+  $('#stay-preview').prop('hidden', false);
+  $('#preview-photo').prop('hidden', true);
+  $('#preview-status').text('링크 읽는 중…');
+  api('POST', '/api/trips/' + tripId + '/stays/preview', { url: url }).done(function (p) {
+    if ($('#stay-url').val().trim() !== url) return; // 읽는 사이 다른 링크로 바꿨으면 버린다
+    if (p.imageUrl) $('#preview-photo').attr('src', p.imageUrl).prop('hidden', false);
+    if (p.title && !$('#stay-title').val()) $('#stay-title').val(p.title);
+    if (p.price && !$('#stay-price').val()) $('#stay-price').val(p.price);
+    p.amenities.forEach(function (key) { $('#stay-amenities .toggle[data-key="' + key + '"]').attr('aria-pressed', true); });
+    var found = [];
+    if (p.price) found.push('오늘 1박 ' + p.price.toLocaleString('ko-KR') + '원');
+    if (p.amenities.length) found.push('조건 ' + p.amenities.length + '개');
+    $('#preview-status').text(found.length
+      ? '링크에서 찾아 채웠어요: ' + found.join(' · ') + '. 가격은 날짜마다 달라요. 틀리면 고쳐 주세요.'
+      : (p.title ? '이름과 사진을 가져왔어요. 있는 조건만 눌러 주세요.' : '이 사이트는 정보를 안 보여 줘요. 이름과 조건만 적어 주세요.'));
+  }).fail(function () {
+    previewedUrl = null;
+    $('#preview-status').text('링크를 읽지 못했어요. 그래도 올릴 수 있어요.');
   });
 }
 
@@ -104,7 +156,7 @@ function vote(stayId) {
   showNotice('');
   api('PUT', '/api/trips/' + tripId + '/votes/' + trip.meId, { stayId: stayId })
     .fail(function (xhr) { if (xhr.status !== 401) showNotice('투표하지 못했어요. 다시 눌러 주세요.'); })
-    .always(loadBoard);
+    .always(function () { loadBoard().done(function () { delight($('#stay-list .btn.primary')); }); });
 }
 
 // POST: /api/trips/1/stays  { "url": "https://...", "title": "숲속 독채", "amenities": ["DETACHED"] }
@@ -112,13 +164,17 @@ function addStay(e) {
   e.preventDefault();
   showNotice('');
   $('#btn-add').prop('disabled', true).text('올리는 중…');
-  var amenities = $('#stay-amenities input:checked').map(function () { return this.value; }).get();
   api('POST', '/api/trips/' + tripId + '/stays', {
-    url: $('#stay-url').val(),
-    title: $('#stay-title').val() || null,
-    amenities: amenities
+    url: $('#stay-url').val().trim(),
+    title: $('#stay-title').val().trim() || null,
+    price: $('#stay-price').val() ? Number($('#stay-price').val()) : null,
+    amenities: pickedAmenities()
   }).done(function () {
     $('#stay-form')[0].reset();
+    $('#stay-amenities .toggle').attr('aria-pressed', false);
+    $('#stay-preview').prop('hidden', true);
+    previewedUrl = null;
+    showToast('숙소를 올렸어요. 친구들 화면에도 바로 보여요.');
     loadBoard();
   }).fail(function (xhr) {
     if (xhr.status !== 401) showNotice(xhr.status === 400
@@ -131,6 +187,10 @@ function addStay(e) {
 
 $(function () {
   $('#stay-form').submit(addStay);
+  // 붙여 넣으면 바로, 손으로 치면 멈춘 뒤 읽는다
+  var typing = null;
+  $('#stay-url').on('paste', function () { setTimeout(previewLink, 0); })
+    .on('input', function () { clearTimeout(typing); typing = setTimeout(previewLink, 700); });
 
   loadTrip(tripId).done(function (t) {
     trip = t;

@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.List;
 
 // 운전·회비 근거. 차마다 출발 동네 → 방 지역 길을 찾아 거리·시간·통행료·기름값을 내고,
 // 운전 칸에 들어간 차만 모아 왕복으로 1인 교통비를 낸다. 총무가 회비를 걷을 때 근거로 쓴다
@@ -51,25 +52,29 @@ public class TravelService {
         }
 
         var price = fuelPriceClient.gasoline();
-        var legs = plan.cars().stream().map(car -> leg(car, to.get(), price.wonPerLiter())).toList();
+        var legs = plan.cars().stream().map(car -> leg(car, to.get(), price.wonPerLiter(), plan.riders().get(car.memberId()))).toList();
         var driving = legs.stream().filter(l -> l.driver() && l.km() != null).toList();
 
         var tips = new ArrayList<String>();
         Integer perPerson = null;
+        Integer perPassenger = null;
         if (driving.isEmpty()) {
             tips.add("운전 칸에 사람이 들어가면 1인 교통비를 셀게요.");
         } else {
             var total = driving.stream().mapToInt(l -> (l.fuel() + l.toll()) * ROUND_TRIP).sum();
             perPerson = roundUp((double) total / plan.memberCount());
+            // 모두 합쳐 나눈 값. 차가 둘 이상이면 화면은 leg 마다의 perRider(그 차에 탄 사람끼리)를 쓴다
+            var passengers = plan.memberCount() - driving.size();
+            if (passengers > 0) perPassenger = roundUp((double) total / passengers);
         }
         driving.stream()
                 .filter(l -> l.minutes() > LONG_DRIVE_MINUTES)
                 .forEach(l -> tips.add(l.name() + " 차는 편도 " + duration(l.minutes()) + "이에요. 교대할 사람을 정해 두세요."));
 
-        return new TravelDto.Summary(null, legs, perPerson, price.wonPerLiter(), price.source(), kmPerLiter, tips);
+        return new TravelDto.Summary(null, legs, perPerson, perPassenger, price.wonPerLiter(), price.source(), kmPerLiter, tips);
     }
 
-    private TravelDto.Leg leg(TravelDto.Car car, KakaoMapClient.Point to, int wonPerLiter) {
+    private TravelDto.Leg leg(TravelDto.Car car, KakaoMapClient.Point to, int wonPerLiter, List<Long> riders) {
         if (car.departure() == null) return TravelDto.Leg.missing(car, "설문에 출발 동네가 없어요");
         var from = kakaoMapClient.find(car.departure());
         if (from.isEmpty()) return TravelDto.Leg.missing(car, "출발 동네를 지도에서 찾지 못했어요");
@@ -78,9 +83,17 @@ public class TravelService {
 
         var meters = drive.get().meters();
         var fuel = roundUp((double) meters / METERS_PER_KM / kmPerLiter * wonPerLiter);
+        // 이 차 왕복을 이 차에 탄 사람끼리. 차를 안 나눴으면(운전 칸이 비었으면) null 이고 화면은 모두 나눈 값을 쓴다
+        Integer perRider = null, perPassenger = null;
+        var carRiders = riders == null ? List.<Long>of() : riders;
+        if (car.driver() && riders != null) {
+            var carTotal = (fuel + drive.get().toll()) * ROUND_TRIP;
+            perRider = roundUp((double) carTotal / (carRiders.size() + 1));
+            if (!carRiders.isEmpty()) perPassenger = roundUp((double) carTotal / carRiders.size());
+        }
         return new TravelDto.Leg(car.memberId(), car.name(), car.driver(),
                 Math.round((float) meters / METERS_PER_KM), Math.round((float) drive.get().seconds() / SECONDS_PER_MINUTE),
-                drive.get().toll(), fuel, null);
+                drive.get().toll(), fuel, null, carRiders, perRider, perPassenger);
     }
 
     // 회비는 100원 단위로 걷으니 올림한다

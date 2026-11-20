@@ -4,29 +4,101 @@
 <body th:data-trip-id="${tripId}">
 <div class="page">
   <header th:replace="~{fragments/common :: tripHeader}"></header>
-  <main class="stack">
+  <!-- 손님에게만: 카카오로 이어 두면 다른 기기에서도 나로. 닫으면 이 휴대폰에서는 다시 안 뜬다 -->
+  <div id="guest-band" class="guest-band" hidden>
+    <span>카카오로 이어 두면 다른 기기에서도 나로 들어오고, 다음 여행 방도 만들 수 있어요.</span>
+    <a id="guest-link" href="/oauth2/authorization/kakao" class="btn small">카카오로 잇기</a>
+    <button type="button" id="guest-band-close" class="link small" aria-label="닫기">닫기</button>
+  </div>
+  <main class="stack ov-grid">
+    <!-- 휴대폰은 위아래 한 줄(지금 할 일이 맨 위). 넓은 화면은 왼쪽 할 일 / 오른쪽 사람·규칙 두 기둥.
+         기둥으로 묶은 까닭: 칸 격자로 두면 왼쪽 날짜 달력 높이에 오른쪽이 끌려가 빈자리가 350px 생겼다 -->
+    <!-- 방에 들어올 때마다 "여행 가는 방"이라는 느낌이 들게 얇은 풍경 띠 하나. Unsplash 무료 사진(unsplash.com/photos/NZZgWbjYu2Y) -->
+    <!-- 방의 지역(없으면 철) 사진. 위에 D-day 한 줄(trip.js). 처음 사진은 지역도 날짜도 없을 때 -->
+    <div class="ov-cover cover-wrap">
+      <img class="cover thin" th:src="@{/img/photo/forest-hills.jpg}" alt="" width="1200" height="600">
+      <span id="dday" class="dday" hidden></span>
+      <button type="button" id="btn-rename" class="rename" hidden>이름·지역 고치기</button>
+    </div>
+    <div class="ov-main">
+    <!-- 방 이름·지역 고치기(방장): 사진 위 단추를 누르면 열린다 -->
+    <form id="rename-form" class="ov-rename box stack" hidden>
+      <h2>방 이름·지역</h2>
+      <input type="text" id="rename-title" maxlength="100" aria-label="방 이름" required>
+      <input type="text" id="rename-destination" maxlength="100" placeholder="지역(예: 강릉)" aria-label="지역">
+      <div class="row"><button type="submit" class="btn primary">저장</button><button type="button" id="rename-cancel" class="btn">닫기</button></div>
+      <!-- 방 지우기(방장): 설문·역할·숙소·장보기·정산까지 모두 지워져 되돌릴 수 없다. 확인 창 뒤에 -->
+      <button type="button" id="btn-delete-trip" class="link small danger-link">이 방 지우기</button>
+    </form>
     <!-- 지금 나에게 맞는 다음 할 일 하나. 처음 들어온 사람이 "여기서 뭘 하지?"를 고민하지 않게 trip.js 가 고른다 -->
-    <section id="next" class="box stack">
+    <section id="next" class="ov-next box stack">
       <h2 id="next-title"></h2>
       <p id="next-text" class="muted"></p>
       <div id="next-actions" class="row wrap"></div>
     </section>
-
-    <section class="box stack">
-      <div class="between"><h2>초대 링크</h2><span class="muted small">단톡방에 붙여 넣으면 돼요</span></div>
-      <div class="row">
-        <input type="text" id="invite-link" readonly aria-label="초대 링크">
-        <button type="button" id="btn-invite" class="btn primary">복사</button>
-      </div>
+    <!-- 준비 체크: 날짜·설문·역할·숙소·장보기가 탭마다 흩어져 "뭐가 남았지?"를 알려면 다 눌러 봐야 했다. 한눈에 다섯 줄, 누르면 그 화면 -->
+    <section class="ov-progress box stack">
+      <div class="between"><h2>준비 체크</h2><span id="progress-count" class="muted small"></span></div>
+      <ol id="progress" class="progress-list"></ol>
     </section>
-
-    <section class="box stack">
-      <div class="between small"><span class="strong">설문 진행</span><span id="survey-count" class="muted"></span></div>
+    <!-- 날짜 맞추기: 방에 날짜가 없을 때만. 되는 날을 누르면 바로 저장되고, 겹치는 날로 좋은 후보 셋을 보인다 -->
+    <section id="dates-card" class="ov-dates box stack" hidden>
+      <div class="between"><h2>날짜 맞추기</h2><span id="dates-count" class="muted small"></span></div>
+      <p id="dates-nudge" class="nudge" hidden></p>
+      <p class="muted small">되는 날을 모두 눌러 주세요. 진할수록 많이 겹친 날이에요.</p>
+      <div id="dates-cal"></div>
+      <div id="dates-length" class="toggles dates-length" role="group" aria-label="몇 박으로"></div>
+      <ul id="dates-best" class="stack"></ul>
+    </section>
+    <!-- 미리 걷는 회비(왼쪽 "할 일" 기둥: 낼 사람이 누르는 일이라. 오른쪽에 두니 날짜가 정해진 방에서 왼쪽만 일찍 끝나 PC 아래가 비었다). 정하면 모두에게 "1인 얼마 · 누구에게 · 몇 명 냈어요", 다녀오면 남은 돈은 정산이 나눈다(trip.js renderDues) -->
+    <section id="dues-card" class="ov-dues box stack" hidden></section>
+    </div>
+    <div class="ov-side">
+    <!-- 방 규칙: 운전자 기름값, 전날 불참 예약금, 술값. 트립 개요에서 모두가 보고 방장만 바꾼다 -->
+    <section class="ov-rules box stack">
+      <!-- 모일 시간·장소: 방장이 한 번 적으면 모두의 D-day 줄에 "내일 08:00 · 합정역 2번 출구"로 뜬다 -->
+      <div id="meet" class="stack meet"></div>
+      <h2>방 규칙</h2>
+      <p id="rules-note" class="muted small"></p>
+      <ul id="rules" class="stack"></ul>
+    </section>
+    <!-- 차 나누기: 운전 칸에 들어간 사람마다 차 하나. 안 고르면 고르게 저절로 나뉘고, 차마다 태우는 곳·시간(trip.js renderCars) -->
+    <section id="cars-card" class="ov-cars box stack" hidden></section>
+    <!-- 함께하는 사람: 설문 진행과 초대 링크를 한 상자로(상자가 일곱 개라 빽빽했다. 스레드 디자이너 조언 "box 가 너무 많다") -->
+    <section class="ov-people box stack">
+      <div class="between"><h2>함께하는 사람</h2><span id="survey-count" class="muted small"></span></div>
       <div class="bar"><div id="survey-bar" class="fill"></div></div>
       <ul id="members" class="grid4"></ul>
+      <div class="row">
+        <input type="text" id="invite-link" readonly aria-label="초대 링크">
+        <button type="button" id="btn-invite" class="btn">보내기</button>
+      </div>
+      <!-- 같은 멤버로 다음 여행: 사람·규칙을 그대로 옮긴 새 방. 초대를 다시 돌리지 않게 -->
+      <div class="between">
+        <p id="next-trip" class="small" hidden></p>
+        <!-- 못 가게 됐으면 스스로 나간다. 남은 사람끼리 1인 금액이 다시 나뉜다 -->
+        <button type="button" id="leave-trip" class="link small muted" hidden>방 나가기</button>
+      </div>
     </section>
+    <!-- 방·침대 뽑기: 서버가 섞고(몰래 다시 뽑아도 몇 번째인지 보인다), 화면은 이름이 잠깐 돌다 멈춘다 -->
+    <section id="draw-card" class="ov-draw box stack" hidden>
+      <div class="between"><h2>방·침대 뽑기</h2><span id="draw-meta" class="muted small"></span></div>
+      <p class="muted small">누가 어느 방, 누가 침대인지 공평하게. 다시 뽑으면 몇 번째인지 모두에게 보여요.</p>
+      <div class="between draw-controls">
+        <div class="stepper" aria-label="방 수">
+          <button type="button" class="btn" id="draw-less" aria-label="방 하나 줄이기">−</button>
+          <b id="draw-count"></b>
+          <button type="button" class="btn" id="draw-more" aria-label="방 하나 늘리기">+</button>
+        </div>
+        <button type="button" id="btn-draw" class="btn primary">뽑기!</button>
+      </div>
+      <ol id="draw-result" class="draw-result"></ol>
+      <button type="button" id="btn-draw-share" class="btn block" hidden>결과 단톡방에 보내기</button>
+    </section>
+    </div>
   </main>
 </div>
+<script th:src="@{/js/dates.js}"></script>
 <script th:src="@{/js/trip.js}"></script>
 </body>
 </html>

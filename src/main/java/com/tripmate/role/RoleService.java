@@ -1,7 +1,12 @@
 package com.tripmate.role;
 
+import com.tripmate.trip.TripDeleting;
+import org.springframework.context.event.EventListener;
+import com.tripmate.trip.MemberLeaving;
+import com.tripmate.trip.MemberLeft;
 import com.tripmate.survey.SurveyAnswer;
 import com.tripmate.survey.SurveyAnswerRepository;
+import com.tripmate.trip.Member;
 import com.tripmate.trip.MemberRepository;
 import com.tripmate.trip.TripChanged;
 import com.tripmate.trip.TripRepository;
@@ -12,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -32,16 +38,18 @@ public class RoleService {
     private final RoleRepository roleRepository;
     private final AssignmentRepository assignmentRepository;
     private final SurveyAnswerRepository surveyAnswerRepository;
+    private final CarService carService;
     private final ApplicationEventPublisher events;
 
     public RoleService(TripRepository tripRepository, MemberRepository memberRepository, RoleRepository roleRepository,
                        AssignmentRepository assignmentRepository, SurveyAnswerRepository surveyAnswerRepository,
-                       ApplicationEventPublisher events) {
+                       CarService carService, ApplicationEventPublisher events) {
         this.tripRepository = tripRepository;
         this.memberRepository = memberRepository;
         this.roleRepository = roleRepository;
         this.assignmentRepository = assignmentRepository;
         this.surveyAnswerRepository = surveyAnswerRepository;
+        this.carService = carService;
         this.events = events;
     }
 
@@ -101,7 +109,7 @@ public class RoleService {
             throw new ResponseStatusException(HttpStatus.CONFLICT);
         }
         if (current.isEmpty() && target != null) {
-            assignmentRepository.save(new Assignment(member, target, List.of()));
+            assignmentRepository.save(Assignment.placedByHand(member, target));
         } else if (current.isPresent() && target == null) {
             assignmentRepository.delete(current.get());
         } else if (current.isPresent()) {
@@ -132,7 +140,46 @@ public class RoleService {
                         surveys.containsKey(m.getId()) ? surveys.get(m.getId()).getDeparture() : null,
                         drivers.contains(m.getId())))
                 .toList();
-        return new TravelDto.Plan(trip.getDestination(), trip.getMembers().size(), cars);
+        // 차 나누기대로 차마다 탄 사람(운전자 빼고). 운전 칸이 비었으면 빈 표
+        var riders = new HashMap<Long, List<Long>>();
+        carService.seating(tripId).cars().forEach((driver, seats) ->
+                riders.put(driver, seats.stream().filter(id -> !id.equals(driver)).sorted().toList()));
+        return new TravelDto.Plan(trip.getDestination(), trip.getMembers().size(), cars, riders);
+    }
+
+    // 방을 지우면 역할 카드와 역할 칸도 지운다(카드가 칸을 가리켜 카드부터)
+    @EventListener
+    public void onTripDeleting(TripDeleting e) {
+        assignmentRepository.deleteAll(assignmentRepository.findByRoleTripIdOrderById(e.tripId()));
+        roleRepository.deleteAll(roleRepository.findByTripIdOrderById(e.tripId()));
+    }
+
+    // 방을 나간 사람의 역할 카드. 빈자리는 보드에서 다시 추천하거나 손으로 채운다
+    @EventListener
+    public void onMemberLeaving(MemberLeaving e) {
+        assignmentRepository.findByMemberId(e.memberId()).ifPresent(assignmentRepository::delete);
+    }
+
+    // 나간 사람이 마지막 설문 전 사람이었으면 이제 다 모인 것이라 자동 추천을 다시 본다(리뷰 #10)
+    @EventListener
+    public void onMemberLeft(MemberLeft e) {
+        recommendWhenAllDone(e.tripId());
+    }
+
+    // 마지막 사람이 설문을 끝내면 방장이 단추를 누르지 않아도 역할이 정해진다.
+    // 혼자 있는 방은 아직 부를 친구가 남아 기다린다.
+    // 방장과 제일 빠른 친구 둘이 먼저 끝내면 그때 "모두 끝남"이라 둘만 배정되고, 저녁에 들어온 다섯은 빈손이었다(7명 시뮬레이션).
+    // 그래서 배정 없는 사람이 생기면 다시 짠다. 다만 누가 카드를 손으로 옮겼으면 그 뜻을 지우지 않게 둔다
+    @Transactional
+    public void recommendWhenAllDone(Long tripId) {
+        var members = tripRepository.findWithMembersById(tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)).getMembers();
+        var allDone = members.size() >= 2 && members.stream().allMatch(Member::isSurveyDone);
+        if (!allDone) return;
+        var assignments = assignmentRepository.findByRoleTripIdOrderById(tripId);
+        var someoneLeftOut = assignments.size() < members.size();
+        var movedByHand = assignments.stream().anyMatch(Assignment::isByHand);
+        if (assignments.isEmpty() || someoneLeftOut && !movedByHand) recommend(tripId);
     }
 
     // 손으로 옮긴 배정까지 지우고 설문으로 처음부터 다시 짠다. 점수 규칙은 RoleScorer, 배정은 HungarianAssigner

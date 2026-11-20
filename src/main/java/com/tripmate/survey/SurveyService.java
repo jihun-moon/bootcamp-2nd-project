@@ -1,6 +1,10 @@
 package com.tripmate.survey;
 
+import com.tripmate.trip.TripDeleting;
+import org.springframework.context.event.EventListener;
+import com.tripmate.trip.MemberLeaving;
 import com.tripmate.role.Chore;
+import com.tripmate.role.RoleService;
 import com.tripmate.stay.Amenity;
 import com.tripmate.trip.Member;
 import com.tripmate.trip.MemberRepository;
@@ -19,12 +23,14 @@ public class SurveyService {
 
     private final MemberRepository memberRepository;
     private final SurveyAnswerRepository surveyAnswerRepository;
+    private final RoleService roleService;
     private final ApplicationEventPublisher events;
 
     public SurveyService(MemberRepository memberRepository, SurveyAnswerRepository surveyAnswerRepository,
-                         ApplicationEventPublisher events) {
+                         RoleService roleService, ApplicationEventPublisher events) {
         this.memberRepository = memberRepository;
         this.surveyAnswerRepository = surveyAnswerRepository;
+        this.roleService = roleService;
         this.events = events;
     }
 
@@ -45,6 +51,7 @@ public class SurveyService {
                 departure, req.mobilityLimited(), avoid, preferences);
         // 방 개요의 "설문 완료"가 바뀌니 같은 방 화면들에 알린다
         events.publishEvent(new TripChanged(tripId, "members"));
+        roleService.recommendWhenAllDone(tripId);
         return SurveyDto.Response.of(survey, true);
     }
 
@@ -57,5 +64,17 @@ public class SurveyService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         var showPrivate = viewer.getId().equals(memberId) || viewer.isHost();
         return SurveyDto.Response.of(survey, showPrivate);
+    }
+
+    // 방을 지우면 그 방 설문도 지운다
+    @EventListener
+    public void onTripDeleting(TripDeleting e) {
+        surveyAnswerRepository.deleteAll(surveyAnswerRepository.findByMemberTripId(e.tripId()));
+    }
+
+    // 방을 나간 사람의 설문. 숙소 취향 평균과 역할 점수에서 빠진다
+    @EventListener
+    public void onMemberLeaving(MemberLeaving e) {
+        surveyAnswerRepository.findByMemberId(e.memberId()).ifPresent(surveyAnswerRepository::delete);
     }
 }

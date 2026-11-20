@@ -15,18 +15,31 @@
     <!-- 숙소마다 카드 한 장. 넓은 표는 휴대폰에서 옆으로 밀어야 해서 카드로 바꿨다. 그룹 취향 점수 높은 순 -->
     <section class="stack">
       <div class="between"><h2>숙소 후보</h2><span id="stay-count" class="muted small"></span></div>
-      <p id="stay-empty" class="hint">아직 숙소가 없어요. 아래에 예약 사이트 링크를 붙여 넣어 주세요.</p>
+      <p id="vote-nudge" class="nudge" hidden></p>
+      <p id="stay-empty" class="hint">아직 숙소가 없어요. 지도나 예약 앱에서 "공유"로 복사한 글을 아래에 붙여 넣어 주세요.</p>
       <ul id="stay-list" class="stay-list"></ul>
     </section>
 
     <form id="stay-form" class="box dashed stack">
       <h2>숙소 링크 올리기</h2>
-      <p class="muted small">링크만 넣으면 제목과 사진은 알아서 가져와요.</p>
-      <input type="url" id="stay-url" required placeholder="https://...">
+      <p class="muted small">찾은 곳에서 "공유"를 눌러 복사한 글을 그대로 붙여 넣어요. 이름·사진·조건은 알아서 채워요.</p>
+      <!-- 공유 글(이름·주소·링크가 섞인 여러 줄)도 받아야 해서 textarea. input 은 붙여 넣을 때 줄바꿈을 지워 이름과 주소가 붙는다.
+           링크를 뽑는 건 서버(ShareText) -->
+      <textarea id="stay-url" class="paste-box" rows="2" required maxlength="2000" autocomplete="off"
+                placeholder="링크나 공유 글 붙여 넣기"></textarea>
+      <p class="muted small stay-sources">네이버 지도 · 카카오맵 · 에어비앤비 · 야놀자 · 여기어때 · 네이버 호텔 · 아고다 · 블로그 글</p>
+      <!-- 링크를 읽은 결과. 사진과 이름이 보이면 맞는 링크인지 바로 안다 -->
+      <div id="stay-preview" class="stay-preview" hidden>
+        <img id="preview-photo" alt="" referrerpolicy="no-referrer" hidden>
+        <p id="preview-status" class="muted small" aria-live="polite"></p>
+      </div>
       <input type="text" id="stay-title" maxlength="200" placeholder="이름 (비우면 링크 제목을 가져와요)">
+      <label>1박 가격 (원, 몰라도 돼요)
+        <input type="number" id="stay-price" min="0" max="100000000" step="1" inputmode="numeric" placeholder="예: 240000">
+      </label>
       <fieldset>
-        <legend class="muted small">있는 조건을 체크해 주세요</legend>
-        <div id="stay-amenities" class="row wrap"></div>
+        <legend class="muted small">이 숙소에 있는 것 (눌러서 고치기)</legend>
+        <div id="stay-amenities" class="toggles"></div>
       </fieldset>
       <button type="submit" id="btn-add" class="btn primary">올리기</button>
     </form>

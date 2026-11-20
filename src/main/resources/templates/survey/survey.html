@@ -16,16 +16,16 @@
       <button type="button" class="link btn-back">← 이전</button>
     </section>
 
-    <!-- 마지막 장: 숙소 조건 중요도 1~5 -->
+    <!-- 마지막 장: 숙소 조건. 기본은 "상관없어"라 신경 쓰이는 것만 누르면 된다 -->
     <section id="step-preferences" class="box stack" hidden>
       <p id="p-count" class="muted small"></p>
-      <h2>숙소에서 이건 얼마나 중요해요?</h2>
-      <p class="muted small">1 = 없어도 됨, 5 = 꼭 있어야 함</p>
+      <h2>마지막! 숙소에서 신경 쓰이는 것만</h2>
+      <p class="muted small">안 누르면 "상관없어"로 들어가요. 숙소 후보를 고를 때 그룹 점수로 쓰여요.</p>
       <ul id="preferences" class="stack"></ul>
       <p id="save-error" class="error" hidden>저장하지 못했어요. 다시 눌러 주세요.</p>
       <div class="between">
         <button type="button" class="link btn-back">← 이전</button>
-        <button type="button" id="btn-save" class="btn primary">저장하기</button>
+        <button type="button" id="btn-save" class="btn primary">다 했어요</button>
       </div>
     </section>
 
@@ -41,6 +41,7 @@
     </section>
   </main>
 </div>
+<script th:src="@{/js/dates.js}"></script>
 <script th:src="@{/js/survey.js}"></script>
 </body>
 </html>

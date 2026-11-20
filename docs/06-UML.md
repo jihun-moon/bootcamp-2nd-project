@@ -15,25 +15,39 @@ flowchart LR
 
     subgraph TripMate
         login((로그인))
+        guest((이름만 쓰고 참여))
         create((여행방 만들기))
         invite((초대 링크 보내기))
         join((초대 링크로 참여))
         survey((설문하기))
+        dates((되는 날 누르기))
         recommend((역할 추천받기))
         move((역할 카드 옮기기))
         addStay((숙소 링크 올리기))
         vote((숙소 투표))
+        shop((장보기 내가 살게))
+        settle((먼저 낸 돈·보냈어요))
+        leave((방 나가기))
+        manage((이름 고치기·방장 넘기기·빼기))
+        delete((방 지우기))
     end
 
     member --- login
+    member --- guest
     member --- join
     member --- survey
+    member --- dates
     member --- move
     member --- addStay
     member --- vote
+    member --- shop
+    member --- settle
+    member --- leave
     host --- create
     host --- invite
     host --- recommend
+    host --- manage
+    host --- delete
     host -. 참여자가 하는 일도 함 .-> member
     login --- kakao
 ```
@@ -42,11 +56,14 @@ flowchart LR
 |---|---|---|
 | 로그인 | 누구나 | REQ-01 |
 | 여행방 만들기, 초대 링크 보내기 | 로그인한 사람(만들면 방장) | REQ-02, REQ-03 |
-| 초대 링크로 참여 | 로그인한 사람 | REQ-03 |
+| 초대 링크로 참여 | 로그인한 사람, 또는 로그인 없이 이름만 쓴 손님 | REQ-03 |
 | 설문하기 | 참여자 본인 | REQ-07, REQ-08 |
 | 역할 추천받기 | 방장 | REQ-09 |
 | 역할 카드 옮기기 | 참여자 | REQ-10, REQ-11 |
 | 숙소 링크 올리기, 투표 | 참여자 | REQ-13~15 |
+| 되는 날 누르기, 장보기 내가 살게, 먼저 낸 돈 적기·보냈어요 | 참여자 | (번호 없음, [1. 요구사항](01-주제와-요구사항.md)) |
+| 방 나가기 | 참여자 본인 | REQ-06 |
+| 이름·지역 고치기, 방장 넘기기, 참여자 빼기, 방 지우기 | 방장 | REQ-05, REQ-06 |
 
 ## 2. 클래스 다이어그램
 
@@ -65,12 +82,19 @@ classDiagram
         -RoleService roleService
         +getBoard(tripId) ResponseEntity
         +move(tripId, memberId, req) ResponseEntity
+        +addRole(tripId, req) ResponseEntity
+        +updateRole(tripId, roleId, req) ResponseEntity
+        +deleteRole(tripId, roleId) ResponseEntity
         +recommend(tripId) ResponseEntity
+        +travel(tripId) ResponseEntity
     }
     class RoleService {
         -int REQUIRED_BONUS
         +board(tripId) Board
         +move(tripId, memberId, req) Board
+        +addRole(tripId, req) Board
+        +updateRole(tripId, roleId, req) Board
+        +deleteRole(tripId, roleId)
         +recommend(tripId) Board
     }
     class RoleScorer {
@@ -82,6 +106,7 @@ classDiagram
     class TripAccess {
         +me(tripId) Member
         +self(tripId, memberId) Member
+        +selfOrHost(tripId, memberId) Member
         +host(tripId) Member
     }
     class RoleRepository {
@@ -123,11 +148,13 @@ classDiagram
 
 | 패키지 | 화면 컨트롤러 | API 컨트롤러 | 서비스 | 엔티티 |
 |---|---|---|---|---|
-| `user` | `LoginPageController` | `AuthController`, `DevLoginController` | `KakaoUserService` | `AppUser` |
-| `trip` | `TripPageController` | `TripController` | (박재현 1주 차) | `Trip`, `Member` |
+| `user` | `LoginPageController` | `AuthController` | `KakaoUserService`, `GuestService` | `AppUser`, `PersistentLogin` |
+| `trip` | `TripPageController` | `TripController` | `TripService` | `Trip`, `Member` |
 | `survey` | `SurveyPageController` | `SurveyController` | `SurveyService` | `SurveyAnswer` |
 | `role` | `RolePageController` | `RoleController` | `RoleService` | `Role`, `Assignment` |
 | `stay` | `StayPageController` | `StayController` | (김현수 1주 차) | `Stay`, `Vote` |
+| `shopping` | `ShoppingPageController` | `ShoppingController` | `ShoppingService` | `ShoppingPlan`, `ShoppingClaim` |
+| `settle` | (영수증·정산 화면은 `TripPageController.receipt`) | `SettleController` | `SettleService` | `Expense`, `Payment` |
 
 ## 3. 시퀀스 다이어그램
 

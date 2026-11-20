@@ -12,32 +12,29 @@ public class AuthController {
 
     private final CurrentUser currentUser;
     private final boolean kakaoReady;
-    private final boolean devLogin;
 
     public AuthController(CurrentUser currentUser,
-                          @Value("${spring.security.oauth2.client.registration.kakao.client-id}") String kakaoClientId,
-                          @Value("${tripmate.dev-login}") boolean devLogin) {
+                          @Value("${spring.security.oauth2.client.registration.kakao.client-id}") String kakaoClientId) {
         this.currentUser = currentUser;
         this.kakaoReady = !"unset".equals(kakaoClientId);
-        this.devLogin = devLogin;
     }
 
-    public record Me(Long id, String nickname) {
+    public record Me(Long id, String nickname, boolean guest) {
     }
 
-    public record Options(boolean kakao, boolean dev) {
+    public record Options(boolean kakao) {
     }
 
     // GET: /api/me   로그인 안 했으면 401
     @GetMapping("/me")
     public ResponseEntity<Me> me() {
         var user = currentUser.get();
-        return ResponseEntity.ok(new Me(user.getId(), user.getNickname()));
+        return ResponseEntity.ok(new Me(user.getId(), user.getNickname(), user.isGuest()));
     }
 
     // GET: /api/auth/options   로그인 화면이 어떤 버튼을 보여 줄지 고른다
     @GetMapping("/auth/options")
     public ResponseEntity<Options> options() {
-        return ResponseEntity.ok(new Options(kakaoReady, devLogin));
+        return ResponseEntity.ok(new Options(kakaoReady));
     }
 }

@@ -20,6 +20,7 @@ public class TripAccess {
     // 요청한 사람의 이 방 참여자
     public Member me(Long tripId) {
         return memberRepository.findByTripIdAndUserId(tripId, currentUser.get().getId())
+                .filter(m -> !m.isDeparted())   // 나간 사람은 방이 있는지도 모르게
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
@@ -27,6 +28,13 @@ public class TripAccess {
     public Member self(Long tripId, Long memberId) {
         var me = me(tripId);
         if (!me.getId().equals(memberId)) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        return me;
+    }
+
+    // 본인 것이거나 방장(나가기·빼기, 술 표시처럼 "내 것은 내가, 못 하는 사람은 방장이")
+    public Member selfOrHost(Long tripId, Long memberId) {
+        var me = me(tripId);
+        if (!me.getId().equals(memberId) && !me.isHost()) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         return me;
     }
 

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head('장보기')}"></head>
+<body th:data-trip-id="${tripId}">
+<div class="page">
+  <header th:replace="~{fragments/common :: tripHeader}"></header>
+  <!-- 장보기: 방 인원·박 수로 양을 세고, 줄마다 "내가 살게". 산 뒤 쓴 돈을 적으면 1인 몫이 나온다(docs/14 아이디어 1) -->
+  <main class="stack">
+    <section class="box stack">
+      <div class="between"><h2>얼마나 사요?</h2><span id="shop-basis" class="muted small"></span></div>
+      <div id="shop-plan" class="shop-plan"></div>
+      <p class="muted small">1인 고기 300g 은 단체 여행 글에서 가장 많이 쓰는 기준이에요. 방장이 바꿀 수 있어요.</p>
+    </section>
+
+    <!-- "내가 살게"가 무엇인지 처음 온 사람이 묻지 않게 한 줄(지훈 11-21 "누르면 내가 산다는 거야?") -->
+    <p class="hint">"내가 살게"를 누르면 그 줄은 내가 사 오기로 찜돼요. 다른 사람 화면에도 이름이 떠서 겹쳐 사지 않아요. 사 온 뒤 쓴 돈을 적으면 정산에 저절로 들어가요.</p>
+    <ul id="shop-list" class="shop-list"></ul>
+
+    <section class="box stack">
+      <div class="between"><span class="strong">쓴 돈</span><span id="shop-spent" class="strong"></span></div>
+      <p id="shop-who" class="muted small"></p>
+      <button type="button" id="btn-shop-share" class="btn primary block">카톡으로 장보기 목록 보내기</button>
+    </section>
+  </main>
+</div>
+<script th:src="@{/js/shopping.js}"></script>
+</body>
+</html>

@@ -9,13 +9,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0e7c72">
   <title th:text="${title} + ' | TripMate'">TripMate</title>
-  <meta name="description" content="7~8명 여행에서 운전·총무·장보기를 설문 1분으로 근거 있게 나누고, 숙소는 누가 싫어하는지까지 보고 고른다. 앱 설치 없이 카톡 링크로.">
+  <!-- 정산 받는 링크처럼 이름·금액이 든 공개 화면은 검색에 안 잡히게 -->
+  <meta name="robots" content="noindex, nofollow" th:if="${noindex}">
+  <meta name="description" content="여럿이 가는 여행에서 운전·총무·장보기를 설문 1분으로 근거 있게 나누고, 숙소는 누가 싫어하는지까지 보고 고른다. 앱 설치 없이 카톡 링크로.">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="TripMate">
-  <meta property="og:title" th:content="${ogTitle} ?: 'TripMate | 단체 여행, 눈치 싸움 없이 정하기'">
+  <meta property="og:title" th:content="${ogTitle} ?: 'TripMate | 운전 누가 해? 1분이면 정해지는 단체 여행'">
   <meta property="og:description" th:content="${ogDescription} ?: '설문 1분이면 역할은 근거와 함께, 숙소는 의견 갈림까지 보여요. 앱 설치 없이 카톡 링크로.'">
   <link rel="icon" type="image/svg+xml" th:href="@{/img/logo-mark.svg}">
   <link rel="apple-touch-icon" th:href="@{/img/apple-touch-icon.png}">
+  <!-- 홈 화면에 추가하면 주소창 없이 앱처럼 열린다(설치 없이 쓰는 웹앱이라는 말이 실제로 맞게) -->
+  <link rel="manifest" th:href="@{/manifest.json}">
   <meta property="og:image" th:content="${baseUrl} + '/img/og.png'">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -36,7 +40,7 @@
   <div class="inner">
     <a th:href="@{/}" class="logo"><img th:src="@{/img/logo-mark.svg}" width="28" height="28" alt=""><span class="wordmark">Trip<span>Mate</span></span></a>
     <nav class="row" th:if="${cta}">
-      <a th:href="@{/trips/new}" class="btn primary">여행방 만들기</a>
+      <a th:href="@{/trips/new}" class="btn primary">우리 방 만들기</a>
     </nav>
   </div>
 </header>
@@ -57,6 +61,7 @@
     <a th:href="@{/trips/{id}/survey(id=${tripId})}" th:classappend="${tab == 'survey'} ? 'active'">설문</a>
     <a th:href="@{/trips/{id}/roles(id=${tripId})}" th:classappend="${tab == 'roles'} ? 'active'">역할</a>
     <a th:href="@{/trips/{id}/stays(id=${tripId})}" th:classappend="${tab == 'stays'} ? 'active'">숙소</a>
+    <a th:href="@{/trips/{id}/shopping(id=${tripId})}" th:classappend="${tab == 'shopping'} ? 'active'">장보기</a>
   </nav>
   <p id="notice" class="notice" hidden></p>
 </header>

@@ -9,11 +9,11 @@
   --ink: #1b1f24;
   --muted: #5f6873;
   --line: #e2e5e9;
-  --accent: #0e7c72;
+  --line-strong: #c4cad1; /* 누를 수 있는 판에 손을 올렸을 때 */
+  --accent: #0e7c72;      /* 흰 바탕 대비 5.3:1 */
+  --accent-hover: #0b6a61;
   --accent-ink: #ffffff;
-  --accent-soft: #e3f3f0;
-  --sun: #f59e0b;
-  --sun-soft: #fdf1dc;
+  --accent-soft: #e3f3f0; /* 입력칸 초점 고리에만 */
   --warn: #c2410c;
   --warn-soft: #fdeae2;
   --error: #dc2626;
@@ -23,6 +23,12 @@
   --radius: 12px;
   --radius-sm: 6px;
   --shadow: 0 8px 24px rgb(16 24 40 / 0.16); /* 떠 있는 창(시트)에만 */
+  /* 움직임: 빠르게 나가서 부드럽게 멈춤(ease-out) 하나. 손에 반응하는 것은 짧게, 장면이 바뀌는 것만 조금 길게.
+     transform·opacity 만 움직인다(레이아웃을 다시 계산하지 않아 60fps 가 나온다) */
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --dur-fast: 120ms;
+  --dur: 200ms;
+  --dur-slow: 400ms;
   --tap: 44px; /* 손가락으로 누르는 것의 최소 높이(Apple HIG 44pt, WCAG 2.2 권장) */
 
   /* 글자 크기는 여섯 단계만(12·14·16·20·24·32). 본문 16 이 휴대폰에서 확대 없이 읽히는 기준이다 */
@@ -42,10 +48,11 @@
     --ink: #eef0f2;
     --muted: #9aa3ad;
     --line: #2a3036;
+    --line-strong: #3d454d;
     --accent: #2dd4bf;
+    --accent-hover: #5eead4;
     --accent-ink: #062b27;
     --accent-soft: #0f2e2b;
-    --sun-soft: #2e2412;
     --warn: #fb923c;
     --warn-soft: #34200f;
     --shadow: 0 8px 24px rgb(0 0 0 / 0.5);
@@ -100,7 +107,7 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 .strong { font-weight: 600; }
 .center { text-align: center; }
 .error { color: var(--error); }
-.notice { border: 1px solid var(--sun); background: var(--sun-soft); border-radius: var(--radius-sm); padding: 8px 12px; font-size: var(--fs-sm); }
+.notice { border: 1px solid var(--warn); background: var(--warn-soft); border-radius: var(--radius-sm); padding: 8px 12px; font-size: var(--fs-sm); }
 .hint { background: var(--surface-2); border-radius: var(--radius-sm); padding: 12px; font-size: var(--fs-sm); color: var(--muted); }
 
 /* 상자 */
@@ -133,23 +140,35 @@ button { font: inherit; cursor: pointer; }
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   min-height: var(--tap); padding: 8px 16px; border: 1px solid var(--line); border-radius: var(--radius-sm);
   background: var(--surface); color: var(--ink); font-weight: 600; white-space: nowrap; text-align: center;
-  transition: background-color 0.12s, border-color 0.12s;
+  transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
 }
-.btn:hover { border-color: var(--accent); }
+/* 누르는 순간 살짝 들어간다(실제 단추처럼). 휴대폰에도 보이도록 hover 와 따로 둔다 */
+.btn:active:not(:disabled), .choice:active, .score:active, .member-card:active { transform: scale(0.97); }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-.btn.primary:hover { filter: brightness(1.08); }
 .btn.kakao { background: var(--kakao); border-color: var(--kakao); color: rgb(0 0 0 / 0.85); border-radius: 12px; } /* 카카오 로그인 디자인 가이드 값 */
 .btn.plain { border-color: transparent; background: none; color: var(--muted); }
 .btn.danger { color: var(--error); }
 .btn.big { min-height: 52px; padding: 12px 24px; font-size: var(--fs-md); }
 .btn.block { display: flex; width: 100%; }
 .btn:disabled { opacity: 0.5; cursor: default; }
-.link { background: none; border: 0; padding: 0; color: var(--ink); font-size: var(--fs-sm); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.link { background: none; border: 0; padding: 0; color: var(--ink); font-size: var(--fs-sm); font-weight: 600;
+  text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 3px; transition: text-decoration-color var(--dur-fast) var(--ease); }
+
+/* 마우스가 있는 기기에서만 hover. 휴대폰은 누른 뒤 hover 가 남아 "눌린 채"로 보이는 문제가 있어서 막는다 */
+@media (hover: hover) {
+  .btn:hover { border-color: var(--line-strong); background: var(--surface-2); }
+  .btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .btn.kakao:hover { background: var(--kakao); filter: brightness(0.96); }
+  .link:hover { text-decoration-color: currentColor; }
+  .choice:hover, label.chip:hover { border-color: var(--line-strong); }
+  .trip-item, .core .box, .mini-phone, .stay { transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease); }
+  .trip-item:hover, .core .box:hover, .stay:hover { border-color: var(--line-strong); transform: translateY(-2px); }
+  .tabs a:hover { color: var(--ink); }
+}
 .choice {
   min-height: 52px; padding: 12px 16px; border: 1px solid var(--line); border-radius: var(--radius-sm);
   background: var(--surface); color: var(--ink); text-align: left; font-weight: 600;
 }
-.choice:hover { border-color: var(--accent); }
 .choice.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
 .score { width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
 .score.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700; }
@@ -244,15 +263,99 @@ tr:last-child td { border-bottom: 0; }
 .section > h2 { font-size: var(--fs-xl); margin-bottom: 8px; }
 .section > .muted { margin-bottom: 24px; }
 
+/* 휴대폰 틀. 기기를 그린 것이라 둥글기 두 단계 규칙의 예외다. 화면 안 색은 다크 모드와 상관없이 실제 기기 화면처럼 고정 */
+.phone {
+  justify-self: center; width: min(320px, 100%); padding: 10px; border-radius: 44px;
+  background: #0d0f12; box-shadow: 0 30px 60px rgb(16 24 40 / 0.22), inset 0 0 0 2px #2a2e34;
+  transition: transform var(--dur) var(--ease); will-change: transform;
+}
+.phone-screen { position: relative; height: 580px; overflow: hidden; border-radius: 34px; background: #fff; color: #191919; font-size: 13px; }
+.scene { position: absolute; inset: 0; display: flex; flex-direction: column; transition: opacity 0.3s var(--ease), transform 0.3s var(--ease); }
+.status-bar { display: flex; justify-content: space-between; align-items: center; padding: 14px 24px 6px; font-size: 13px; font-weight: 600; }
+.status-icons { display: inline-flex; gap: 6px; align-items: center; fill: currentColor; }
+
+/* 메신저 방 */
+.chat-scene { background: #b9cddf; }
+.chat-scene .status-bar, .room-head { background: #b9cddf; }
+.room-head { display: flex; align-items: center; gap: 8px; padding: 6px 16px 10px; font-size: 15px; }
+.room-head .back { font-size: 24px; line-height: 1; margin-right: 4px; }
+.room-head .count { color: #4d5866; font-size: 14px; }
+.chat-demo { flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 4px 12px 12px; overflow: hidden; }
+.day { text-align: center; }
+.day span { display: inline-block; padding: 3px 10px; border-radius: 99px; background: rgb(0 0 0 / 0.12); color: #fff; font-size: 11px; }
+.msg { display: grid; grid-template-columns: 36px 1fr; gap: 8px; align-items: start; }
+.pf { width: 36px; height: 36px; border-radius: 14px; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 13px; }
+.msg .who { display: block; font-size: 12px; color: #39424d; margin-bottom: 4px; }
+.msg .line { display: flex; align-items: flex-end; gap: 4px; }
+.msg .bubble { max-width: 190px; padding: 7px 10px; border-radius: 4px 14px 14px 14px; background: #fff; border: 0; line-height: 1.4; }
+.msg .time { font-size: 10px; color: #4d5866; white-space: nowrap; display: grid; justify-items: end; }
+.msg .unread { color: #e8b800; font-weight: 700; }
+.msg.mine { grid-template-columns: 1fr; }
+.msg.mine .line { justify-content: flex-end; }
+.link-card { display: grid; width: 200px; overflow: hidden; border-radius: 14px; background: #fff; color: #191919; }
+.link-band { padding: 18px 12px; background: #0e7c72; color: #fff; font-weight: 700; font-size: 15px; letter-spacing: -0.02em; }
+.link-title { padding: 10px 12px 2px; font-weight: 600; line-height: 1.35; }
+.link-desc { padding: 0 12px; color: #5f6873; font-size: 12px; }
+.link-domain { padding: 8px 12px 10px; color: #8a929c; font-size: 11px; }
+.chat-input { display: flex; align-items: center; gap: 10px; padding: 8px 12px 18px; background: #fff; }
+.chat-input .plus { font-size: 22px; color: #8a929c; line-height: 1; }
+.chat-input .field { flex: 1; padding: 8px 12px; border-radius: 18px; background: #f2f3f5; color: #9aa1a9; font-size: 13px; }
+.chat-input .send { width: 30px; height: 30px; border-radius: 50%; background: #f2f3f5; color: transparent; }
+.typing { display: inline-flex; gap: 4px; padding: 10px 12px; margin-left: 44px; width: fit-content; border-radius: 4px 14px 14px 14px; background: #fff; }
+.typing i { width: 6px; height: 6px; border-radius: 50%; background: #9aa1a9; animation: typing 1s infinite; }
+.typing i:nth-child(2) { animation-delay: 0.15s; }
+.typing i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes typing { 0%, 60%, 100% { opacity: 0.3; transform: none; } 30% { opacity: 1; transform: translateY(-2px); } }
+
+/* TripMate 화면(실제 역할 보드와 같은 칸) */
+.board-scene { background: #f6f7f8; }
+.app-head { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px 0; }
+.app-head .logo { font-size: 15px; }
+.app-head .logo span { color: #0e7c72; }
+.app-head .avatar { width: 26px; height: 26px; background: #e4e7eb; font-size: 11px; }
+.app-title { padding: 8px 16px 0; font-size: 19px; font-weight: 700; letter-spacing: -0.02em; }
+.app-meta { padding: 2px 16px 0; color: #5f6873; font-size: 12px; }
+.app-tabs { display: flex; gap: 16px; padding: 12px 16px 0; border-bottom: 1px solid #e2e5e9; color: #5f6873; font-weight: 600; }
+.app-tabs span { padding-bottom: 8px; }
+.app-tabs .on { color: #0e7c72; box-shadow: inset 0 -2px #0e7c72; }
+.app-board { display: grid; gap: 8px; padding: 12px 16px; }
+.app-board li { padding: 10px 12px; border: 1px solid #e2e5e9; border-radius: 10px; background: #fff; }
+.app-board p { margin-top: 4px; }
+.app-board .reason { margin-left: 4px; color: #5f6873; font-size: 12px; }
+.app-board .sum { display: flex; justify-content: space-between; border-color: #0e7c72; }
+
+/* 재생 중일 때만 숨겼다가 차례로 띄운다. JS 가 없으면 .playing 이 안 붙어 결과 화면이 보인다 */
+.phone.playing [data-step] { opacity: 0; transform: translateY(8px); transition: opacity 0.28s var(--ease), transform 0.28s var(--ease); }
+.phone.playing [data-step].shown { opacity: 1; transform: none; }
+.phone.playing .board-scene { opacity: 0; transform: translateX(24px); pointer-events: none; }
+.phone.playing.on-board .chat-scene { opacity: 0; transform: translateX(-24px); }
+.phone.playing.on-board .board-scene { opacity: 1; transform: none; transition-delay: 0.25s; }
+.phone:not(.playing) .chat-scene { display: none; }
+
+.mini-phone {
+  display: grid; gap: 8px; align-content: start; min-height: 200px; padding: 16px; border-radius: 24px;
+  border: 6px solid #111418; background: var(--bg); font-size: var(--fs-sm);
+}
+.mini-phone .choice { min-height: 40px; padding: 8px 12px; }
+.fake-input { flex: 1; padding: 8px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); color: var(--muted); font-size: var(--fs-xs); white-space: nowrap; overflow: hidden; }
+
+/* 스크롤 등장: 내용은 기본으로 보이고(움직임이 실패해도 읽힌다) JS 가 .will-reveal 을 붙였을 때만 짧게 올라온다 */
+.will-reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.5s var(--ease), transform 0.5s var(--ease); }
+.will-reveal.revealed { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
 .chat { display: grid; gap: 8px; }
 .bubble { max-width: 88%; padding: 8px 12px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); }
 .bubble.me { justify-self: end; background: var(--kakao); color: #191600; border-color: transparent; }
 .bubble .who { display: block; font-size: var(--fs-xs); color: var(--muted); }
 
 .steps { display: grid; gap: 12px; counter-reset: step; }
-.steps li { counter-increment: step; display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: start; }
-.steps li::before {
-  content: counter(step); width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+.steps > li { counter-increment: step; display: grid; gap: 12px; align-content: start; }
+.steps > li::before {
+  content: counter(step); width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
   border: 1px solid var(--line); color: var(--ink); font-weight: 600;
 }
 
@@ -301,8 +404,13 @@ body:has(.sticky-cta) .site-header .btn { display: none; } /* 아래 붙은 버�
   .hero h1 { font-size: 2.75rem; }
   .core { grid-template-columns: 1fr 1fr; }
   .more { grid-template-columns: 1fr 1fr; }
-  .steps { grid-template-columns: repeat(3, 1fr); }
-  .steps li { grid-template-columns: 1fr; }
+  /* 세 단계는 토스처럼 한 단계에 화면 하나: 휴대폰이 왼쪽에 붙어 있고(sticky) 설명이 지나가면 다음 단계 휴대폰이 올라온다 */
+  .steps { gap: 0; }
+  .steps > li { grid-template-columns: 300px 1fr; grid-template-rows: auto 1fr; column-gap: 48px; min-height: 64vh; align-items: start; }
+  .steps > li::before { grid-column: 2; grid-row: 1; margin-top: 96px; }
+  .steps > li > .mini-phone { grid-column: 1; grid-row: 1 / 3; position: sticky; top: 96px; min-height: 280px; }
+  .steps > li > div:last-child { grid-column: 2; grid-row: 2; align-self: start; }
+  .steps > li > div:last-child h3 { font-size: var(--fs-xl); }
   .tabs { margin: 12px 0; padding: 0; }
   .sticky-cta { display: none; }
   body:has(.sticky-cta) .site-footer { padding-bottom: 24px; }
@@ -313,3 +421,6 @@ body:has(.sticky-cta) .site-header .btn { display: none; } /* 아래 붙은 버�
 @media (max-width: 600px) {
   .sheet { width: 100%; max-width: none; margin: auto 0 0; border-radius: var(--radius) var(--radius) 0 0; }
 }
+
+/* 재생을 시작하는 첫 순간에는 장면 전환을 끈다. 안 끄면 결과 화면이 사라지는 0.3초 동안 두 장면이 겹쳐 보인다 */
+.phone.no-anim .scene, .phone.no-anim [data-step] { transition: none !important; }

@@ -45,7 +45,17 @@ function buildLines(trip, board, stays, travel, shopping) {
     out.push({ kind: 'row', left: '숙소  ' + stay.title, right: stayRight });
     if (stayPart !== null) total += stayPart;
   }
-  if (travel && travel.perPerson !== null) {
+  // 교통: 차를 나눴으면 내가 탄 차 값, 따로 가면 빠진다. 안 나눴으면 모두 나눈 값
+  var carLegs = travel ? travel.legs.filter(function (l) { return l.perRider !== null; }) : [];
+  var myCar = carLegs.find(function (l) { return l.memberId === trip.meId || l.riderIds.indexOf(trip.meId) >= 0; });
+  if (myCar) {
+    var carExempt = trip.rules.driverPaysFuel === false && myCar.perPassenger !== null;
+    var mine = carExempt ? (myCar.memberId === trip.meId ? 0 : myCar.perPassenger) : myCar.perRider;
+    out.push({ kind: 'row', left: '교통  ' + myCar.name + ' 차' + (carExempt ? '(운전자 빼고)' : ''), right: won(mine) });
+    total += mine;
+  } else if (carLegs.length) {
+    out.push({ kind: 'row', left: '교통  따로 가요', right: won(0) });
+  } else if (travel && travel.perPerson !== null) {
     var exempt = trip.rules.driverPaysFuel === false && travel.perPassenger !== null;
     var move = exempt ? travel.perPassenger : travel.perPerson;
     out.push({ kind: 'row', left: '교통  기름값·통행료' + (exempt ? '(운전자 빼고)' : ''), right: won(move) });

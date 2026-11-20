@@ -130,6 +130,15 @@ public class CarService {
                 .collect(Collectors.toSet());
     }
 
+    // 승용차 한 대 5명(운전자 포함). 큰 차일 수도 있어 막지는 않고, 안 고른 사람을 넣을 때만 꽉 찬 차를 건너뛴다
+    static final int SEATS = 5;
+
+    // 차례인 차가 꽉 찼으면 자리 남은 다음 차로. 다 찼으면 차례 그대로(화면이 "5인승이면 넘어요"로 알린다)
+    private static Set<Long> seatDefault(Map<Long, Set<Long>> cars, Long turn) {
+        if (cars.get(turn).size() < SEATS) return cars.get(turn);
+        return cars.values().stream().filter(c -> c.size() < SEATS).findFirst().orElse(cars.get(turn));
+    }
+
     // 안 고른 사람은 들어온 순서대로 차를 번갈아(1번 차, 2번 차, 1번 차…), 고른 사람만 고른 차로.
     // 처음엔 "지금 가장 적게 탄 차"로 넣었는데, 한 사람이 옮기면 안 고른 다른 사람 자리까지 바뀌었다(CarsTest 에서 찾음).
     // 운전자가 바뀌어 고른 차가 없어졌으면 안 고른 것으로 본다
@@ -147,7 +156,7 @@ public class CarService {
             var r = picked.get(m);
             if (r != null && r.getDriver() == null) separate.add(m);
             else if (r != null && cars.containsKey(r.getDriver().getId())) cars.get(r.getDriver().getId()).add(m);
-            else cars.get(drivers.get(i % drivers.size())).add(m);
+            else seatDefault(cars, drivers.get(i % drivers.size())).add(m);
         }
         return new Seating(cars, separate);
     }

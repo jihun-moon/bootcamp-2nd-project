@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -37,16 +38,18 @@ public class RoleService {
     private final RoleRepository roleRepository;
     private final AssignmentRepository assignmentRepository;
     private final SurveyAnswerRepository surveyAnswerRepository;
+    private final CarService carService;
     private final ApplicationEventPublisher events;
 
     public RoleService(TripRepository tripRepository, MemberRepository memberRepository, RoleRepository roleRepository,
                        AssignmentRepository assignmentRepository, SurveyAnswerRepository surveyAnswerRepository,
-                       ApplicationEventPublisher events) {
+                       CarService carService, ApplicationEventPublisher events) {
         this.tripRepository = tripRepository;
         this.memberRepository = memberRepository;
         this.roleRepository = roleRepository;
         this.assignmentRepository = assignmentRepository;
         this.surveyAnswerRepository = surveyAnswerRepository;
+        this.carService = carService;
         this.events = events;
     }
 
@@ -137,7 +140,11 @@ public class RoleService {
                         surveys.containsKey(m.getId()) ? surveys.get(m.getId()).getDeparture() : null,
                         drivers.contains(m.getId())))
                 .toList();
-        return new TravelDto.Plan(trip.getDestination(), trip.getMembers().size(), cars);
+        // 차 나누기대로 차마다 탄 사람(운전자 빼고). 운전 칸이 비었으면 빈 표
+        var riders = new HashMap<Long, List<Long>>();
+        carService.seating(tripId).cars().forEach((driver, seats) ->
+                riders.put(driver, seats.stream().filter(id -> !id.equals(driver)).sorted().toList()));
+        return new TravelDto.Plan(trip.getDestination(), trip.getMembers().size(), cars, riders);
     }
 
     // 방을 지우면 역할 카드와 역할 칸도 지운다(카드가 칸을 가리켜 카드부터)

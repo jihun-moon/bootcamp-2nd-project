@@ -14,6 +14,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -94,16 +95,19 @@ class CarsTest {
         mvc.perform(post("/api/trips/1/expenses").session(TestLogin.as(mvc, "민지")).contentType(MediaType.APPLICATION_JSON)
                 .content("{ \"kind\": \"FUEL\", \"memo\": \"수원에서\", \"amount\": 90000 }")).andExpect(status().isCreated());
 
-        // 재현 차(도윤·예린)는 60,000 ÷ 2, 민지 차(서연·하준·지우)는 90,000 ÷ 3 이라 다섯 모두 30,000 씩.
-        // 누가 누구에게 보낼지는 보내는 횟수를 줄이려 짝을 지어서, 재현 차 사람이 민지에게 보낼 수도 있다(합은 같다)
-        var paid = new HashMap<String, Integer>();
-        var got = new HashMap<String, Integer>();
-        for (var t : get("/api/trips/1/settlement").get("transfers")) {
-            paid.merge(t.get("fromName").asString(), t.get("amount").asInt(), Integer::sum);
-            got.merge(t.get("toName").asString(), t.get("amount").asInt(), Integer::sum);
-        }
-        for (var name : new String[]{"도윤", "서연", "하준", "지우", "예린"}) assertThat(paid.get(name)).isEqualTo(30_000);
-        assertThat(paid).doesNotContainKey("시우");
-        assertThat(got).containsEntry("재현", 60_000).containsEntry("민지", 90_000);
+        // 재현 차(도윤·예린)는 60,000 ÷ 2, 민지 차(서연·하준·지우)는 90,000 ÷ 3. 보낼 줄도 자기 차 운전자에게
+        var sent = new HashMap<String, Integer>();
+        for (var t : get("/api/trips/1/settlement").get("transfers")) sent.put(t.get("fromName").asString() + "→" + t.get("toName").asString(), t.get("amount").asInt());
+        assertThat(sent).containsOnly(Map.entry("도윤→재현", 30_000), Map.entry("예린→재현", 30_000),
+                Map.entry("서연→민지", 30_000), Map.entry("하준→민지", 30_000), Map.entry("지우→민지", 30_000));
+    }
+
+    @Test
+    void 안_고른_사람은_꽉_찬_차를_건너뛴다() throws Exception {
+        // 도윤·서연·하준·지우가 재현 차를 골라 재현 차가 5명(꽉 참). 안 고른 예린·시우는 민지 차로
+        for (var i = 3; i <= 6; i++) ride(NAMES[i - 1], i, 1L).andExpect(status().isOk());
+        var cars = get("/api/trips/1/cars").get("cars");
+        assertThat(cars.get(0).get("riderIds").size()).isEqualTo(4);
+        assertThat(cars.get(1).get("riderIds").toString()).isEqualTo("[7,8]");
     }
 }

@@ -326,8 +326,11 @@ function drawCars(me, data) {
   data.cars.forEach(function (car) {
     var mine = car.driverId === me.id || car.riderIds.indexOf(me.id) >= 0;
     var block = $('<div class="car stack">').toggleClass('mine', mine);
+    var size = car.riderIds.length + 1;
     block.append($('<div class="between">').append($('<span class="strong">').text(car.driverName + ' 차'),
-      $('<span class="muted small">').text((car.riderIds.length + 1) + '명')));
+      $('<span class="small">').toggleClass('muted', size <= 5).toggleClass('error', size > 5).text(size + '명')));
+    // 승용차는 5명(운전자 포함). 큰 차일 수도 있어 막지는 않고 알리기만
+    if (size > 5) block.append($('<p class="small error">').text('5인승이면 ' + (size - 5) + '명 넘어요. 7인승이면 괜찮아요.'));
     // 태우는 곳: 운전자·방장이 정한다
     var canEdit = car.driverId === me.id || me.host;
     var when = (car.meetTime ? koreanTime(car.meetTime.slice(0, 5)) : '') + (car.meetPlace ? (car.meetTime ? ' · ' : '') + car.meetPlace : '');

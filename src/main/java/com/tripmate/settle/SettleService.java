@@ -153,7 +153,7 @@ public class SettleService {
             return new SettleDto.Balance(m.getId(), nameOf(m), (int) Math.round(p), (int) Math.round(o), (int) Math.round(p - o));
         }).toList();
         var total = lines.stream().mapToInt(SettleDto.Line::amount).sum();
-        return new SettleDto.Board(total, lines, balances, transfers(parties, paid, owed), paidRows, trip.getDriverPaysFuel(),
+        return new SettleDto.Board(total, lines, balances, transfers(parties, paid, owed, carOf(seating)), paidRows, trip.getDriverPaysFuel(),
                 trip.getDrinksSeparate(), trip.getRefundNoShow(), dues);
     }
 
@@ -162,6 +162,12 @@ public class SettleService {
         var riders = members.stream().filter(m -> car.contains(m.getId()))
                 .filter(m -> !driversExempt || !m.getId().equals(driverId)).toList();
         return riders.isEmpty() ? members.stream().filter(m -> m.getId().equals(driverId)).toList() : riders;
+    }
+
+    private static Map<Long, Long> carOf(CarService.Seating seating) {
+        var map = new HashMap<Long, Long>();
+        seating.cars().forEach((driver, riders) -> riders.stream().filter(r -> !r.equals(driver)).forEach(r -> map.put(r, driver)));
+        return map;
     }
 
     private static String nameOf(Member m) {
@@ -175,11 +181,15 @@ public class SettleService {
     }
 
     // 받을 사람과 보낼 사람을 큰 금액부터 짝짓는다. 8명이면 보내는 줄이 많아야 7줄.
+    // 차를 나눴으면 먼저 탄 사람이 자기 차 운전자에게 보낸다. 큰 금액끼리만 짝지으면 재현 차에 탄 도윤이 민지에게
+    // 보내는 줄이 나와 "왜 내가 민지한테?"가 됐다(합은 맞았다). carOf = 탄 사람 id -> 그 차 운전자 id
     // shortcut: 줄마다 100원 단위로 올려서 받는 사람이 몇십 원 더 받는다(10,000 ÷ 3 → 3,400 × 2 = 6,800). 회비를 100원 단위로
     //   걷는 관습을 따른 것이고, 남는 자투리는 100원 아래라 끝난 것으로 본다. 원 단위가 필요해지면 마지막 줄에서 차액을 빼서 맞춘다
-    private static List<SettleDto.Transfer> transfers(List<Member> members, Map<Long, Double> paid, Map<Long, Double> owed) {
-        record Side(Member member, double[] left) {
-        }
+    private record Side(Member member, double[] left) {
+    }
+
+    private static List<SettleDto.Transfer> transfers(List<Member> members, Map<Long, Double> paid, Map<Long, Double> owed,
+                                                      Map<Long, Long> carOf) {
         var creditors = new ArrayList<Side>();
         var debtors = new ArrayList<Side>();
         for (var m : members) {
@@ -188,24 +198,33 @@ public class SettleService {
             if (diff >= UNIT) creditors.add(new Side(m, new double[]{diff}));
             else if (diff <= -UNIT) debtors.add(new Side(m, new double[]{-diff}));
         }
-        Comparator<Side> big = Comparator.comparingDouble((Side s) -> s.left()[0]).reversed();
-        creditors.sort(big);
-        debtors.sort(big);
         var out = new ArrayList<SettleDto.Transfer>();
+        // 1. 같은 차: 탄 사람 -> 그 차 운전자(운전자가 받을 사람일 때만)
+        for (var from : debtors) {
+            var driverId = carOf.get(from.member().getId());
+            if (driverId == null) continue;
+            creditors.stream().filter(to -> to.member().getId().equals(driverId)).findFirst().ifPresent(to -> send(from, to, out));
+        }
+        // 2. 남은 것은 큰 금액끼리
+        Comparator<Side> big = Comparator.comparingDouble((Side s) -> s.left()[0]).reversed();
+        var restTo = creditors.stream().filter(x -> x.left()[0] >= UNIT).sorted(big).toList();
+        var restFrom = debtors.stream().filter(x -> x.left()[0] >= UNIT).sorted(big).toList();
         int c = 0, d = 0;
-        while (c < creditors.size() && d < debtors.size()) {
-            var to = creditors.get(c);
-            var from = debtors.get(d);
-            var x = Math.min(to.left()[0], from.left()[0]);
-            var won = (int) (Math.ceil(x / UNIT - 1e-9) * UNIT);
-            if (won > 0) out.add(new SettleDto.Transfer(from.member().getId(), nameOf(from.member()),
-                    to.member().getId(), nameOf(to.member()), won));
-            to.left()[0] -= x;
-            from.left()[0] -= x;
-            if (to.left()[0] < UNIT) c++;
-            if (from.left()[0] < UNIT) d++;
+        while (c < restTo.size() && d < restFrom.size()) {
+            send(restFrom.get(d), restTo.get(c), out);
+            if (restTo.get(c).left()[0] < UNIT) c++;
+            if (restFrom.get(d).left()[0] < UNIT) d++;
         }
         return out;
+    }
+
+    private static void send(Side from, Side to, List<SettleDto.Transfer> out) {
+        var x = Math.min(to.left()[0], from.left()[0]);
+        var won = (int) (Math.ceil(x / UNIT - 1e-9) * UNIT);
+        if (won > 0) out.add(new SettleDto.Transfer(from.member().getId(), nameOf(from.member()),
+                to.member().getId(), nameOf(to.member()), won));
+        to.left()[0] -= x;
+        from.left()[0] -= x;
     }
 
     @Transactional

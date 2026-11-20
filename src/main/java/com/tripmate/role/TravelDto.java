@@ -1,6 +1,7 @@
 package com.tripmate.role;
 
 import java.util.List;
+import java.util.Map;
 
 public final class TravelDto {
 
@@ -8,7 +9,8 @@ public final class TravelDto {
     }
 
     // RoleService 가 DB 에서 꺼낸 값. 길찾기는 트랜잭션 밖에서 하려고 엔티티 대신 값만 담아 넘긴다
-    public record Plan(String destination, int memberCount, List<Car> cars) {
+    // riders: 운전자 id -> 그 차에 탄 사람 id(운전자 빼고). 차 나누기(CarService)에서 온다. 비면 차마다 셈하지 않는다
+    public record Plan(String destination, int memberCount, List<Car> cars, Map<Long, List<Long>> riders) {
     }
 
     // 차를 가져가는 사람, 또는 운전 칸에 들어간 사람. departure 는 서버 안에서만 쓰고 응답에 넣지 않는다
@@ -27,12 +29,14 @@ public final class TravelDto {
         }
     }
 
-    // 편도 값. 길을 못 찾았으면 숫자 칸은 null 이고 note 에 까닭을 적는다
+    // 편도 값. 길을 못 찾았으면 숫자 칸은 null 이고 note 에 까닭을 적는다.
+    // 차를 나눴으면 그 차에 탄 사람(riderIds, 운전자 빼고)과 그 차 왕복을 탄 사람끼리 나눈 값(perRider: 운전자 포함, perPassenger: 운전자 빼고)
     public record Leg(Long memberId, String name, boolean driver,
-                      Integer km, Integer minutes, Integer toll, Integer fuel, String note) {
+                      Integer km, Integer minutes, Integer toll, Integer fuel, String note,
+                      List<Long> riderIds, Integer perRider, Integer perPassenger) {
 
         static Leg missing(Car car, String note) {
-            return new Leg(car.memberId(), car.name(), car.driver(), null, null, null, null, note);
+            return new Leg(car.memberId(), car.name(), car.driver(), null, null, null, null, note, List.of(), null, null);
         }
     }
 }

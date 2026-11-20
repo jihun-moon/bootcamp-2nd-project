@@ -302,9 +302,19 @@ function renderTravel() {
     var detail = (l.km === null)
       ? l.note
       : '편도 ' + l.km + 'km · ' + minutesText(l.minutes) + ' · 기름 ' + won(l.fuel) + ' · 통행료 ' + won(l.toll);
-    list.append($('<li class="card">').append(name, $('<div class="muted small">').text(detail)));
+    var item = $('<li class="card">').append(name, $('<div class="muted small">').text(detail));
+    // 차를 나눴으면 이 차에 탄 사람끼리 나눈 값(방 규칙이 "운전자는 안 냄"이면 운전자 빼고)
+    if (l.perRider !== null) {
+      var exempt = trip.rules.driverPaysFuel === false && l.perPassenger !== null;
+      item.append($('<div class="small">').text('이 차 ' + (l.riderIds.length + 1) + '명 · 1인 ' + won(exempt ? l.perPassenger : l.perRider)
+        + (exempt ? ' (운전자 빼고)' : (l.perPassenger !== null ? ' · 운전자 빼면 ' + won(l.perPassenger) : ''))));
+    }
+    list.append(item);
   });
-  if (travel.perPerson !== null) {
+  var byCar = travel.legs.filter(function (l) { return l.perRider !== null; }).length > 1;
+  if (byCar) {
+    box.append($('<p class="muted small">').text('차마다 거리가 달라 1인 교통비도 차마다 달라요. 정산도 그 차에 탄 사람끼리 나눠요.'));
+  } else if (travel.perPerson !== null) {
     // "운전한 사람도 기름값 내?"를 단톡방에서 따지지 않게 두 기준을 나란히 둔다. 고르는 건 그룹 몫
     // 방 규칙(운전한 사람 기름값)을 정했으면 그쪽 칸을 "우리 규칙"으로 칠한다
     var rule = trip.rules.driverPaysFuel;
@@ -487,6 +497,10 @@ $(function () {
       } else if (what === 'roles') {
         // 운전이 바뀌면 교통비도 바뀐다. 카드를 연달아 옮길 때마다 길찾기를 부르지 않게 멈춘 뒤 한 번만 센다
         loadBoard();
+        clearTimeout(travelTimer);
+        travelTimer = setTimeout(loadTravel, 1500);
+      } else if (what === 'cars') {
+        // 누가 차를 옮기면 차마다 1인 교통비가 바뀐다
         clearTimeout(travelTimer);
         travelTimer = setTimeout(loadTravel, 1500);
       }

@@ -9,6 +9,11 @@ function render(t) {
   var done = trip.members.length - notYet.length;
 
   $('#invite-link').val(location.origin + '/join/' + trip.inviteCode);
+  var photo = tripPhoto(trip.destination, trip.startDate);
+  var cover = $('.ov-cover img');
+  if (photo && cover.attr('src') !== photo.src) cover.attr({ src: photo.src, alt: photo.alt });
+  var d = dday(trip.destination, trip.startDate, trip.endDate);
+  $('#dday').text(d || '').prop('hidden', !d);
   $('#survey-count').text('설문 ' + done + '/' + trip.members.length + '명');
   $('#survey-bar').css('width', (done / trip.members.length * 100) + '%');
   renderNext(me, notYet);

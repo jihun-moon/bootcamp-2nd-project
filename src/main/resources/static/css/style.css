@@ -755,3 +755,8 @@ button.link::after { content: ""; position: absolute; inset: -12px -8px; } /* �
 /* 방 만들기 사진: 지역·철을 고르면 그 사진으로. 사라졌다 나타나는 시간은 짧게(누름에 바로 반응하는 느낌) */
 .cover { transition: opacity 0.18s var(--ease); }
 .cover.fading { opacity: 0; }
+
+/* 방 머리 사진 위 D-day: 사진 왼쪽 아래 알약 하나. 어떤 사진 위에서도 읽히게 어두운 반투명 바탕 */
+.cover-wrap { position: relative; }
+.dday { position: absolute; left: 16px; bottom: 14px; padding: 6px 14px; border-radius: 99px; background: rgb(0 0 0 / 0.55); color: #fff; font-size: var(--fs-sm); font-weight: 700; letter-spacing: -0.01em; backdrop-filter: blur(6px); }
+@media (min-width: 720px) { .dday { left: 20px; bottom: 18px; font-size: var(--fs-md); } }

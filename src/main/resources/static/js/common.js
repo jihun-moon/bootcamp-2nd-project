@@ -177,6 +177,46 @@ function listen(tripId, onChange) {
   }, 10000);
 }
 
+// 여행지·철 사진. 방 만들기(고르는 순간)와 방 개요(머리 사진)가 같이 쓴다.
+// 사진은 Unsplash 무료, 지역마다 그곳을 대표하는 장면 하나(가평 북한강, 강릉 바다 정자, 양양 서핑, 속초 설악산, 춘천 메타세쿼이아 길,
+// 태안 바다, 부산 해변열차, 경주 동궁과 월지, 여수 케이블카, 거제 외도, 전주 한옥 지붕, 제주 성산)
+var REGION_PHOTO = {
+  '가평': ['gapyeong', '안개 낀 북한강과 소나무'], '강릉': ['gangneung', '파도 치는 강릉 바다의 정자'],
+  '양양': ['yangyang', '서퍼들과 빨간 등대가 있는 양양 바다'], '속초': ['sokcho', '설악산 바위 능선'],
+  '춘천': ['chuncheon', '메타세쿼이아가 늘어선 길'], '태안': ['taean', '꽃 너머로 배가 지나가는 태안 바다'],
+  '부산': ['busan', '해운대 바닷가를 달리는 해변열차'], '경주': ['gyeongju', '연못에 비친 동궁과 월지'],
+  '여수': ['yeosu', '케이블카가 지나는 여수 바다'], '거제': ['geoje', '바다를 내려다보는 외도 정원'],
+  '전주': ['jeonju', '전주 한옥마을 지붕'], '제주': ['jeju', '바다 옆 성산일출봉']
+};
+// 지역 없이 날짜만 고르면 그 철 사진. 여름은 처음 사진(바다) 그대로
+var SEASON_PHOTO = { winter: '눈 내리는 거리', spring: '벚꽃이 핀 길', autumn: '단풍 든 연못가 정자' };
+
+// 지역 사진이 있으면 그것, 없으면 출발 달의 철 사진(여름은 null → 화면의 처음 사진)
+function tripPhoto(destination, startDate) {
+  var region = REGION_PHOTO[destination];
+  if (region) return { src: '/img/region/' + region[0] + '.jpg', alt: region[1] };
+  if (startDate) {
+    var m = Number(startDate.slice(5, 7));
+    var season = m === 12 || m <= 2 ? 'winter' : m <= 5 ? 'spring' : m >= 9 && m <= 11 ? 'autumn' : null;
+    if (season) return { src: '/img/region/' + season + '.jpg', alt: SEASON_PHOTO[season] };
+  }
+  return null;
+}
+
+// 방 머리 사진 위 한 줄: 떠나기 전엔 D-day, 여행 중엔 몇째 날, 다녀와선 며칠 지났는지(그날그날 다른 말이 보이게)
+function dday(destination, startDate, endDate) {
+  if (!startDate) return null;
+  var day = function (s) { return new Date(s + 'T00:00:00'); };
+  var now = new Date(); now = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  var toStart = Math.round((day(startDate) - now) / 86400000);
+  var place = destination || '여행';
+  if (toStart > 0) return place + (destination ? '까지' : '') + ' D-' + toStart;
+  if (toStart === 0) return '오늘 출발! 짐 다 챙겼죠?';
+  var sinceEnd = Math.round((now - day(endDate || startDate)) / 86400000);
+  if (sinceEnd <= 0) return place + ' ' + (1 - toStart) + '일째';
+  return place + ' 다녀온 지 ' + sinceEnd + '일';
+}
+
 // 같은 멤버로 다음 여행. POST: /api/trips/1/next -> { "tripId": 7, "created": true, "memberCount": 8 }
 // 새 방(누가 먼저 만들었으면 그 방)으로 옮겨 가고, 옮겨 간 화면에서 한 줄로 알린다
 function startNextTrip(tripId, button) {

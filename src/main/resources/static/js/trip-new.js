@@ -5,19 +5,6 @@ var DRAFT_KEY = 'tripmate.trip-draft';
 // 단체 여행으로 많이 가는 곳. 지역 이름은 카카오 길찾기 검색어로도 쓰여서 시·군 이름 그대로
 var REGIONS = ['가평', '강릉', '양양', '속초', '춘천', '태안', '부산', '경주', '여수', '거제', '전주', '제주'];
 
-// 고른 곳·때에 맞춰 왼쪽 사진을 바꾼다. 누르는 순간 "거기 가는 기분"이 들게(지훈: 사소한 게 쌓이면 고퀄리티).
-// 사진은 Unsplash 무료, 지역마다 그곳을 대표하는 장면 하나(가평 북한강, 강릉 바다 정자, 양양 서핑, 속초 설악산, 춘천 메타세쿼이아 길,
-// 태안 바다, 부산 해변열차, 경주 동궁과 월지, 여수 케이블카, 거제 외도, 전주 한옥 지붕, 제주 성산)
-var REGION_PHOTO = {
-  '가평': ['gapyeong', '안개 낀 북한강과 소나무'], '강릉': ['gangneung', '파도 치는 강릉 바다의 정자'],
-  '양양': ['yangyang', '서퍼들과 빨간 등대가 있는 양양 바다'], '속초': ['sokcho', '설악산 바위 능선'],
-  '춘천': ['chuncheon', '메타세쿼이아가 늘어선 길'], '태안': ['taean', '꽃 너머로 배가 지나가는 태안 바다'],
-  '부산': ['busan', '해운대 바닷가를 달리는 해변열차'], '경주': ['gyeongju', '연못에 비친 동궁과 월지'],
-  '여수': ['yeosu', '케이블카가 지나는 여수 바다'], '거제': ['geoje', '바다를 내려다보는 외도 정원'],
-  '전주': ['jeonju', '전주 한옥마을 지붕'], '제주': ['jeju', '바다 옆 성산일출봉']
-};
-// 지역 없이 날짜만 고르면 그 철 사진. 여름은 처음 사진(바다) 그대로
-var SEASON_PHOTO = { winter: '눈 내리는 거리', spring: '벚꽃이 핀 길', autumn: '단풍 든 연못가 정자' };
 var defaultCover = null;
 
 var picked = { start: null, end: null };   // 'YYYY-MM-DD'
@@ -140,15 +127,9 @@ function suggestTitle() {
   updateCover();
 }
 
+// 고른 곳·때에 맞춰 왼쪽 사진을 바꾼다. 누르는 순간 "거기 가는 기분"이 들게(지훈: 사소한 게 쌓이면 고퀄리티)
 function coverFor() {
-  var region = REGION_PHOTO[destination()];
-  if (region) return { src: '/img/region/' + region[0] + '.jpg', alt: region[1] };
-  if (picked.start) {
-    var m = Number(picked.start.slice(5, 7));
-    var season = m === 12 || m <= 2 ? 'winter' : m <= 5 ? 'spring' : m >= 9 && m <= 11 ? 'autumn' : null;
-    if (season) return { src: '/img/region/' + season + '.jpg', alt: SEASON_PHOTO[season] };
-  }
-  return defaultCover;
+  return tripPhoto(destination(), picked.start) || defaultCover;
 }
 
 // 새 사진을 먼저 받아 두고 살짝 사라졌다 나타나게 바꾼다(받는 동안 빈 칸이 보이지 않게)

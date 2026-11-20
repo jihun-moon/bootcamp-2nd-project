@@ -418,6 +418,14 @@ $(function () {
     $('#rename-title').trigger('focus');
   });
   $('#rename-cancel').click(function () { $('#rename-form').prop('hidden', true); });
+  // DELETE: /api/trips/1   방장만. 되돌릴 수 없으니 무엇이 사라지는지 적어 한 번 더 묻는다
+  $('#btn-delete-trip').click(function () {
+    if (!window.confirm('"' + trip.title + '" 방을 지울까요? 모두의 설문·역할·숙소·장보기·정산이 함께 사라지고 되돌릴 수 없어요.')) return;
+    api('DELETE', '/api/trips/' + tripId).done(function () {
+      try { sessionStorage.setItem('tripmate.toast', '방을 지웠어요.'); } catch (e) { /* 알림만 못 띄운다 */ }
+      location.href = '/';
+    });
+  });
   $('#guest-link').click(function () {
     try { sessionStorage.setItem('tripmate.next', location.pathname); } catch (e) { /* 로그인은 된다 */ }
   });
@@ -448,6 +456,14 @@ $(function () {
   $('#invite-link').on('focus', function () { this.select(); });
   loadTrip(tripId).done(function (t) {
     render(t);
-    listen(tripId, function () { loadTrip(tripId).done(render); });
+    listen(tripId, function (kind) {
+      // 방장이 방을 지웠으면 다른 사람 화면은 첫 화면으로(머문 채로 404 를 보지 않게)
+      if (kind === 'deleted') {
+        try { sessionStorage.setItem('tripmate.toast', '방장이 이 방을 지웠어요.'); } catch (e) { /* 알림만 못 띄운다 */ }
+        location.href = '/';
+        return;
+      }
+      loadTrip(tripId).done(render);
+    });
   });
 });

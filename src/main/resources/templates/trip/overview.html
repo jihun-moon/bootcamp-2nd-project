@@ -27,6 +27,8 @@
       <input type="text" id="rename-title" maxlength="100" aria-label="방 이름" required>
       <input type="text" id="rename-destination" maxlength="100" placeholder="지역(예: 강릉)" aria-label="지역">
       <div class="row"><button type="submit" class="btn primary">저장</button><button type="button" id="rename-cancel" class="btn">닫기</button></div>
+      <!-- 방 지우기(방장): 설문·역할·숙소·장보기·정산까지 모두 지워져 되돌릴 수 없다. 확인 창 뒤에 -->
+      <button type="button" id="btn-delete-trip" class="link small danger-link">이 방 지우기</button>
     </form>
     <!-- 지금 나에게 맞는 다음 할 일 하나. 처음 들어온 사람이 "여기서 뭘 하지?"를 고민하지 않게 trip.js 가 고른다 -->
     <section id="next" class="ov-next box stack">

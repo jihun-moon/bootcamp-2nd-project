@@ -1,5 +1,6 @@
 package com.tripmate.shopping;
 
+import com.tripmate.trip.TripDeleting;
 import org.springframework.context.event.EventListener;
 import com.tripmate.trip.MemberLeaving;
 import com.tripmate.trip.Member;
@@ -94,6 +95,13 @@ public class ShoppingService {
         claimRepository.delete(claim);
         events.publishEvent(new TripChanged(tripId, "shopping"));
         return board(tripId);
+    }
+
+    // 방을 지우면 장보기 맡은 줄과 기준도 지운다
+    @EventListener
+    public void onTripDeleting(TripDeleting e) {
+        claimRepository.deleteAll(claimRepository.findByTripId(e.tripId()));
+        planRepository.findByTripId(e.tripId()).ifPresent(planRepository::delete);
     }
 
     // 방을 나간 사람이 "내가 살게"만 하고 아직 안 산 줄은 다시 빈 줄로(남아 있으면 아무도 안 산다).

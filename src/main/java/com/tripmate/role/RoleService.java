@@ -1,5 +1,6 @@
 package com.tripmate.role;
 
+import com.tripmate.trip.TripDeleting;
 import org.springframework.context.event.EventListener;
 import com.tripmate.trip.MemberLeaving;
 import com.tripmate.trip.MemberLeft;
@@ -137,6 +138,13 @@ public class RoleService {
                         drivers.contains(m.getId())))
                 .toList();
         return new TravelDto.Plan(trip.getDestination(), trip.getMembers().size(), cars);
+    }
+
+    // 방을 지우면 역할 카드와 역할 칸도 지운다(카드가 칸을 가리켜 카드부터)
+    @EventListener
+    public void onTripDeleting(TripDeleting e) {
+        assignmentRepository.deleteAll(assignmentRepository.findByRoleTripIdOrderById(e.tripId()));
+        roleRepository.deleteAll(roleRepository.findByTripIdOrderById(e.tripId()));
     }
 
     // 방을 나간 사람의 역할 카드. 빈자리는 보드에서 다시 추천하거나 손으로 채운다

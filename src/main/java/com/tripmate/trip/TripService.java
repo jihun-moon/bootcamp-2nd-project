@@ -145,6 +145,17 @@ public class TripService {
         return TripDto.Response.of(trip, host);
     }
 
+    // 방 지우기(방장, REQ-05). 각 기능이 자기 표를 지운 뒤(TripDeleting) 방과 참여자를 지운다. 되돌릴 수 없다
+    @Transactional
+    public void delete(Long tripId) {
+        var trip = tripRepository.lockById(tripId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        events.publishEvent(new TripDeleting(tripId));
+        // 각 기능이 지운 것(참여자를 가리키는 행)을 먼저 내보낸 뒤 참여자·방을 지운다(외래 키 차례)
+        memberRepository.flush();
+        tripRepository.delete(trip);
+        events.publishEvent(new TripChanged(tripId, "deleted"));
+    }
+
     // 방 이름·지역 고치기. 바뀌면 모두의 방 머리·사진(지역)이 다시 그려진다
     @Transactional
     public TripDto.Response rename(Long tripId, Member host, TripDto.RenameRequest req) {

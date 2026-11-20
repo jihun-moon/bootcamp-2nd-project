@@ -87,6 +87,14 @@ public class TripController {
         return ResponseEntity.ok(tripService.rename(tripId, host, req));
     }
 
+    // DELETE: /api/trips/1   방장만. 설문·역할·숙소·장보기·정산까지 모두 지워지고 되돌릴 수 없다 -> 204
+    @DeleteMapping("/trips/{tripId}")
+    public ResponseEntity<Void> delete(@PathVariable Long tripId) {
+        tripAccess.host(tripId);
+        tripService.delete(tripId);
+        return ResponseEntity.noContent().build();
+    }
+
     // PUT: /api/trips/1/host  body = { "memberId": 3 }   방장만
     @PutMapping("/trips/{tripId}/host")
     public ResponseEntity<TripDto.Response> handOver(@PathVariable Long tripId, @Valid @RequestBody TripDto.HostRequest req) {

@@ -1,5 +1,7 @@
 package com.tripmate.settle;
 
+import org.springframework.context.event.EventListener;
+import com.tripmate.trip.TripDeleting;
 import com.tripmate.shopping.ShoppingClaimRepository;
 import com.tripmate.trip.Member;
 import com.tripmate.trip.TripChanged;
@@ -186,6 +188,13 @@ public class SettleService {
         expenseRepository.delete(expense);
         events.publishEvent(new TripChanged(tripId, "settle"));
         return board(tripId);
+    }
+
+    // 방을 지우면 그 방의 보냈어요 표시와 먼저 낸 돈도 지운다
+    @EventListener
+    public void onTripDeleting(TripDeleting e) {
+        paymentRepository.deleteAll(paymentRepository.findByTripIdOrderById(e.tripId()));
+        expenseRepository.deleteAll(expenseRepository.findByTripIdOrderById(e.tripId()));
     }
 
     // 보냈어요/받았어요. 보낸 사람·받은 사람이 한 번 누르면 된다(방장은 대신 눌러 줄 수 있다)

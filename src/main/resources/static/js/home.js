@@ -157,7 +157,7 @@ function showQuizResult() {
   if (!a.car || !a.plan || !a.act) return;
   var best = QUIZ_ROLES.slice().sort(function (x, y) { return y.score(a) - x.score(a); })[0];
   $('#quiz-role').text(best.name);
-  $('#quiz-why').text('근거: ' + best.why + '. 친구들 답까지 모이면 모두가 가장 만족하는 쪽으로 다시 맞춰요.');
+  $('#quiz-why').text('근거: ' + best.why);
   $('#quiz-result').prop('hidden', false);
 }
 

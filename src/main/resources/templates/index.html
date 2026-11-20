@@ -111,7 +111,7 @@
     <p class="muted">질문 셋, 10초면 나와요.</p>
     <div class="box stack quiz">
       <fieldset><legend class="strong">차를 가져갈 수 있어?</legend>
-        <div class="row wrap"><label class="chip"><input type="radio" name="car" value="yes"> 가능</label><label class="chip"><input type="radio" name="car" value="no"> 어려워</label></div></fieldset>
+        <div class="row wrap"><label class="chip"><input type="radio" name="car" value="yes"> 가능</label><label class="chip"><input type="radio" name="car" value="no"> 어려워요</label></div></fieldset>
       <fieldset><legend class="strong">일정은?</legend>
         <div class="row wrap"><label class="chip"><input type="radio" name="plan" value="planner"> 분 단위로 짠다</label><label class="chip"><input type="radio" name="plan" value="spont"> 그때그때</label></div></fieldset>
       <fieldset><legend class="strong">여행 가서 더 끌리는 건?</legend>
@@ -120,7 +120,7 @@
         <p class="muted small">당신은</p>
         <p id="quiz-role" class="quiz-role"></p>
         <p id="quiz-why" class="muted"></p>
-        <div class="row wrap"><button type="button" id="quiz-share" class="btn">결과 복사해서 단톡방에 던지기</button><a href="/trips/new" class="btn primary">우리 방 만들기 (30초)</a></div>
+        <button type="button" id="quiz-share" class="btn primary big block">결과 복사해서 단톡방에 던지기</button>
       </div>
     </div>
   </section>
@@ -130,30 +130,30 @@
     <p class="muted">앱 설치 없이, 카톡 링크로 1분.</p>
     <ol class="steps">
       <li data-reveal>
-        <div class="mini-phone" aria-hidden="true">
+        <a th:href="@{/demo}" class="mini-phone" aria-label="체험 방에서 직접 해 보기">
           <p class="strong">먼저 친구들을 불러요</p>
           <div class="row"><span class="fake-input">tripmate/join/3f9a…</span><span class="btn primary">보내기</span></div>
           <ul class="rows small"><li>재현 <span class="tag">방장</span></li><li>민지 <span class="chip">설문 전</span></li></ul>
-        </div>
+        <span class="mini-go">직접 해 보기 →</span></a>
         <div class="step-text"><h3>방장이 방 만들고 카톡으로 보내기</h3><p class="muted">여행 이름만 적으면 30초. 누르면 카톡 공유 창이 떠요.</p></div>
       </li>
       <li data-reveal>
-        <div class="mini-phone" aria-hidden="true">
+        <a th:href="@{/demo}" class="mini-phone" aria-label="체험 방에서 직접 해 보기">
           <p class="muted small">재현 · 3 / 5</p>
           <p class="strong">차를 가져갈 수 있나요?</p>
           <span class="choice on">가능</span><span class="choice">어려워요</span>
-        </div>
+        <span class="mini-go">직접 해 보기 →</span></a>
         <div class="step-text"><h3>친구들은 다섯 번 누르면 끝</h3><p class="muted">차 있어? 계획형이야? 이건 빼 줘. 한 번 누르면 다음 장으로 넘어가요.</p></div>
       </li>
       <li data-reveal>
-        <div class="mini-phone" aria-hidden="true">
+        <a th:href="@{/demo}" class="mini-phone" aria-label="체험 방에서 직접 해 보기">
           <p class="strong">역할 보드</p>
           <ul class="rows small">
             <li class="between"><span><b>운전</b> 재현</span><span class="chip">차 있음 +4</span></li>
             <li class="between"><span><b>총무</b> 도윤</span><span class="chip">계획형 +3</span></li>
           </ul>
           <span class="btn">카톡으로 결과 보내기</span>
-        </div>
+        <span class="mini-go">직접 해 보기 →</span></a>
         <div class="step-text"><h3>마지막 사람이 끝내면 역할이 저절로</h3><p class="muted">왜 그 사람인지 근거까지. 마음에 안 들면 카드를 눌러 옮겨요.</p></div>
       </li>
     </ol>

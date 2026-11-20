@@ -1,9 +1,16 @@
 // 모든 화면이 같이 쓰는 것: API 부르기, 방 머리 채우기, 실시간 알림 받기
 
-// 로그인 뒤 돌아올 곳. 다른 사이트로 튀지 않게 우리 주소(/로 시작, //는 안 됨)만 받는다
+// 로그인 뒤 돌아올 곳. 다른 사이트로 튀지 않게 우리 주소만 받는다.
+// "/\evil.com" 이나 "/<탭>/evil.com" 은 / 로 시작해도 브라우저가 "//evil.com" 으로 읽는다. 그래서 글자로 보지 않고
+// 브라우저와 같은 방식(URL)으로 풀어 본 뒤 origin 이 우리 것인지 본다
 function safeNext(path) {
-  if (!path || !path.startsWith('/') || path.startsWith('//')) return '/';
-  return path;
+  if (!path) return '/';
+  try {
+    var url = new URL(path, location.origin);
+    return url.origin === location.origin ? url.pathname + url.search + url.hash : '/';
+  } catch (e) {
+    return '/';
+  }
 }
 
 function goLogin() {
@@ -20,7 +27,31 @@ function api(method, url, body) {
     data: body === undefined ? undefined : JSON.stringify(body)
   }).fail(function (xhr) {
     if (xhr.status === 401) goLogin();
+    // 화면마다 따로 쓰지 않아도 되게 공통으로. 화면이 더 맞는 말을 쓰면 그 말이 뒤에 덮는다
+    else if (xhr.status === 0) showNotice('인터넷 연결이 끊긴 것 같아요. 연결되면 다시 눌러 주세요.');
+    else if (xhr.status >= 500) showNotice('잠시 문제가 생겼어요. 조금 뒤 다시 눌러 주세요.');
   });
+}
+
+// 초대 링크·카톡용 글을 복사한다. clipboard API 는 https·localhost 에서만 돼서
+// 같은 와이파이 휴대폰으로 http://192.168... 에 들어온 경우는 옛 방식(execCommand)으로 복사한다
+function copyText(text) {
+  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+  var area = $('<textarea readonly>').val(text).css({ position: 'fixed', opacity: 0 }).appendTo('body');
+  area[0].select();
+  var ok = document.execCommand('copy');
+  area.remove();
+  return ok ? Promise.resolve() : Promise.reject();
+}
+
+// 결과만 짧게 알릴 때(복사했어요 등). 막힘·오류처럼 사람이 읽고 해야 할 일이 있으면 showNotice 를 쓴다
+var toastTimer = null;
+function showToast(message) {
+  var toast = $('#toast');
+  if (!toast.length) toast = $('<div id="toast" class="toast" role="status" aria-live="polite">').appendTo('body');
+  toast.text(message).prop('hidden', false);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { toast.prop('hidden', true); }, 2500);
 }
 
 function showNotice(message) {

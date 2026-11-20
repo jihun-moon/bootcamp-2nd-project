@@ -2,39 +2,24 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/common :: head('여행방 만들기')}"></head>
 <body>
-<main class="page narrow">
-  <h1>여행방 만들기</h1>
-  <form id="trip-form" class="stack">
-    <label>여행 이름 <input type="text" id="title" required maxlength="100" placeholder="겨울 펜션 2박 3일"></label>
-    <label>지역 <input type="text" id="destination" maxlength="100" placeholder="가평"></label>
+<header th:replace="~{fragments/common :: siteHeader(false)}"></header>
+<main class="page narrow stack loose">
+  <div class="stack">
+    <h1>여행방 만들기</h1>
+    <p class="muted">30초면 끝나요. 만든 사람이 방장이 되고, 다음 화면에서 초대 링크를 단톡방에 보내면 돼요.</p>
+  </div>
+  <form id="trip-form" class="box stack">
+    <label>여행 이름 <input type="text" id="title" required maxlength="100" placeholder="예: 겨울 펜션 2박 3일"></label>
+    <label>지역 <input type="text" id="destination" maxlength="100" placeholder="예: 가평 (길찾기·교통비 계산에 써요)"></label>
     <div class="row">
       <label>출발 <input type="date" id="startDate"></label>
       <label>도착 <input type="date" id="endDate"></label>
     </div>
+    <p class="muted small">지역과 날짜는 나중에 정해도 돼요.</p>
     <p id="form-error" class="error" hidden></p>
-    <div class="row">
-      <button type="submit" class="btn primary">만들기</button>
-      <a th:href="@{/}" class="btn plain">취소</a>
-    </div>
+    <button type="submit" id="btn-create" class="btn primary big block">방 만들고 초대 링크 받기</button>
   </form>
 </main>
-<script>
-  // POST: /api/trips  { "title": "겨울 펜션 2박 3일", "destination": "가평", "startDate": "2027-01-15", "endDate": "2027-01-17" }
-  // 만든 사람이 방장이 되고, 만든 방으로 간다
-  $('#trip-form').submit(function (e) {
-    e.preventDefault();
-    var body = {
-      title: $('#title').val(),
-      destination: $('#destination').val() || null,
-      startDate: $('#startDate').val() || null,
-      endDate: $('#endDate').val() || null
-    };
-    api('POST', '/api/trips', body)
-      .done(function (trip) { location.href = '/trips/' + trip.id; })
-      .fail(function (xhr) {
-        if (xhr.status !== 401) $('#form-error').text('방을 만들지 못했어요. 여행 이름을 확인해 주세요.').prop('hidden', false);
-      });
-  });
-</script>
+<script th:src="@{/js/trip-new.js}"></script>
 </body>
 </html>

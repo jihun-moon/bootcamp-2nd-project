@@ -2,20 +2,49 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <body>
 
-<!-- 모든 화면의 <head>. 쓰는 곳: <head th:replace="~{fragments/common :: head('제목')}"></head> -->
+<!-- 모든 화면의 <head>. 쓰는 곳: <head th:replace="~{fragments/common :: head('제목')}"></head>
+     og 태그는 카톡·문자에 링크를 붙였을 때 뜨는 미리보기다. 초대 화면만 컨트롤러가 ogTitle 로 방 이름을 넣는다 -->
 <head th:fragment="head(title)">
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0e7c72">
   <title th:text="${title} + ' | TripMate'">TripMate</title>
+  <meta name="description" content="7~8명 여행에서 운전·총무·장보기를 설문 1분으로 근거 있게 나누고, 숙소는 누가 싫어하는지까지 보고 고른다. 앱 설치 없이 카톡 링크로.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TripMate">
+  <meta property="og:title" th:content="${ogTitle} ?: 'TripMate | 단체 여행, 눈치 싸움 없이 정하기'">
+  <meta property="og:description" th:content="${ogDescription} ?: '설문 1분이면 역할은 근거와 함께, 숙소는 의견 갈림까지 보여요. 앱 설치 없이 카톡 링크로.'">
+  <link rel="icon" type="image/svg+xml" th:href="@{/img/logo-mark.svg}">
+  <link rel="apple-touch-icon" th:href="@{/img/apple-touch-icon.png}">
+  <meta property="og:image" th:content="${baseUrl} + '/img/og.png'">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <!-- Pretendard: 한국어 웹 화면에서 가장 널리 쓰는 본문 글꼴(SIL OFL, 상업 사용 허용). 판을 고정하고 해시를 단다.
+       쓰는 글자만 받는 dynamic subset 이라 처음 열 때 받는 양이 작다. 못 받으면 아래 시스템 글꼴로 그린다 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pretendard/1.3.9/variable/pretendardvariable-dynamic-subset.min.css"
+        integrity="sha384-yrRxb1ijbFpccVLlUyFKO/3aN/HZkRi3ayQm7YC2u7nEh6IvE0mohDVEDepTertg" crossorigin="anonymous">
   <link rel="stylesheet" th:href="@{/css/style.css}">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <!-- integrity: CDN 파일이 바뀌어 들어와도 브라우저가 실행하지 않게 해시를 박아 둔다 -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+          integrity="sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs" crossorigin="anonymous"></script>
   <script th:src="@{/js/common.js}"></script>
 </head>
+
+<!-- 방 밖 화면(첫 화면·로그인·방 만들기)의 위쪽. "여행방 만들기"는 첫 화면에서만(cta=true).
+     로그인·방 만들기 화면에서는 지금 하려는 일과 겹치거나 같은 곳을 가리켜서 뺀다 -->
+<header th:fragment="siteHeader(cta)" class="site-header">
+  <div class="inner">
+    <a th:href="@{/}" class="logo"><img th:src="@{/img/logo-mark.svg}" width="28" height="28" alt=""><span class="wordmark">Trip<span>Mate</span></span></a>
+    <nav class="row" th:if="${cta}">
+      <a th:href="@{/trips/new}" class="btn primary">여행방 만들기</a>
+    </nav>
+  </div>
+</header>
 
 <!-- 방 화면(개요·설문·역할·숙소) 위쪽. 방 이름·인원은 common.js 의 loadTrip() 이 채운다 -->
 <header th:fragment="tripHeader" class="trip-header">
   <div class="top">
-    <a th:href="@{/}" class="muted">TripMate</a>
+    <a th:href="@{/}" class="logo"><img th:src="@{/img/logo-mark.svg}" width="28" height="28" alt=""><span class="wordmark">Trip<span>Mate</span></span></a>
     <div class="user-menu">
       <span id="me-name"></span>
       <button type="button" id="btn-logout" class="link">로그아웃</button>

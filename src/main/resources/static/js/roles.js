@@ -8,6 +8,8 @@ var board = { roles: [], assignments: [] };
 var dragging = null;
 var picking = null; // 역할 고르기 창을 연 사람
 var justMoved = null;
+var editing = null; // 고치는 중인 역할. null 이면 새로 더하기
+var travel = null; // 마지막으로 센 이동·회비 근거. 역할이 바뀌면 운전하는 차가 달라지니 비운다
 
 // 미배정까지 넣은 칸 목록. 칸마다 그 칸에 있는 카드를 같이 담는다
 function columns() {
@@ -25,12 +27,16 @@ function columns() {
 
 function render() {
   var box = $('#board').empty();
+  var isHost = memberById(trip.meId).host;
 
   columns().forEach(function (col) {
     var role = col.role;
     var title = $('<h3>').text(role.title);
     if (role.required) title.append($('<span class="tag">').text('필수'));
     if (role.capacity > 0) title.append($('<span class="tag">').text(col.cards.length + '/' + role.capacity));
+    if (isHost && role.id !== UNASSIGNED) {
+      title.append($('<button type="button" class="link tag">').text('고치기').on('click', function () { openEditor(role); }));
+    }
 
     var section = $('<section class="column">')
       .toggleClass('empty-required', role.required && col.cards.length === 0)
@@ -52,7 +58,7 @@ function render() {
     box.append(section);
   });
 
-  var isHost = memberById(trip.meId).host;
+  $('#btn-add-role').prop('hidden', !isHost);
   $('#btn-recommend').prop('hidden', !isHost).text(board.assignments.length ? '다시 추천받기' : '설문으로 추천받기');
 }
 
@@ -111,6 +117,61 @@ function closePicker() {
   $('#role-picker')[0].close();
 }
 
+// 역할 편집 창. role 이 없으면 새로 더하기
+function openEditor(role) {
+  editing = role;
+  $('#editor-title').text(role ? '역할 고치기' : '역할 더하기');
+  $('#role-title').val(role ? role.title : '');
+  $('#role-capacity').val(role ? role.capacity : 1);
+  $('#role-required').prop('checked', role ? role.required : false);
+  $('#role-tasks').val(role ? role.tasks.join(', ') : '');
+  $('#btn-role-delete').prop('hidden', !role);
+  $('#role-error').prop('hidden', true);
+  $('#role-editor')[0].showModal();
+}
+
+// POST: /api/trips/1/roles     { "title": "설거지", "required": false, "capacity": 2, "tasks": ["저녁 설거지"] }
+// PATCH: /api/trips/1/roles/7  같은 칸
+function saveRole(e) {
+  e.preventDefault();
+  var tasks = $('#role-tasks').val().split(',').map(function (t) { return t.trim(); }).filter(Boolean);
+  if (tasks.length > 5) {
+    $('#role-error').text('할 일은 5개까지 적을 수 있어요.').prop('hidden', false);
+    return;
+  }
+  var body = {
+    title: $('#role-title').val().trim(),
+    required: $('#role-required').prop('checked'),
+    capacity: Number($('#role-capacity').val()),
+    tasks: tasks
+  };
+  var request = editing
+    ? api('PATCH', '/api/trips/' + tripId + '/roles/' + editing.id, body)
+    : api('POST', '/api/trips/' + tripId + '/roles', body);
+  $('#btn-role-save').prop('disabled', true);
+  request.done(function (res) {
+    board = res;
+    render();
+    $('#role-editor')[0].close();
+  }).fail(function (xhr) {
+    if (xhr.status === 401) return;
+    $('#role-error').text(xhr.status === 400
+      ? '이름(30자), 정원(1~8명), 할 일(20자씩 5개)을 확인해 주세요. 역할은 12개까지예요.'
+      : '저장하지 못했어요. 다시 눌러 주세요.').prop('hidden', false);
+  }).always(function () { $('#btn-role-save').prop('disabled', false); });
+}
+
+// DELETE: /api/trips/1/roles/7  -> 204. 그 역할에 있던 사람은 미배정으로
+function deleteRole() {
+  if (!confirm("'" + editing.title + "' 역할을 지울까요? 이 역할에 있던 사람은 미배정으로 가요.")) return;
+  api('DELETE', '/api/trips/' + tripId + '/roles/' + editing.id).done(function () {
+    $('#role-editor')[0].close();
+    loadBoard();
+  }).fail(function (xhr) {
+    if (xhr.status !== 401) $('#role-error').text('지우지 못했어요. 다시 눌러 주세요.').prop('hidden', false);
+  });
+}
+
 // GET: /api/trips/1/roles  -> { "roles": [...], "assignments": [{ "roleId", "memberId", "reasons", "version" }] }
 function loadBoard() {
   return api('GET', '/api/trips/' + tripId + '/roles').done(function (res) {
@@ -164,6 +225,51 @@ function recommend() {
     .always(function () { $('#btn-recommend').prop('disabled', false); });
 }
 
+// GET: /api/trips/1/roles/travel
+// -> { "message": null, "legs": [{ "name", "driver", "km", "minutes", "toll", "fuel", "note" }], "perPerson": 6000,
+//      "fuelPrice": 1700, "fuelSource": "어림값", "kmPerLiter": 12, "tips": [] }
+function loadTravel() {
+  $('#btn-travel').prop('disabled', true).text('계산 중…');
+  api('GET', '/api/trips/' + tripId + '/roles/travel')
+    .done(function (res) {
+      travel = res;
+      renderTravel();
+    })
+    .always(function () { $('#btn-travel').prop('disabled', false).text('다시 계산'); });
+}
+
+function renderTravel() {
+  var box = $('#travel').empty();
+  if (!travel) return;
+  if (travel.message) {
+    box.append($('<p class="hint">').text(travel.message));
+    return;
+  }
+  var list = $('<ul class="stack">').appendTo(box);
+  travel.legs.forEach(function (l) {
+    var name = $('<div class="strong">').text(l.name);
+    if (l.driver) name.append($('<span class="tag">').text('운전'));
+    var detail = (l.km === null)
+      ? l.note
+      : '편도 ' + l.km + 'km · ' + minutesText(l.minutes) + ' · 기름 ' + won(l.fuel) + ' · 통행료 ' + won(l.toll);
+    list.append($('<li class="card">').append(name, $('<div class="muted small">').text(detail)));
+  });
+  if (travel.perPerson !== null) {
+    box.append($('<p class="strong">').text('1인 교통비 약 ' + won(travel.perPerson) + ' (운전하는 차 왕복, ' + trip.members.length + '명)'));
+  }
+  travel.tips.forEach(function (t) { box.append($('<p class="notice">').text(t)); });
+  box.append($('<p class="muted small">').text('길·통행료: 카카오모빌리티 · 휘발유 ' + won(travel.fuelPrice) + '/L(' + travel.fuelSource + ') · 연비 ' + travel.kmPerLiter + 'km/L로 셈'));
+}
+
+function minutesText(minutes) {
+  var h = Math.floor(minutes / 60);
+  return (h ? h + '시간 ' : '') + (minutes % 60) + '분';
+}
+
+function won(n) {
+  return n.toLocaleString('ko-KR') + '원';
+}
+
 // 단톡방에 붙여 넣을 글. 링크는 방 주소 대신 초대 링크라 아직 안 들어온 사람도 눌러서 들어온다
 function resultText() {
   var lines = ['[' + trip.title + '] 역할'];
@@ -174,24 +280,14 @@ function resultText() {
   });
   var notYet = trip.members.filter(function (m) { return !m.surveyDone; }).map(function (m) { return m.name; });
   if (notYet.length) lines.push('설문 아직: ' + notYet.join(', '));
+  if (travel && travel.perPerson !== null) lines.push('1인 교통비 약 ' + won(travel.perPerson) + ' (기름값·통행료 왕복)');
   lines.push('TripMate 에서 정했어요 ' + location.origin + '/join/' + trip.inviteCode);
   return lines.join('\n');
 }
 
-// clipboard API 는 https·localhost 에서만 된다. 그 밖(같은 와이파이 휴대폰으로 http://192.168... 접속 등)은 옛 방식으로 복사한다
 function copyResult() {
-  var text = resultText();
-  var copied;
-  if (navigator.clipboard && window.isSecureContext) {
-    copied = navigator.clipboard.writeText(text);
-  } else {
-    var area = $('<textarea readonly>').val(text).css({ position: 'fixed', opacity: 0 }).appendTo('body');
-    area[0].select();
-    copied = document.execCommand('copy') ? Promise.resolve() : Promise.reject();
-    area.remove();
-  }
-  copied.then(
-    function () { showNotice('복사했어요. 단톡방에 붙여 넣어 주세요.'); },
+  copyText(resultText()).then(
+    function () { showToast('복사했어요. 단톡방에 붙여 넣어 주세요.'); },
     function () { showNotice('복사하지 못했어요. 다시 눌러 주세요.'); }
   );
 }
@@ -199,6 +295,11 @@ function copyResult() {
 $(function () {
   $('#btn-recommend').click(recommend);
   $('#btn-copy').click(copyResult);
+  $('#btn-travel').click(loadTravel);
+  $('#btn-add-role').click(function () { openEditor(null); });
+  $('#role-form').on('submit', saveRole);
+  $('#btn-role-delete').click(deleteRole);
+  $('#btn-role-cancel').click(function () { $('#role-editor')[0].close(); });
   $('#btn-picker-close').click(closePicker);
   // 창 바깥(어두운 곳)을 누르면 닫는다. 창 안을 누르면 target 이 안쪽 요소라 닫히지 않는다
   $('#role-picker').on('click', function (e) { if (e.target === this) closePicker(); })
@@ -213,6 +314,10 @@ $(function () {
         loadTrip(tripId).done(function (t) { trip = t; loadBoard(); });
       } else if (what === 'roles') {
         loadBoard();
+        if (travel) {
+          travel = null;
+          $('#travel').empty().append($('<p class="hint">').text('역할이 바뀌었어요. 다시 계산해 주세요.'));
+        }
       }
     });
   });

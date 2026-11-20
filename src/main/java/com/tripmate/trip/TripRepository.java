@@ -3,6 +3,7 @@ package com.tripmate.trip;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface TripRepository extends JpaRepository<Trip, Long> {
@@ -13,4 +14,8 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
 
     @EntityGraph(attributePaths = "members")
     Optional<Trip> findByInviteCode(String inviteCode);
+
+    // 방 목록에 인원·설문 수를 같이 보여 주려고 참여자까지 한 번에 읽는다
+    @EntityGraph(attributePaths = "members")
+    List<Trip> findByIdIn(List<Long> ids);
 }

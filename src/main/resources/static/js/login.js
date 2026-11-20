@@ -14,7 +14,8 @@ $(function () {
   // GET: /api/auth/options  -> { "kakao": true, "dev": false }  어떤 로그인 버튼을 보여 줄지
   api('GET', '/api/auth/options').done(function (options) {
     $('#btn-kakao').prop('hidden', !options.kakao);
-    $('#kakao-off').prop('hidden', options.kakao);
+    // 개발용 로그인이 켜진 로컬에서는 안내가 필요 없다
+    $('#kakao-off').prop('hidden', options.kakao || options.dev);
     $('#dev-login').prop('hidden', !options.dev);
   });
 

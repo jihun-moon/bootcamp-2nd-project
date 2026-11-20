@@ -1,6 +1,7 @@
 package com.tripmate.role;
 
 import com.tripmate.trip.TripAccess;
+import jakarta.validation.Valid;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,10 +14,12 @@ public class RoleController {
 
     private final TripAccess tripAccess;
     private final RoleService roleService;
+    private final TravelService travelService;
 
-    public RoleController(TripAccess tripAccess, RoleService roleService) {
+    public RoleController(TripAccess tripAccess, RoleService roleService, TravelService travelService) {
         this.tripAccess = tripAccess;
         this.roleService = roleService;
+        this.travelService = travelService;
     }
 
     // GET: /api/trips/1/roles
@@ -35,11 +38,43 @@ public class RoleController {
         return ResponseEntity.ok(roleService.move(tripId, memberId, req));
     }
 
+    // POST: /api/trips/1/roles  body = { "title": "설거지", "required": false, "capacity": 2, "tasks": ["저녁 설거지"] }
+    // 역할을 더하고 고치고 지우는 건 모두의 보드를 바꾸니 방장만
+    @PostMapping
+    public ResponseEntity<RoleDto.Board> addRole(@PathVariable Long tripId, @Valid @RequestBody RoleDto.SaveRequest req) {
+        tripAccess.host(tripId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(roleService.addRole(tripId, req));
+    }
+
+    // PATCH: /api/trips/1/roles/4  body = POST 와 같다(칸을 다 보낸다)
+    @PatchMapping("/{roleId}")
+    public ResponseEntity<RoleDto.Board> updateRole(@PathVariable Long tripId, @PathVariable Long roleId,
+                                                    @Valid @RequestBody RoleDto.SaveRequest req) {
+        tripAccess.host(tripId);
+        return ResponseEntity.ok(roleService.updateRole(tripId, roleId, req));
+    }
+
+    // DELETE: /api/trips/1/roles/4   그 역할에 있던 사람은 미배정으로
+    @DeleteMapping("/{roleId}")
+    public ResponseEntity<Void> deleteRole(@PathVariable Long tripId, @PathVariable Long roleId) {
+        tripAccess.host(tripId);
+        roleService.deleteRole(tripId, roleId);
+        return ResponseEntity.noContent().build();
+    }
+
     // POST: /api/trips/1/roles/recommend   모두의 배정을 갈아엎으니 방장만
     @PostMapping("/recommend")
     public ResponseEntity<RoleDto.Board> recommend(@PathVariable Long tripId) {
         tripAccess.host(tripId);
         return ResponseEntity.ok(roleService.recommend(tripId));
+    }
+
+    // GET: /api/trips/1/roles/travel   차마다 거리·시간·통행료·기름값과 운전하는 차로 센 1인 교통비
+    // 카카오를 부르므로 보드를 읽을 때마다가 아니라 화면에서 "계산하기"를 누를 때만 부른다
+    @GetMapping("/travel")
+    public ResponseEntity<TravelDto.Summary> travel(@PathVariable Long tripId) {
+        tripAccess.me(tripId);
+        return ResponseEntity.ok(travelService.estimate(roleService.travelPlan(tripId)));
     }
 
     // version 비교와 저장 사이에 다른 요청이 끼어들면 DB 단계에서 걸린다. 둘 다 "누가 먼저 옮김"이다

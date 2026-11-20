@@ -8,6 +8,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
 @Configuration
@@ -34,6 +35,15 @@ public class SecurityConfig {
                         .userInfoEndpoint(u -> u.userService(kakaoUserService))
                         .successHandler((req, res, a) -> res.sendRedirect("/login/done"))
                         .failureHandler((req, res, ex) -> res.sendRedirect("/login?error")))
+                // CSP: 스크립트는 우리 서버와 jQuery CDN 만. 화면에 끼어든 <script> 는 돌지 않는다(XSS 를 한 겹 더 막음).
+                // 글꼴·스타일은 cdnjs(Pretendard), 숙소 사진은 예약 사이트 https 주소라 img 는 https 전체.
+                // style 'unsafe-inline' 은 jQuery .css() 와 막대 너비 같은 style 속성 때문. 스크립트에는 주지 않는다
+                .headers(h -> h
+                        .contentSecurityPolicy(csp -> csp.policyDirectives(
+                                "default-src 'self'; script-src 'self' https://ajax.googleapis.com; "
+                                        + "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src https://cdnjs.cloudflare.com; "
+                                        + "img-src 'self' data: https:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"))
+                        .referrerPolicy(r -> r.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)))
                 .logout(logout -> logout
                         .logoutRequestMatcher(PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, "/api/logout"))
                         .logoutSuccessHandler((req, res, a) -> res.setStatus(HttpStatus.NO_CONTENT.value())));

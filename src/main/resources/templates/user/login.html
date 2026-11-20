@@ -2,15 +2,24 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/common :: head('로그인')}"></head>
 <body>
-<main class="page narrow center">
-  <h1>TripMate 로그인</h1>
+<header th:replace="~{fragments/common :: siteHeader(false)}"></header>
+<main class="page narrow stack loose">
+  <div class="stack">
+    <h1>로그인하고 시작해요</h1>
+    <p class="muted">카카오 계정으로 한 번이면 돼요. 비밀번호는 TripMate 가 저장하지 않고, 이름과 프로필 사진만 받아요.</p>
+  </div>
   <p th:if="${param.error}" class="notice">카카오 로그인에 실패했어요. 다시 시도해 주세요.</p>
   <p id="login-error" class="notice" hidden></p>
 
-  <a id="btn-kakao" href="/oauth2/authorization/kakao" class="btn kakao block" hidden>카카오로 시작하기</a>
-  <p id="kakao-off" class="muted small" hidden>카카오 키가 아직 없어 카카오 로그인을 숨겼어요. (KAKAO_CLIENT_ID)</p>
+  <!-- 카카오 콘솔 [도구 > 디자인 리소스 다운로드 > 카카오 로그인]에서 받은 공식 완성형 그림(kakao_login_kr_large.svg) 그대로.
+       심볼·글자 비율을 바꾸지 않고, 넓힐 때는 가이드대로 노란 바탕만 좌우로 똑같이 늘린다 -->
+  <a id="btn-kakao" href="/oauth2/authorization/kakao" class="kakao-login" hidden>
+    <img th:src="@{/img/kakao_login_kr_large.svg}" alt="카카오 로그인" width="336" height="46">
+  </a>
+  <!-- 사용자에게는 까닭(키 설정)을 보이지 않는다. 개발자는 서버 로그와 README 로 안다 -->
+  <p id="kakao-off" class="hint" hidden>지금은 로그인을 쓸 수 없어요. 잠시 뒤 다시 와 주세요.</p>
 
-  <section id="dev-login" class="box dashed" hidden>
+  <section id="dev-login" class="box dashed stack" hidden>
     <h2>개발용 로그인</h2>
     <p class="muted small">예시 방 참여자로 들어가요. 배포에서는 꺼져 있어요.</p>
     <div id="demo-names" class="grid4"></div>

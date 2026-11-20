@@ -31,6 +31,10 @@ public class SurveyAnswer {
     private boolean hasCar;
     private boolean separateDeparture;
 
+    // 차로 갈 때 출발하는 동네(예: 서울 마포구). 이동·회비 근거의 길찾기에 쓴다. 본인과 방장만 본다
+    @Column(length = 30)
+    private String departure;
+
     // 본인과 방장만 본다. 다른 사람에게 내보내는 응답에는 이 칸을 넣지 않는다
     private boolean mobilityLimited;
 
@@ -56,11 +60,12 @@ public class SurveyAnswer {
     }
 
     public void update(ActivityStyle activity, PlanningStyle planning, boolean hasCar, boolean separateDeparture,
-                       boolean mobilityLimited, Set<Chore> avoid, Map<Amenity, Integer> preferences) {
+                       String departure, boolean mobilityLimited, Set<Chore> avoid, Map<Amenity, Integer> preferences) {
         this.activity = activity;
         this.planning = planning;
         this.hasCar = hasCar;
         this.separateDeparture = separateDeparture;
+        this.departure = departure;
         this.mobilityLimited = mobilityLimited;
         this.avoid.clear();
         this.avoid.addAll(avoid);
@@ -75,6 +80,7 @@ public class SurveyAnswer {
     public PlanningStyle getPlanning() { return planning; }
     public boolean isHasCar() { return hasCar; }
     public boolean isSeparateDeparture() { return separateDeparture; }
+    public String getDeparture() { return departure; }
     public boolean isMobilityLimited() { return mobilityLimited; }
     public Set<Chore> getAvoid() { return avoid; }
     public Map<Amenity, Integer> getPreferences() { return preferences; }

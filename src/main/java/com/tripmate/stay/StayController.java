@@ -27,6 +27,9 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/trips/{tripId}")
 public class StayController {
 
+    private static final int MAX_STAYS = 30;
+    private static final int MAX_URL = 2000;
+
     private final TripRepository tripRepository;
     private final MemberRepository memberRepository;
     private final StayRepository stayRepository;
@@ -81,12 +84,17 @@ public class StayController {
     @PostMapping("/stays")
     public ResponseEntity<StayDto.StayView> addStay(@PathVariable Long tripId, @Valid @RequestBody StayDto.CreateRequest req) {
         var member = tripAccess.me(tripId);
+        // 숙소마다 서버가 바깥 페이지를 한 번 읽고, 보드는 숙소를 전부 읽는다. 끝없이 늘지 않게 막는다
+        if (stayRepository.countByTripId(tripId) >= MAX_STAYS) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "숙소는 " + MAX_STAYS + "개까지 올릴 수 있어요");
+        }
         var preview = linkPreview.fetch(req.url());
-        var title = firstNonBlank(req.title(), preview.title(), URI.create(req.url()).getHost());
+        var title = firstNonBlank(req.title(), preview.title(), hostOf(req.url()));
+        var imageUrl = (preview.imageUrl() != null && preview.imageUrl().length() <= MAX_URL) ? preview.imageUrl() : null;
         var amenities = (req.amenities() == null) ? EnumSet.noneOf(Amenity.class) : req.amenities();
 
         var trip = tripRepository.getReferenceById(tripId);
-        var stay = stayRepository.save(new Stay(trip, member, title, req.url(), preview.imageUrl(), amenities));
+        var stay = stayRepository.save(new Stay(trip, member, title, req.url(), imageUrl, amenities));
         events.publishEvent(new TripChanged(tripId, "stays"));
         return ResponseEntity.status(HttpStatus.CREATED).body(new StayDto.StayView(stay.getId(), stay.getTitle(),
                 stay.getUrl(), stay.getImageUrl(), Set.copyOf(stay.getAmenities()), List.of()));
@@ -117,6 +125,15 @@ public class StayController {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<Void> conflict() {
         return ResponseEntity.status(HttpStatus.CONFLICT).build();
+    }
+
+    // "https://a.com/|x" 처럼 \S+ 는 통과해도 URI 로는 안 읽히는 링크가 있다. 그때는 이름을 비워 "숙소"로 둔다
+    private static String hostOf(String url) {
+        try {
+            return URI.create(url).getHost();
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private static String firstNonBlank(String... values) {

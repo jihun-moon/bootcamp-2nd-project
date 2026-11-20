@@ -20,6 +20,7 @@
 | REQ-02 | 방 만들기 | POST | `/api/trips` | `{"title", "destination", "startDate", "endDate"}` | 201 방 | `TripController`, `TripService` |
 | REQ-04 | 방 보기 | GET | `/api/trips/{id}` | | 200 방(참여자, `meId`, `inviteCode`) | `TripController`, `TripService` |
 | REQ-03 | 초대 링크로 참여 | POST | `/api/invites/{inviteCode}` | | 200 `{tripId}` | `TripController`, `TripService` |
+| REQ-02 | 내 여행방 | GET | `/api/me/trips` | | 200 `[{id, title, destination, startDate, memberCount, surveyDone, host}]` 최근 50개 / 401 | `TripController`, `TripService.myTrips` |
 | REQ-11 | 바뀜 알림(SSE) | GET | `/api/trips/{id}/events` | | `event: change` / `ping` | `TripController`, `TripEvents` |
 | REQ-05 | 방 고치기 *(남은 일)* | PATCH | `/api/trips/{id}` | 바꿀 칸 | 200 | |
 | REQ-05 | 방 지우기 *(남은 일)* | DELETE | `/api/trips/{id}` | | 204 | |
@@ -34,7 +35,8 @@
 | REQ-09 | 역할 보드 | GET | `/api/trips/{id}/roles` | | 200 `{roles, assignments}` | `RoleController`, `RoleService` |
 | REQ-09 | 역할 추천(방장) | POST | `/api/trips/{id}/roles/recommend` | | 200 보드 | `RoleController`, `RoleService.recommend`, `RoleScorer`, `HungarianAssigner` |
 | REQ-10 | 카드 옮기기 | PATCH | `/api/trips/{id}/roles/assignments/{memberId}` | `{"roleId": 4, "version": 0}` | 200 보드 / 409 | `RoleController`, `RoleService.move` |
-| REQ-12 | 역할 더하기·고치기·지우기 *(남은 일)* | POST / PATCH / DELETE | `/api/trips/{id}/roles`, `/api/trips/{id}/roles/{roleId}` | | 201 / 200 / 204 | |
+| REQ-18 | 이동·회비 근거 | GET | `/api/trips/{id}/roles/travel` | | 200 `{message, legs, perPerson, fuelPrice, fuelSource, kmPerLiter, tips}` | `RoleController`, `RoleService.travelPlan`, `TravelService`, `KakaoMapClient`, `FuelPriceClient` |
+| REQ-12 | 역할 더하기·고치기·지우기(방장) | POST / PATCH / DELETE | `/api/trips/{id}/roles`, `/api/trips/{id}/roles/{roleId}` | `{"title": "설거지", "required": false, "capacity": 2, "tasks": ["저녁 설거지"]}` | 201 보드 / 200 보드 / 204, 400(검사·12개 넘음), 403 | `RoleController`, `RoleService.addRole·updateRole·deleteRole` |
 
 ## 숙소·투표 (김현수)
 

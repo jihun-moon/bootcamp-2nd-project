@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head('체험 방')}"></head>
+<body>
+<!-- 로그인 없이 둘러보는 읽기 전용 체험 방. DB·API 를 쓰지 않고 실제 화면과 같은 부품(클래스)으로 예시 여행 하나를 보여 준다.
+     실제 방을 읽게 하면 운영에서도 늘 켜진 예시 방과 로그인 없이 부르는 API 가 필요해져서, 보여 주기만 하는 화면으로 따로 뒀다 -->
+<div class="page">
+  <header class="trip-header">
+    <div class="top">
+      <a th:href="@{/}" class="logo"><img th:src="@{/img/logo-mark.svg}" width="28" height="28" alt=""><span class="wordmark">Trip<span>Mate</span></span></a>
+      <a th:href="@{/trips/new}" class="btn primary">내 여행방 만들기</a>
+    </div>
+    <p class="notice demo-banner">체험 방이에요. 예시 데이터라 눌러도 바뀌지 않아요.</p>
+    <h1>겨울 펜션 2박 3일</h1>
+    <p class="muted">가평 · 2027-01-15 ~ 2027-01-17 · 8명</p>
+    <nav class="tabs" role="tablist">
+      <button type="button" class="tab active" data-tab="overview" role="tab" aria-selected="true">개요</button>
+      <button type="button" class="tab" data-tab="roles" role="tab" aria-selected="false">역할</button>
+      <button type="button" class="tab" data-tab="stays" role="tab" aria-selected="false">숙소</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- 개요 -->
+    <section class="stack" data-panel="overview">
+      <div class="box stack">
+        <h2>모두 설문을 끝냈어요</h2>
+        <p class="muted">방장이 역할 보드에서 "설문으로 추천받기"를 누르면 역할이 나뉘어요.</p>
+        <div class="row wrap"><button type="button" class="btn primary" data-goto="roles">역할 보드 보기</button><button type="button" class="btn" data-goto="stays">숙소 투표 보기</button></div>
+      </div>
+      <div class="box stack">
+        <div class="between small"><span class="strong">설문 진행</span><span class="muted">8/8명</span></div>
+        <div class="bar"><div class="fill" style="width:100%"></div></div>
+        <ul class="grid4">
+          <li class="row"><span class="avatar">재</span><div><div class="strong">재현<span class="tag">방장</span></div><span class="chip on">설문 완료</span></div></li>
+          <li class="row"><span class="avatar">민</span><div><div class="strong">민지</div><span class="chip on">설문 완료</span></div></li>
+          <li class="row"><span class="avatar">도</span><div><div class="strong">도윤</div><span class="chip on">설문 완료</span></div></li>
+          <li class="row"><span class="avatar">서</span><div><div class="strong">서연</div><span class="chip on">설문 완료</span></div></li>
+          <li class="row"><span class="avatar">하</span><div><div class="strong">하준</div><span class="chip on">설문 완료</span></div></li>
+          <li class="row"><span class="avatar">지</span><div><div class="strong">지우</div><span class="chip on">설문 완료</span></div></li>
+          <li class="row"><span class="avatar">예</span><div><div class="strong">예린</div><span class="chip on">설문 완료</span></div></li>
+          <li class="row"><span class="avatar">시</span><div><div class="strong">시우</div><span class="chip on">설문 완료</span></div></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 역할: 실제 역할 보드와 같은 칸. 근거는 RoleScorer 점수 규칙대로 적었다(docs/matching.md) -->
+    <section class="stack" data-panel="roles" hidden>
+      <p class="muted small">실제 방에서는 카드를 누르면 다른 역할로 옮길 수 있어요.</p>
+      <div class="board">
+        <section class="column"><h3>총무·타임라인<span class="tag">필수</span><span class="tag">1/1</span></h3><p class="muted small">회비 걷기 · 일정표 공유</p>
+          <ul class="stack"><li class="card"><button type="button" class="member-card"><div class="strong">도윤</div><div class="muted small">계획형 +3</div></button></li></ul></section>
+        <section class="column"><h3>운전<span class="tag">필수</span><span class="tag">2/2</span></h3><p class="muted small">차량 픽업 · 주유</p>
+          <ul class="stack"><li class="card"><button type="button" class="member-card"><div class="strong">재현</div><div class="muted small">차 있음 +4</div></button></li>
+            <li class="card"><button type="button" class="member-card"><div class="strong">민지</div><div class="muted small">차 있음 +4</div></button></li></ul></section>
+        <section class="column"><h3>장보기<span class="tag">필수</span><span class="tag">1/1</span></h3><p class="muted small">고기 사기 · 술·음료</p>
+          <ul class="stack"><li class="card"><button type="button" class="member-card"><div class="strong">서연</div><div class="muted small">밖 활동 선호 +1</div></button></li></ul></section>
+        <section class="column"><h3>바베큐 세팅<span class="tag">2/2</span></h3><p class="muted small">그릴 준비 · 뒷정리</p>
+          <ul class="stack"><li class="card"><button type="button" class="member-card"><div class="strong">하준</div><div class="muted small">숙소 휴식 선호 +2</div></button></li>
+            <li class="card"><button type="button" class="member-card"><div class="strong">예린</div><div class="muted small">이동 적은 역할 우선 +2</div></button></li></ul></section>
+        <section class="column"><h3>여행 DJ<span class="tag">1/1</span></h3><p class="muted small">플레이리스트</p>
+          <ul class="stack"><li class="card"><button type="button" class="member-card"><div class="strong">지우</div><div class="muted small">숙소 휴식 선호 +1</div></button></li></ul></section>
+        <section class="column"><h3>기록 담당<span class="tag">1/1</span></h3><p class="muted small">사진·영상 · 후기 정리</p>
+          <ul class="stack"><li class="card"><button type="button" class="member-card"><div class="strong">시우</div><div class="muted small">밖 활동 선호 +2</div></button></li></ul></section>
+      </div>
+      <div class="box stack">
+        <h2>이동·회비 근거</h2>
+        <ul class="rows">
+          <li><div class="strong">재현<span class="tag">운전</span></div><div class="muted small">편도 77km · 2시간 8분 · 기름 11,000원 · 통행료 0원</div></li>
+          <li><div class="strong">민지<span class="tag">운전</span></div><div class="muted small">편도 76km · 1시간 53분 · 기름 10,900원 · 통행료 4,200원</div></li>
+        </ul>
+        <p class="strong">1인 교통비 약 6,600원 (운전하는 차 왕복, 8명)</p>
+        <p class="notice">재현 차는 편도 2시간 8분이에요. 교대할 사람을 정해 두세요.</p>
+        <p class="muted small">실제 방에서는 카카오모빌리티 길찾기와 오피넷 그날 기름값으로 계산해요.</p>
+      </div>
+    </section>
+
+    <!-- 숙소: 실제 숙소 화면과 같은 칸. 평균·최솟값은 예시 설문 8명 기준 -->
+    <section class="stack" data-panel="stays" hidden>
+      <div class="box stack">
+        <h2>우리 그룹이 중요하게 보는 것</h2>
+        <p class="muted small">설문 8명 · 막대는 평균, 세로선은 가장 낮게 준 사람의 점수(5점 만점)</p>
+        <ul class="stack">
+          <li class="pref-row"><span>독채</span><div class="bar"><div class="fill" style="width:88%"></div><div class="min-line" style="left:60%"></div></div><span class="small">4.4점</span></li>
+          <li class="pref-row"><span>개별 바베큐</span><div class="bar"><div class="fill" style="width:80%"></div><div class="min-line" style="left:60%"></div></div><span class="small">4.0점</span></li>
+          <li class="pref-row"><span>온수풀</span><div class="bar"><div class="fill" style="width:56%"></div><div class="min-line" style="left:20%"></div></div><span class="small error">의견 갈림</span></li>
+          <li class="pref-row"><span>방 3개 이상</span><div class="bar"><div class="fill" style="width:70%"></div><div class="min-line" style="left:40%"></div></div><span class="small">3.5점</span></li>
+        </ul>
+      </div>
+      <div class="between"><h2>숙소 후보</h2><span class="muted small">3곳</span></div>
+      <ul class="stay-list">
+        <li class="box stay best">
+          <div class="between"><span class="strong">숲속 독채 펜션</span><span class="rank">1위 · 11.9점</span></div>
+          <div class="row wrap"><span class="chip on">독채</span><span class="chip on">개별 바베큐</span><span class="chip on">방 3개 이상</span></div>
+          <div class="between"><span class="muted small">재현, 도윤, 서연, 하준, 예린</span><button type="button" class="btn primary" data-demo-action>투표 5</button></div>
+        </li>
+        <li class="box stay">
+          <div class="between"><span class="strong">바다뷰 풀빌라</span><span class="rank">2위 · 6.3점</span></div>
+          <div class="row wrap"><span class="chip on">온수풀</span><span class="chip on">방 3개 이상</span><span class="chip warn">독채 없음</span></div>
+          <div class="between"><span class="muted small">민지, 지우</span><button type="button" class="btn" data-demo-action>투표 2</button></div>
+        </li>
+        <li class="box stay">
+          <div class="between"><span class="strong">계곡 앞 민박</span><span class="rank">3위 · 4.0점</span></div>
+          <div class="row wrap"><span class="chip on">개별 바베큐</span><span class="chip warn">독채 없음</span></div>
+          <div class="between"><span class="muted small">시우</span><button type="button" class="btn" data-demo-action>투표 1</button></div>
+        </li>
+      </ul>
+    </section>
+
+    <section class="cta stack">
+      <h2>우리 여행도 이렇게 정해 볼까요?</h2>
+      <p class="muted">방 만들기 30초, 친구들 설문 1분.</p>
+      <div><a th:href="@{/trips/new}" class="btn primary big">내 여행방 만들기</a></div>
+    </section>
+  </main>
+</div>
+<script th:src="@{/js/demo.js}"></script>
+</body>
+</html>

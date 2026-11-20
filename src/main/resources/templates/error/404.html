@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head('찾을 수 없어요')}"></head>
+<body>
+<header th:replace="~{fragments/common :: siteHeader(false)}"></header>
+<!-- 오류 번호·영어 메시지·서버 이름은 보이지 않는다. 무엇이 일어났는지와 갈 곳 하나만 -->
+<main class="page narrow stack loose">
+  <div class="stack">
+    <h1>찾는 화면이 없어요</h1>
+    <p class="muted">주소가 바뀌었거나 지워진 방일 수 있어요. 초대 링크로 들어왔다면 방장에게 링크를 다시 받아 주세요.</p>
+  </div>
+  <a th:href="@{/}" class="btn primary big block">처음 화면으로</a>
+</main>
+</body>
+</html>

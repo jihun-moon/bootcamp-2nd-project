@@ -12,5 +12,7 @@ public interface StayRepository extends JpaRepository<Stay, Long> {
     @EntityGraph(attributePaths = "amenities")
     List<Stay> findByTripIdOrderById(Long tripId);
 
+    long countByTripId(Long tripId);
+
     Optional<Stay> findByIdAndTripId(Long id, Long tripId);
 }

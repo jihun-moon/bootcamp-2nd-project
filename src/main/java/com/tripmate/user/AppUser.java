@@ -35,7 +35,6 @@ public class AppUser {
     }
 
     public Long getId() { return id; }
-    public String getLoginId() { return loginId; }
     public String getNickname() { return nickname; }
     public String getProfileImageUrl() { return profileImageUrl; }
 }

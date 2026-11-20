@@ -1,5 +1,11 @@
 package com.tripmate.role;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
 import java.util.List;
 
 public final class RoleDto {
@@ -9,6 +15,13 @@ public final class RoleDto {
 
     // { "roleId": 4, "version": 0 }   roleId null = 미배정으로, version null = 지금 미배정인 사람
     public record MoveRequest(Long roleId, Long version) {
+    }
+
+    // { "title": "설거지", "required": false, "capacity": 2, "tasks": ["저녁 설거지", "분리수거"] }
+    // 정원 8명·할 일 5개까지. 추천은 정원만큼 칸을 펼쳐 푸니 칸 수가 계산 시간을 정한다
+    public record SaveRequest(@NotBlank @Size(max = 30) String title, boolean required,
+                              @Min(1) @Max(8) int capacity,
+                              @NotNull @Size(max = 5) List<@NotBlank @Size(max = 20) String> tasks) {
     }
 
     // roles.js 가 roles 와 assignments 를 따로 받아 칸을 그린다. 미배정은 참여자 목록에서 뺀 나머지

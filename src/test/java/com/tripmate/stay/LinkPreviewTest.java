@@ -15,6 +15,7 @@ class LinkPreviewTest {
     @ValueSource(strings = {
             "http://127.0.0.1/", "http://localhost:8080/api", "http://10.1.2.3/", "http://192.168.0.1/",
             "http://169.254.169.254/latest/meta-data", "http://[::1]/", "http://0.0.0.0/", "file:///etc/passwd",
+            "http://100.100.100.200/latest/meta-data", "http://8.8.8.8:6379/",
     })
     void 내부_주소와_http_아닌_주소는_막는다(String url) {
         assertThatThrownBy(() -> LinkPreview.requirePublic(URI.create(url)))

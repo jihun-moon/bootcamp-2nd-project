@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -23,6 +24,8 @@ public class RoleService {
 
     // 필수 역할의 첫 칸에만 얹는다. 설문 점수(한 자리)보다 훨씬 커서 사람이 모자라도 필수 역할이 먼저 찬다
     private static final int REQUIRED_BONUS = 100;
+    // 기본 6개 + 방장이 더한 것. 추천은 (사람 + 정원 칸)^3 이라 끝없이 늘지 않게 막는다
+    private static final int MAX_ROLES = 12;
 
     private final TripRepository tripRepository;
     private final MemberRepository memberRepository;
@@ -48,6 +51,43 @@ public class RoleService {
                 assignmentRepository.findByRoleTripIdOrderById(tripId));
     }
 
+    // POST 역할 더하기. 방장만(컨트롤러에서 막는다)
+    @Transactional
+    public RoleDto.Board addRole(Long tripId, RoleDto.SaveRequest req) {
+        var trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (roleRepository.countByTripId(tripId) >= MAX_ROLES) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "역할은 " + MAX_ROLES + "개까지 둘 수 있어요");
+        }
+        roleRepository.save(new Role(trip, req.title().strip(), req.required(), req.capacity(), strip(req.tasks())));
+        events.publishEvent(new TripChanged(tripId, "roles"));
+        return board(tripId);
+    }
+
+    // 정원을 지금 인원보다 줄여도 배정은 그대로 둔다. 손으로 옮길 때처럼 "3/2"로 보이고 사람이 고른다
+    @Transactional
+    public RoleDto.Board updateRole(Long tripId, Long roleId, RoleDto.SaveRequest req) {
+        var role = roleRepository.findByIdAndTripId(roleId, tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        role.update(req.title().strip(), req.required(), req.capacity(), strip(req.tasks()));
+        events.publishEvent(new TripChanged(tripId, "roles"));
+        return board(tripId);
+    }
+
+    // 그 역할에 있던 사람은 미배정으로 돌아간다
+    @Transactional
+    public void deleteRole(Long tripId, Long roleId) {
+        var role = roleRepository.findByIdAndTripId(roleId, tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        assignmentRepository.deleteByRoleId(role.getId());
+        roleRepository.delete(role);
+        events.publishEvent(new TripChanged(tripId, "roles"));
+    }
+
+    private static List<String> strip(List<String> tasks) {
+        return tasks.stream().map(String::strip).toList();
+    }
+
     // 화면이 본 version 과 지금 version 이 다르면 그 사이 누가 옮긴 것이라 409 로 막는다
     @Transactional
     public RoleDto.Board move(Long tripId, Long memberId, RoleDto.MoveRequest req) {
@@ -71,6 +111,28 @@ public class RoleService {
         assignmentRepository.flush();
         events.publishEvent(new TripChanged(tripId, "roles"));
         return board(tripId);
+    }
+
+    // 이동·회비 근거에 쓸 값만 꺼낸다. 길찾기는 몇 초 걸리니 그동안 DB 연결을 붙잡지 않게 여기서 트랜잭션을 끝낸다
+    // 차를 가져가는 사람과 운전 칸에 들어간 사람을 같이 담는다(손으로 옮겨 차 없는 사람이 운전 칸에 있을 수도 있다)
+    @Transactional(readOnly = true)
+    public TravelDto.Plan travelPlan(Long tripId) {
+        var trip = tripRepository.findWithMembersById(tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Set<Long> drivers = assignmentRepository.findByRoleTripIdOrderById(tripId).stream()
+                .filter(a -> a.getRole().getKind() == RoleKind.DRIVER)
+                .map(a -> a.getMember().getId())
+                .collect(Collectors.toSet());
+        Map<Long, SurveyAnswer> surveys = surveyAnswerRepository.findByMemberTripId(tripId).stream()
+                .collect(Collectors.toMap(s -> s.getMember().getId(), Function.identity()));
+
+        var cars = trip.getMembers().stream()
+                .filter(m -> drivers.contains(m.getId()) || (surveys.containsKey(m.getId()) && surveys.get(m.getId()).isHasCar()))
+                .map(m -> new TravelDto.Car(m.getId(), m.getName(),
+                        surveys.containsKey(m.getId()) ? surveys.get(m.getId()).getDeparture() : null,
+                        drivers.contains(m.getId())))
+                .toList();
+        return new TravelDto.Plan(trip.getDestination(), trip.getMembers().size(), cars);
     }
 
     // 손으로 옮긴 배정까지 지우고 설문으로 처음부터 다시 짠다. 점수 규칙은 RoleScorer, 배정은 HungarianAssigner

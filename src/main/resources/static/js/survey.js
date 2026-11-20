@@ -1,4 +1,4 @@
-// 설문: 질문 6개를 한 장씩 고르고, 마지막 장에서 숙소 조건 중요도를 매겨 한 번에 저장한다
+// 설문: 질문을 한 장씩 고르고, 마지막 장에서 숙소 조건 중요도를 매겨 한 번에 저장한다
 var tripId = $('body').data('trip-id');
 
 // key 와 value 는 Spring SurveyDto.Request 의 칸 이름·enum 값과 같아야 한다
@@ -9,7 +9,11 @@ var QUESTIONS = [
     { label: '분 단위로 계획', value: 'PLANNER' }, { label: '큰 틀만', value: 'OUTLINE' }, { label: '그때그때', value: 'SPONTANEOUS' }] },
   { key: 'hasCar', title: '차를 가져갈 수 있나요?', options: [
     { label: '가능', value: true }, { label: '어려움', value: false }] },
-  { key: 'separateDeparture', title: '어디서 출발하나요?', options: [
+  // 차를 가져가는 사람만 받는다. 이동·회비 근거(역할 보드)의 길찾기 출발점
+  { key: 'departure', title: '차는 어디서 출발해요?', input: '서울 마포구',
+    note: '동네까지만 적어 주세요. 길찾기에만 쓰고, 다른 사람에게는 거리·시간만 보여요.',
+    when: function () { return answers.hasCar === true; } },
+  { key: 'separateDeparture', title: '다 같이 출발하나요?', options: [
     { label: '같이 출발', value: false }, { label: '따로 출발', value: true }] },
   { key: 'mobilityLimited', title: '이동이 불편한 사정이 있나요?',
     note: "답은 본인과 방장만 봅니다. 다른 사람에게는 '이동 적은 역할 우선'으로만 보여요.", options: [
@@ -33,9 +37,17 @@ var step = 0;
 var answers = {};
 var preferences = {};
 
-// 몇 번째 장을 보여 줄지. 질문 6장 다음이 숙소 조건 장이다
+// 몇 번째 장을 보여 줄지. 질문 장들 다음이 숙소 조건 장이다
+// when 이 거짓인 장(차 없는 사람의 출발 동네)은 답을 비우고 가던 쪽으로 건너뛴다
 function go(next) {
+  var forward = next >= step;
   step = next;
+  var skip = QUESTIONS[step] && QUESTIONS[step].when && !QUESTIONS[step].when();
+  if (skip) {
+    answers[QUESTIONS[step].key] = null;
+    go(forward ? step + 1 : step - 1);
+    return;
+  }
   $('#progress').css('width', (step / TOTAL * 100) + '%');
   $('#step-question').prop('hidden', step >= QUESTIONS.length);
   $('#step-preferences').prop('hidden', step < QUESTIONS.length);
@@ -48,8 +60,20 @@ function go(next) {
     $('#q-title').text(q.title);
     $('#q-note').text(q.note || '').prop('hidden', !q.note);
     var box = $('#q-options').empty();
+    if (q.input) {
+      var field = $('<input type="text" maxlength="30">').attr('placeholder', '예: ' + q.input).val(answers[q.key] || '');
+      var next = $('<button type="button" class="btn primary">').text('다음').click(function () {
+        answers[q.key] = field.val().trim();
+        go(step + 1);
+      });
+      field.on('keydown', function (e) { if (e.key === 'Enter') next.click(); });
+      box.append(field, next);
+      return;
+    }
     q.options.forEach(function (o) {
-      $('<button type="button" class="choice">').text(o.label).click(function () {
+      // 지난 답을 칠해 둔다. avoid 는 배열이라 글자로 바꿔 견준다
+      var picked = JSON.stringify(answers[q.key]) === JSON.stringify(o.value);
+      $('<button type="button" class="choice">').toggleClass('on', picked).text(o.label).click(function () {
         answers[q.key] = o.value;
         go(step + 1);
       }).appendTo(box);
@@ -80,27 +104,43 @@ function renderPreferences() {
 
 // PUT: /api/trips/1/members/2/survey
 // { "activity": "INDOOR", "planning": "PLANNER", "hasCar": true, "separateDeparture": false,
-//   "mobilityLimited": false, "avoid": ["DRIVING"], "preferences": { "DETACHED": 5, ... } }
+//   "departure": "서울 마포구", "mobilityLimited": false, "avoid": ["DRIVING"], "preferences": { "DETACHED": 5, ... } }
 function save() {
   $('#btn-save').prop('disabled', true).text('저장 중…');
   $('#save-error').prop('hidden', true);
   var body = $.extend({}, answers, { preferences: preferences });
   api('PUT', '/api/trips/' + tripId + '/members/' + me.id + '/survey', body)
-    .done(function () {
-      $('#step-question, #step-preferences').prop('hidden', true);
-      $('#saved-title').text(me.name + '님 설문을 저장했어요');
-      $('#step-saved').prop('hidden', false);
-    })
+    .done(showSaved)
     .fail(function () { $('#save-error').prop('hidden', false); })
     .always(function () { $('#btn-save').prop('disabled', false).text('저장하기'); });
 }
 
+// GET: /api/trips/1/members/2/survey  -> SurveyDto.Response (처음이면 404)
+// 다시 들어온 사람이 처음부터 다시 고르지 않게 지난 답을 채워 두고, 이미 했으면 저장 화면부터 보여 준다
+function loadMine() {
+  return api('GET', '/api/trips/' + tripId + '/members/' + me.id + '/survey').done(function (s) {
+    answers = { activity: s.activity, planning: s.planning, hasCar: s.hasCar, separateDeparture: s.separateDeparture,
+      departure: s.departure || null, mobilityLimited: !!s.mobilityLimited, avoid: s.avoid };
+    $.extend(preferences, s.preferences);
+  });
+}
+
+function showSaved() {
+  $('#step-question, #step-preferences').prop('hidden', true);
+  $('#saved-title').text(me.name + '님 설문을 저장했어요');
+  $('#progress').css('width', '100%');
+  $('#step-saved').prop('hidden', false);
+}
+
 $(function () {
   AMENITIES.forEach(function (a) { preferences[a.key] = 3; });
+  $('#go-roles').attr('href', '/trips/' + tripId + '/roles');
+  $('#go-stays').attr('href', '/trips/' + tripId + '/stays');
 
   loadTrip(tripId).done(function (trip) {
     me = trip.members.find(function (m) { return m.id === trip.meId; });
-    go(0);
+    if (me.surveyDone) loadMine().done(showSaved).fail(function () { go(0); });
+    else go(0);
   });
 
   $('.btn-back').click(function () { go(step - 1); });

@@ -9,15 +9,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Comparator;
+import java.util.List;
+
 @Service
 public class TripService {
 
     private final TripRepository tripRepository;
+    private final MemberRepository memberRepository;
     private final RoleRepository roleRepository;
     private final ApplicationEventPublisher events;
 
-    public TripService(TripRepository tripRepository, RoleRepository roleRepository, ApplicationEventPublisher events) {
+    public TripService(TripRepository tripRepository, MemberRepository memberRepository, RoleRepository roleRepository,
+                       ApplicationEventPublisher events) {
         this.tripRepository = tripRepository;
+        this.memberRepository = memberRepository;
         this.roleRepository = roleRepository;
         this.events = events;
     }
@@ -27,6 +33,17 @@ public class TripService {
         var trip = tripRepository.findWithMembersById(tripId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         return TripDto.Response.of(trip, me);
+    }
+
+    // 참여한 방을 최근 것부터. 방 id 를 먼저 모은 뒤 참여자와 같이 한 번에 읽는다(방마다 따로 읽지 않게)
+    @Transactional(readOnly = true)
+    public List<TripDto.Summary> myTrips(AppUser user) {
+        var ids = memberRepository.findTop50ByUserIdOrderByIdDesc(user.getId()).stream()
+                .map(m -> m.getTrip().getId()).toList();
+        return tripRepository.findByIdIn(ids).stream()
+                .sorted(Comparator.comparingInt((Trip t) -> ids.indexOf(t.getId())))
+                .map(t -> TripDto.Summary.of(t, user))
+                .toList();
     }
 
     // 만든 사람이 방장이 되고, 기본 역할(총무·운전…)이 같이 생긴다

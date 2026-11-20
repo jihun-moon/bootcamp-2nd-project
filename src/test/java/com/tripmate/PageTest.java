@@ -27,6 +27,9 @@ class PageTest {
         mvc.perform(get("/login").param("error", "")).andExpect(content().string(containsString("카카오 로그인에 실패")));
         mvc.perform(get("/login/done")).andExpect(status().isOk());
         mvc.perform(get("/trips/new")).andExpect(status().isOk()).andExpect(view().name("trip/new"));
+        // 체험 방은 로그인 없이 열린다
+        mvc.perform(get("/demo")).andExpect(status().isOk()).andExpect(view().name("trip/demo"))
+                .andExpect(content().string(containsString("체험 방이에요")));
         mvc.perform(get("/join/abc123")).andExpect(content().string(containsString("data-invite-code=\"abc123\"")));
     }
 

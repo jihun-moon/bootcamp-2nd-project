@@ -23,6 +23,8 @@ final class RoleScorer {
     }
 
     static Score score(SurveyAnswer s, RoleKind kind) {
+        // 방장이 더한 역할은 규칙이 없다. 누구나 0점이라 남는 사람이 들어간다
+        if (kind == null) return new Score(0, s == null ? List.of("설문 전") : List.of());
         // 설문 전이면 차가 있는지 모르니 운전에는 넣지 않는다
         if (s == null) return new Score(kind == RoleKind.DRIVER ? FORBIDDEN : 0, List.of("설문 전"));
 

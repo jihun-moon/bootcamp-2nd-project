@@ -7,7 +7,7 @@
   <main class="stack">
     <div class="bar thin"><div id="progress" class="fill"></div></div>
 
-    <!-- 질문 6개를 한 장씩. 내용은 survey.js 의 QUESTIONS 가 채운다 -->
+    <!-- 질문을 한 장씩. 내용은 survey.js 의 QUESTIONS 가 채운다 -->
     <section id="step-question" class="box stack">
       <p id="q-count" class="muted small"></p>
       <h2 id="q-title"></h2>
@@ -29,9 +29,15 @@
       </div>
     </section>
 
+    <!-- 저장 뒤 막다른 화면이 되지 않게 다음 갈 곳을 바로 보여 준다 -->
     <section id="step-saved" class="box stack" hidden>
       <h2 id="saved-title"></h2>
-      <button type="button" id="btn-restart" class="link">다시 하기</button>
+      <p class="muted">답은 언제든 다시 고칠 수 있어요. 방장이 추천을 다시 받으면 바뀐 답이 들어가요.</p>
+      <div class="row wrap">
+        <a id="go-roles" class="btn primary">역할 보드 보기</a>
+        <a id="go-stays" class="btn">숙소 투표하기</a>
+        <button type="button" id="btn-restart" class="btn plain">답 고치기</button>
+      </div>
     </section>
   </main>
 </div>

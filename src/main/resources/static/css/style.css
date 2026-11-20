@@ -157,7 +157,10 @@ button { font: inherit; cursor: pointer; }
 .btn.block { display: flex; width: 100%; }
 .btn:disabled { opacity: 0.5; cursor: default; }
 .link { background: none; border: 0; padding: 0; color: var(--ink); font-size: var(--fs-sm); font-weight: 600;
-  text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 3px; transition: text-decoration-color var(--dur-fast) var(--ease); }
+  text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; transition: text-decoration-color var(--dur-fast) var(--ease); }
+/* 혼자 선 글자 단추("하러 가기", "+ 새 방", "빼기")는 밑줄 없이 굵기로만(밑줄이 있으면 지저분해 보였다, 지훈 11-20).
+   글 문장 속 링크만 밑줄을 남겨 어디가 눌리는지 보이게 한다. 마우스를 올리면 밑줄이 진해진다 */
+p > a.link, li > p a.link { text-decoration-color: var(--line-strong); }
 
 /* 마우스가 있는 기기에서만 hover. 휴대폰은 누른 뒤 hover 가 남아 "눌린 채"로 보이는 문제가 있어서 막는다 */
 @media (hover: hover) {

@@ -270,7 +270,7 @@ th, td { padding: 12px; border-bottom: 1px solid var(--line); text-align: left; 
 tr:last-child td { border-bottom: 0; }
 
 /* ---------- 첫 화면 ---------- */
-.hero { display: grid; gap: 32px; padding: 32px 0 16px; }
+.hero { display: grid; gap: 40px; padding: 40px 0 32px; }
 .hero h1 { font-size: var(--fs-2xl); }
 .hero h1 em { font-style: normal; }
 .hero .lead { font-size: var(--fs-md); color: var(--muted); }
@@ -287,9 +287,10 @@ tr:last-child td { border-bottom: 0; }
 .preview .box { padding: 16px; }
 .preview .caption { font-size: var(--fs-xs); color: var(--muted); }
 
-.section { padding: 48px 0 8px; }
-.section > h2 { font-size: var(--fs-xl); margin-bottom: 8px; font-weight: 700; letter-spacing: -0.01em; } /* 훑을 때 제목만 따라가도 읽히게 굵게 */
-.section > .muted { margin-bottom: 24px; }
+/* 한 화면에 한 가지만 보이게 절 사이를 넉넉히(스레드 조언: 정보 밀도를 낮춰라) */
+.section { padding: 80px 0 0; }
+.section > h2 { font-size: var(--fs-xl); margin-bottom: 12px; font-weight: 700; letter-spacing: -0.01em; } /* 훑을 때 제목만 따라가도 읽히게 굵게 */
+.section > .muted { margin-bottom: 32px; }
 
 /* 휴대폰 틀. 기기를 그린 것이라 둥글기 두 단계 규칙의 예외다. 화면 안 색은 다크 모드와 상관없이 실제 기기 화면처럼 고정 */
 .phone {
@@ -401,7 +402,7 @@ tr:last-child td { border-bottom: 0; }
 .bubble.me { justify-self: end; background: var(--kakao); color: #191600; border-color: transparent; }
 .bubble .who { display: block; font-size: var(--fs-xs); color: var(--muted); }
 
-.steps { display: grid; gap: 12px; counter-reset: step; }
+.steps { display: grid; gap: 56px; counter-reset: step; }
 .steps > li { counter-increment: step; display: grid; gap: 12px; align-content: start; }
 .steps > li::before {
   content: counter(step); width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
@@ -432,7 +433,7 @@ tr:last-child td { border-bottom: 0; }
 .faq details[open] summary::after { transform: rotate(45deg); }
 .faq details p { margin-top: 8px; color: var(--muted); }
 
-.cta { text-align: center; padding: 48px 0 16px; }
+.cta { text-align: center; padding: 96px 0 16px; }
 .cta p { margin-inline: auto; } /* 본문 줄 길이 제한(68ch) 때문에 왼쪽으로 붙지 않게 */
 .site-footer { border-top: 1px solid var(--line); margin-top: 48px; padding: 24px 0; color: var(--muted); font-size: var(--fs-xs); }
 
@@ -458,7 +459,13 @@ body:has(.sticky-cta) .site-footer { padding-bottom: 96px; }
 body:has(.sticky-cta) .site-header .btn { display: none; } /* 아래 붙은 버튼과 같은 버튼이 두 번 보이지 않게 */
 
 /* 넓은 화면 */
+/* 방 화면들(개요·설문·역할·숙소): 상자 사이도 조금 더 띄운다 */
+.page > main.stack > * + * { margin-top: 16px; }
+
 @media (min-width: 720px) {
+  .section { padding-top: 120px; }
+  .cta { padding-top: 128px; }
+  .page > main.stack > * + * { margin-top: 24px; }
   .page { padding: 28px 24px 64px; }
   .hero { grid-template-columns: 1.1fr 1fr; align-items: center; padding: 56px 0 24px; }
   h1 { font-size: var(--fs-2xl); }

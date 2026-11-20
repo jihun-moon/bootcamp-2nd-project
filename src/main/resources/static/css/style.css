@@ -378,10 +378,6 @@ tr:last-child td { border-bottom: 0; }
 .phone.playing .chat-demo [data-step]:not(.shown) { display: none; }
 .phone.playing .chat-demo [data-step].shown { animation: msg-in 0.28s var(--ease); }
 @keyframes msg-in { from { opacity: 0; transform: translateY(8px); } }
-.phone.playing .board-scene { opacity: 0; transform: translateX(24px); pointer-events: none; }
-.phone.playing.on-board .chat-scene { opacity: 0; transform: translateX(-24px); }
-.phone.playing.on-board .board-scene { opacity: 1; transform: none; transition-delay: 0.25s; }
-.phone:not(.playing) .chat-scene { display: none; }
 
 
 /* 스크롤 등장: 내용은 기본으로 보이고(움직임이 실패해도 읽힌다) JS 가 .will-reveal 을 붙였을 때만 짧게 올라온다 */
@@ -759,7 +755,7 @@ button.link::after { content: ""; position: absolute; inset: -12px -8px; } /* �
 
 /* 보낼 줄 오른쪽: 금액과 한 번 누르는 단추. 끝난 송금은 작게, 줄 긋지 않고 흐리게 */
 .settle-right { display: inline-flex; align-items: center; gap: 10px; }
-.btn.small.settle-done { min-height: 36px; padding: 6px 12px; font-size: var(--fs-sm); }
+.btn.small.settle-done { min-height: 40px; padding: 6px 12px; font-size: var(--fs-sm); }
 .settle-paid li { gap: 8px; color: var(--muted); }
 .settle-paid li > span:first-child { flex: 1; min-width: 0; }
 
@@ -809,7 +805,7 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
 .nudge { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
   padding: 8px 12px; border-radius: var(--radius-sm); background: var(--accent-soft); }
 .nudge[hidden] { display: none; }
-.nudge .btn.small { min-height: 36px; padding: 6px 12px; font-size: var(--fs-sm); }
+.nudge .btn.small { min-height: 40px; padding: 6px 12px; font-size: var(--fs-sm); }
 
 /* 정산 받는 링크: 내 이름을 고르면 내 줄만 진하게, 나머지는 흐리게 */
 .shared-settle #who { align-items: center; }
@@ -884,14 +880,14 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
 
 /* 기기 틀(소개 페이지). 실제 기기처럼: 휴대폰은 옆 단추·카메라 구멍(다이내믹 아일랜드)·상태 표시줄, 노트북은 카메라·얇은 테두리·알루미늄 받침과 여는 홈.
    크기는 틀 폭을 따라(cqw) 커지고 작아져서 250px 그림이든 170px 그림이든 같은 비율로 보인다 */
-.device-phone { position: relative; container-type: inline-size; padding: 3.4%; border-radius: 15% / 7.2%;
+.device-phone { position: relative; container-type: inline-size; padding: 2.2%; border-radius: 13.5% / 6.4%; /* 테두리 3.4% 는 실물보다 굵었다(지훈 지적), 실제 휴대폰 비율 2% 남짓 */
   background: linear-gradient(150deg, #3a3f47 0%, #15181c 22%, #0b0d10 60%, #23272d 100%);
-  box-shadow: inset 0 0 0 1.5px #4a5059, inset 0 0 0 4px #0b0d10, 0 28px 56px rgb(16 24 40 / 0.28), 0 6px 14px rgb(16 24 40 / 0.18); }
+  box-shadow: inset 0 0 0 1.5px #4a5059, inset 0 0 0 3px #0b0d10, 0 28px 56px rgb(16 24 40 / 0.28), 0 6px 14px rgb(16 24 40 / 0.18); }
 /* 왼쪽 소리 단추 둘, 오른쪽 전원 단추 */
 .device-phone::before { content: ""; position: absolute; left: -2px; top: 19%; width: 3px; height: 7%; border-radius: 2px 0 0 2px; background: #2b2f36;
   box-shadow: 0 calc(7% + 40px) 0 #2b2f36; }
 .device-phone::after { content: ""; position: absolute; right: -2px; top: 25%; width: 3px; height: 11%; border-radius: 0 2px 2px 0; background: #2b2f36; }
-.device-screen { position: relative; overflow: hidden; border-radius: 12% / 5.6%; background: #fff; }
+.device-screen { position: relative; overflow: hidden; border-radius: 11.6% / 5.4%; background: #fff; }
 /* 다이내믹 아일랜드 */
 .device-screen::before { content: ""; position: absolute; z-index: 3; top: 2.4cqw; left: 50%; width: 30%; height: 7.6cqw; transform: translateX(-50%); border-radius: 99px; background: #050506; }
 .device-status { display: flex; justify-content: space-between; align-items: center; height: 11.5cqw; padding: 1.2cqw 7.5cqw 0 9cqw; background: #fff; color: #111; font-size: 3.9cqw; }
@@ -1054,3 +1050,15 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
 
 /* 체험 방: 탭 칸이 grid(.ov-grid)여도 숨김(hidden)이 이기게 */
 [data-panel][hidden] { display: none !important; }
+
+/* 누르는 칸(단추 점검에서 찾음): 작은 단추가 휴대폰에서 36px 라 권장 44px 보다 작았다. 손가락 기기에서는 44px.
+   글자 단추("나는 따로 가요", "로그아웃")는 글씨는 그대로 두고 보이지 않는 여백으로 누름 칸만 넓힌다(배치는 안 바뀐다) */
+@media (pointer: coarse) {
+  .btn.small, .nudge .btn.small, .btn.small.settle-done { min-height: 44px; }
+  button.link, a.link:not(p a.link) { padding: 12px 6px; margin: -12px -6px; }
+  details > summary { min-height: 44px; display: flex; align-items: center; }
+}
+.trip-header .top .btn { font-size: 1rem; } /* 체험 방 머리의 시작 단추만 14px 로 작았다(머리 글자 크기를 물려받음) */
+
+/* 첫 화면 단톡방: 욕은 글자 대신 "#@%!"를 흐리게(실제 욕은 코드에도 없다) */
+.censor { display: inline-block; padding: 0 4px; border-radius: 4px; background: #191919; color: #fff; filter: blur(0.6px); font-weight: 700; letter-spacing: 0.04em; }

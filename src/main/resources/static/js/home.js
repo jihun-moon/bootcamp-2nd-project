@@ -37,7 +37,8 @@ function loadMyTrips() {
   });
 }
 
-// 휴대폰 장면: 단톡방 메시지가 "…"(입력 중) 뒤에 하나씩 → 역할 보드로 넘어가 줄이 하나씩 → 교통비 숫자가 올라감 → 처음부터.
+// 휴대폰 장면: 겨울 펜션 계획으로 시끄러운 단톡방. 메시지가 "…"(입력 중) 뒤에 하나씩, 마지막에 방장이 TripMate 링크를 던지고 끝 → 처음부터.
+// 앱 화면은 바로 아래 영상 띠와 실제 화면 열 장이 보여 준다(여기서 또 보이면 겹쳤다).
 // 화면 밖이면 멈춘다(보지도 않는데 계속 돌지 않게). 움직임 줄이기면 재생하지 않고 결과 화면만 둔다
 function playPhone(phone) {
   var visible = true;
@@ -45,8 +46,6 @@ function playPhone(phone) {
   var untilVisible = async function () { while (!visible) await wait(300); };
 
   var chatSteps = phone.querySelectorAll('.chat-scene [data-step]');
-  var boardSteps = phone.querySelectorAll('.board-scene [data-step]');
-  var counter = phone.querySelector('[data-count]');
   var unread = phone.querySelector('.unread');
   var typing = $('<li class="typing" aria-hidden="true"><i></i><i></i><i></i></li>');
 
@@ -56,8 +55,7 @@ function playPhone(phone) {
   var firstRound = true;
   (async function loop() {
     for (;;) {
-      phone.classList.remove('on-board');
-      $(chatSteps).add(boardSteps).removeClass('shown');
+      $(chatSteps).removeClass('shown');
       if (unread) unread.textContent = '7';
       // 첫 바퀴는 싸움거리 세 줄(운전·숙소·날짜)을 바로 띄운다. 들어오자마자 빈 휴대폰이 보이면 "고장났나?"로 읽혔고,
       // 말풍선 하나만으로는 "우리 단톡방 얘기네"가 안 됐다
@@ -76,15 +74,6 @@ function playPhone(phone) {
         // 카톡처럼 친구들이 읽을 때마다 노란 숫자가 줄어든다(7 → 1). 다 읽기 전에 민지가 답한다
         if (mine && unread) readOneByOne(unread, [6, 5, 3, 2, 1]);
         await wait(mine ? 1800 : 900); // 초대 카드는 읽을 시간을 조금 더
-      }
-      await wait(1200);
-      phone.classList.add('on-board');
-      await wait(500);
-      for (var j = 0; j < boardSteps.length; j++) {
-        await untilVisible();
-        boardSteps[j].classList.add('shown');
-        if (boardSteps[j].contains(counter)) countUp(counter, Number(counter.dataset.count));
-        await wait(450);
       }
       await wait(4000);
       firstRound = false;

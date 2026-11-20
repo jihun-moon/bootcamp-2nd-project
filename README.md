@@ -50,7 +50,7 @@ JDK 17 이상만 있으면 된다. DB 는 메모리 H2 라 설치할 것이 없�
 | 숙소 링크 미리보기 | POST | `/api/trips/{id}/stays/preview` | 200 `{"title": "가평 무지개 독채펜션", "imageUrl": "https://...", "price": 238640, "amenities": ["DETACHED"]}`<br>요청 `{"url": "https://..."}` | url 이 `http(s)://` 가 아니면 400 | 김현수 |
 | 숙소 올리기 | POST | `/api/trips/{id}/stays` | 201 숙소<br>요청 `{"url": "https://...", "title": "숲속 독채", "price": 240000, "amenities": ["DETACHED"]}` | url 이 `http(s)://` 가 아니거나 가격이 음수면 400 | 김현수 |
 | 숙소 투표 | PUT | `/api/trips/{id}/votes/{memberId}` | 204<br>요청 `{"stayId": 3}` (null = 취소) | 남의 표면 403, 숙소가 없으면 404 | 김현수 |
-| 내 여행방 | GET | `/api/me/trips` | 200 `[{"id": 1, "title": "...", "memberCount": 8, "surveyDone": 5, "host": true}]` | 로그인 안 했으면 401 | 박재현 |
+| 내 여행방 | GET | `/api/me/trips` | 200 `[{"id": 1, "title": "...", "memberCount": 8, "surveyDone": 5, "host": true, "todo": ["survey"]}]`<br>todo = 내가 안 한 일(invite·survey·dates, 급한 순) | 로그인 안 했으면 401 | 박재현 |
 | 날짜 맞추기 판 | GET | `/api/trips/{id}/dates` | 200 `{"memberCount": 8, "responded": 5, "available": {"2027-01-15": [1, 2]}}` | | 문지훈 |
 | 내 되는 날 | PUT | `/api/trips/{id}/members/{memberId}/dates` | 200 판<br>요청 `{"dates": ["2027-01-15", "2027-01-16"]}` | 남의 것 403, 지난 날·1년 넘는 날 400 | 문지훈 |
 | 날짜 정하기 | PUT | `/api/trips/{id}/period` | 200 방<br>요청 `{"startDate": "2027-01-15", "endDate": "2027-01-17"}` | 방장이 아니면 403, 도착이 출발보다 앞이면 400 | 문지훈 |

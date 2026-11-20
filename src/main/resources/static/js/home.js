@@ -157,10 +157,16 @@ function stickyAfterHero() {
   var sticky = document.querySelector('.sticky-cta');
   var heroCta = document.querySelector('.hero .btn.primary');
   if (!sticky || !heroCta || !('IntersectionObserver' in window)) return;
+  // 첫 화면 단추나 마지막 권유 단추가 보이는 동안은 숨는다. 같은 단추가 한 화면에 두 개 보이지 않게
+  var showing = new Set();
   sticky.classList.add('waiting');
-  new IntersectionObserver(function (entries) {
-    sticky.classList.toggle('waiting', entries[0].isIntersecting);
-  }).observe(heroCta);
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) { if (e.isIntersecting) showing.add(e.target); else showing.delete(e.target); });
+    sticky.classList.toggle('waiting', showing.size > 0);
+  });
+  observer.observe(heroCta);
+  var endCta = document.querySelector('.cta .btn.primary');
+  if (endCta) observer.observe(endCta);
 }
 
 // "나는 무슨 역할형?" 미리 보기. 점수는 RoleScorer 규칙 일부(차 있음 +4, 계획형 +3, 숙소 휴식 +2, 밖 활동 +2)를 그대로 쓴다.

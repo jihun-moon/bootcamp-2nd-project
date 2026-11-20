@@ -4,7 +4,7 @@
 <body>
 <header th:replace="~{fragments/common :: siteHeader(false)}"></header>
 <!-- 적는 칸 대신 누르는 칸. 지역은 자주 가는 곳을 누르고, 날짜는 달력에서 두 번 누르고, 이름은 비우면 "강릉 2박 3일"로 붙는다 -->
-<main class="page narrow stack loose">
+<main class="page narrow stack loose with-photo">
   <!-- Unsplash 무료 사진(unsplash.com/photos/sE-xn2CBnpQ) -->
   <img class="cover" th:src="@{/img/photo/sea.jpg}" alt="맑은 날 바다로 이어지는 길" width="1200" height="600">
   <div class="stack">

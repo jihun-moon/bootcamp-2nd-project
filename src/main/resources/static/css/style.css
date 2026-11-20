@@ -164,9 +164,14 @@ button { font: inherit; cursor: pointer; }
   .kakao-login:hover { filter: brightness(0.96); }
   .link:hover { text-decoration-color: currentColor; }
   .choice:hover, label.chip:hover { border-color: var(--line-strong); }
-  .trip-item, .core .box, .mini-phone, .stay { transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease); }
-  .trip-item:hover, .core .box:hover, .stay:hover { border-color: var(--line-strong); transform: translateY(-2px); }
+  .trip-item, .mini-phone, .stay { transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease); }
+  .trip-item:hover, .stay:hover { border-color: var(--line-strong); transform: translateY(-2px); }
   .tabs a:hover { color: var(--ink); }
+  .toggle:hover:not([aria-pressed="true"]) { border-color: var(--line-strong); background: var(--surface-2); }
+  .segmented button:hover:not([aria-pressed="true"]) { color: var(--ink); background: var(--surface-2); }
+  .faq summary:hover, .faq summary:hover::after { color: var(--accent); }
+  .mini-phone:hover { transform: translateY(-4px); } /* 테두리가 휴대폰 몸체라 색은 그대로, 뜨기만 */
+  .mini-phone:hover .mini-go { text-decoration: underline; text-underline-offset: 3px; }
 }
 .choice {
   min-height: 52px; padding: 12px 16px; border: 1px solid var(--line); border-radius: var(--radius-sm);
@@ -184,7 +189,10 @@ button { font: inherit; cursor: pointer; }
 .toggles { display: flex; flex-wrap: wrap; gap: 8px; }
 .toggle { min-height: 40px; padding: 8px 14px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); font-size: var(--fs-sm); transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease); }
 .toggle[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
-.toggle:active { transform: scale(0.97); }
+.toggle:active, .segmented button:active { transform: scale(0.97); }
+/* 세 칸 단추는 바깥 상자가 overflow: hidden 이라 초점 테두리를 안쪽으로 그린다 */
+.segmented button:focus-visible { outline-offset: -3px; }
+.faq summary { transition: color var(--dur-fast) var(--ease); }
 /* 설문 장 넘김: 다음은 오른쪽에서, 이전은 왼쪽에서 */
 .slide-next { animation: slide-next var(--dur-slow) var(--ease); }
 .slide-back { animation: slide-back var(--dur-slow) var(--ease); }
@@ -497,10 +505,6 @@ body:has(.sticky-cta) .site-header .btn { display: none; } /* 아래 붙은 버�
 /* 마지막 권유도 다른 절 제목과 같은 크기 */
 /* 단계 그림의 단추는 그림이라 눌러도 안 됐다. 그림 전체를 체험 방 링크로 두고, 누를 수 있다는 걸 아래 한 줄로 알린다 */
 .mini-phone .mini-go { margin-top: auto; padding-top: 4px; font-size: var(--fs-sm); font-weight: 600; color: var(--accent); }
-@media (hover: hover) {
-  a.mini-phone { transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease); }
-  a.mini-phone:hover { border-color: var(--line-strong); transform: translateY(-2px); }
-}
 .split p.chosen { border-color: var(--accent); background: var(--accent-soft); }
 .split p.chosen span { color: var(--accent); font-weight: 600; }
 /* 화면 폭 전체로 펼치는 띠(사진 띠, 마지막 권유). 가로 스크롤은 html 의 overflow-x: clip 이 막는다 */
@@ -508,15 +512,17 @@ body:has(.sticky-cta) .site-header .btn { display: none; } /* 아래 붙은 버�
 
 /* 사진 띠: 사진 위 아래쪽을 어둡게 깔고 흰 글씨 한 줄. 사진이 늦게 와도 글이 읽히게 바탕색을 둔다 */
 .photo-band { position: relative; margin-top: 64px; background: #1b1f24; }
-.photo-band img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
+.photo-band img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; filter: brightness(0.82); } /* 앞유리 햇빛이 너무 밝아 글씨가 묻혀서 사진을 살짝 눌러 둔다 */
 .photo-band p { position: absolute; inset: auto 0 0; max-width: none; padding: 64px 24px 32px;
-  background: linear-gradient(transparent, rgb(0 0 0 / 0.65)); color: #fff; font-size: var(--fs-xl); font-weight: 700; line-height: 1.35; }
+  background: linear-gradient(rgb(0 0 0 / 0), rgb(0 0 0 / 0.55) 40%, rgb(0 0 0 / 0.8)); color: #fff; font-size: var(--fs-xl); font-weight: 700; line-height: 1.35;
+  text-shadow: 0 1px 12px rgb(0 0 0 / 0.45); } /* 앞유리 햇빛 위에서도 흰 글씨가 읽히게 진하게 깔고 그림자 */
 
 /* 마지막 권유: 친구들이 모인 모닥불 사진 위에 어둡게 한 겹, 흰 글씨. 단추만 브랜드 색 */
-.cta { margin-top: 96px; padding: 96px 16px; text-align: center; color: #fff;
-  background: linear-gradient(rgb(0 0 0 / 0.55), rgb(0 0 0 / 0.55)), url("/img/photo/bonfire.jpg") center / cover, #2a1a10; }
+.cta { margin-top: 96px; padding: 96px 16px; text-align: center; color: #fff; text-shadow: 0 1px 10px rgb(0 0 0 / 0.5);
+  background: linear-gradient(rgb(0 0 0 / 0.66), rgb(0 0 0 / 0.66)), url("/img/photo/bonfire.jpg") center / cover, #2a1a10; }
 .cta h2 { font-size: var(--fs-2xl); letter-spacing: -0.02em; }
-.cta .muted { color: inherit; opacity: 0.85; }
+.cta .muted { color: inherit; opacity: 0.92; }
+.cta .btn { text-shadow: none; }
 body:has(.cta) .site-footer { margin-top: 0; }
 @media (min-width: 720px) {
   .cta { margin-top: 128px; padding: 144px 24px; }
@@ -551,7 +557,11 @@ body:has(.cta) .site-footer { margin-top: 0; }
 .cal-day.band-left { background: linear-gradient(90deg, var(--accent-soft) 50%, transparent 50%); }
 .cal-day.start, .cal-day.end { z-index: 0; isolation: isolate; color: var(--accent-ink); font-weight: 700; }
 .cal-day.start::before, .cal-day.end::before { content: ""; position: absolute; inset: 2px 50%; margin-inline: -20px; border-radius: 50%; background: var(--accent); z-index: -1; }
-@media (hover: hover) { .cal-day:not(:disabled):not(.start):not(.end):hover { background-color: var(--surface-2); border-radius: var(--radius-sm); } }
+@media (hover: hover) {
+  .cal-day:not(:disabled):not(.start):not(.end):not(.avail):hover { background-color: var(--surface-2); border-radius: var(--radius-sm); }
+  /* 날짜 맞추기 칸은 겹친 정도(바탕색)를 덮지 않게 테두리로만 */
+  .cal-day.avail:not(:disabled):not([aria-pressed="true"]):hover { box-shadow: inset 0 0 0 1px var(--line-strong); }
+}
 @media (prefers-color-scheme: dark) { .cal-day.sat, .cal-week:last-child { color: #7aa7ff; } }
 .period { font-weight: 600; color: var(--muted); }
 .period.set { color: var(--accent); font-size: var(--fs-lg); }
@@ -590,3 +600,13 @@ body:has(.cta) .site-footer { margin-top: 0; }
 .cal-day.avail[data-heat="4"] { background: color-mix(in srgb, var(--accent) 55%, transparent); }
 .cal-day.avail[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--accent); font-weight: 700; }
 .best-date { padding: 12px 0; border-top: 1px solid var(--line); }
+
+/* 사진 있는 좁은 화면(방 만들기·로그인·초대·찾을 수 없음): 휴대폰은 사진 위·내용 아래, 넓은 화면은 왼쪽 큰 세로 사진 + 오른쪽 내용.
+   480px 한 줄이 1280px 화면 가운데 떠 있어 휑했다 */
+@media (min-width: 960px) {
+  .page.with-photo { max-width: 1040px; display: grid; grid-template-columns: 1fr 1fr; column-gap: 64px; align-items: start; }
+  .page.with-photo > * { grid-column: 2; }
+  .page.with-photo > .cover { grid-column: 1; grid-row: 1 / span 20; position: sticky; top: 96px; aspect-ratio: 4 / 5; }
+  .page.with-photo > .cover + * { margin-top: 0; }
+  .page.with-photo.center { min-height: auto; padding-top: 64px; }
+}

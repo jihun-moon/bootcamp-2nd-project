@@ -3,7 +3,7 @@
 <head th:replace="~{fragments/common :: head('여행방 초대')}"></head>
 <body th:data-invite-code="${inviteCode}">
 <header th:replace="~{fragments/common :: siteHeader(false)}"></header>
-<main class="page narrow center stack">
+<main class="page narrow center stack with-photo">
   <!-- 친구가 초대 링크를 누르면 가장 먼저 보는 화면이라 차가운 로그인 대신 "같이 가자"는 사진. Unsplash 무료 사진(unsplash.com/photos/Z2k2Yod4vCY) -->
   <img class="cover" th:src="@{/img/photo/friends.jpg}" alt="햇살 아래 함께 웃는 친구들" width="1200" height="600">
   <h1 th:text="${ogTitle} ?: '여행방 초대'">여행방 초대</h1>

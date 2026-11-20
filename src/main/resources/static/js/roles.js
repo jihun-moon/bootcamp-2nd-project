@@ -29,6 +29,7 @@ function render() {
   var box = $('#board').empty();
   var isHost = memberById(trip.meId).host;
   renderShortage(isHost);
+  $('#btn-card').prop('hidden', !board.assignments.length);
 
   columns().forEach(function (col) {
     var role = col.role;
@@ -60,7 +61,9 @@ function render() {
   });
 
   $('#btn-add-role').prop('hidden', !isHost);
-  $('#btn-recommend').prop('hidden', !isHost).text(board.assignments.length ? '다시 추천받기' : '설문으로 추천받기');
+  // 정해진 뒤에는 "결과 카드"가 주인공. 다시 추천은 손으로 옮긴 것까지 갈아엎으니 눈에 덜 띄게
+  $('#btn-recommend').prop('hidden', !isHost).toggleClass('primary', !board.assignments.length)
+    .text(board.assignments.length ? '다시 추천받기' : '설문으로 추천받기');
 }
 
 // 카드 전체가 단추라 휴대폰은 눌러서, 키보드는 Tab·Enter 로 옮긴다. 끌기는 PC 용으로 같이 둔다
@@ -355,10 +358,115 @@ function copyResult() {
   shareText(resultText(), '복사했어요. 단톡방에 붙여 넣어 주세요.');
 }
 
+// 역할 결과 카드(폭 1080 그림). 글은 단톡방에서 길게 늘어져 안 읽히는데 그림은 한눈에 보이고,
+// 아직 설문 안 한 친구도 "나만 없네"로 들어온다. 바닥 주소가 다음 방을 부른다(docs/18 다음에 할 것 2번)
+// 역할 이름에 맞는 사진(테스트 카드와 같은 넷). 더한 역할(설거지 등)은 기록형 사진
+var ROLE_PHOTO = [['운전', 'drive'], ['총무', 'money'], ['장보기', 'bbq'], ['요리', 'bbq'], ['고기', 'bbq']];
+function rolePhoto(title) {
+  var hit = ROLE_PHOTO.find(function (p) { return title.indexOf(p[0]) >= 0; });
+  return '/img/role/' + (hit ? hit[1] : 'photo') + '.jpg';
+}
+
+function loadImage(src) {
+  return new Promise(function (resolve, reject) {
+    var img = new Image();
+    img.onload = function () { resolve(img); };
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+// 사진을 칸에 꽉 차게 가운데를 잘라 넣는다(object-fit: cover 와 같은 셈)
+function drawCover(g, img, x, y, w, h) {
+  var scale = Math.max(w / img.width, h / img.height);
+  var sw = w / scale, sh = h / scale;
+  g.drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, x, y, w, h);
+}
+
+// 긴 방 이름·여러 이름은 글자를 줄여 맞춘다. 폭만 줄이면(fillText 의 maxWidth) 영수증 때처럼 옆으로 눌려 찍혔다
+function fitText(g, text, x, y, max, weight, size, min, font) {
+  while (size > min) {
+    g.font = weight + ' ' + size + 'px ' + font;
+    if (g.measureText(text).width <= max) break;
+    size -= 2;
+  }
+  g.font = weight + ' ' + size + 'px ' + font;
+  g.fillText(text, x, y, max);
+}
+
+function drawRoleCard() {
+  var W = 1080, pad = 72, top = 560, rowH = 190, font = '"Pretendard Variable", Pretendard, sans-serif';
+  var rows = columns().filter(function (col) { return col.role.id !== UNASSIGNED && col.cards.length; });
+  var left = trip.members.length - board.assignments.length;
+  var H = top + 64 + rows.length * rowH + (left ? 60 : 0) + 250;
+  var cover = tripPhoto(trip.destination, trip.startDate);
+  var srcs = [cover ? cover.src : '/img/photo/forest-hills.jpg'].concat(rows.map(function (r) { return rolePhoto(r.role.title); }));
+  return document.fonts.ready.then(function () { return Promise.all(srcs.map(loadImage)); }).then(function (imgs) {
+    var c = document.createElement('canvas'); c.width = W; c.height = H;
+    var g = c.getContext('2d');
+    g.fillStyle = '#f5f6f8'; g.fillRect(0, 0, W, H);
+
+    // 머리: 여행지 사진 위에 방 이름
+    drawCover(g, imgs[0], 0, 0, W, top);
+    var grad = g.createLinearGradient(0, top - 360, 0, top);
+    grad.addColorStop(0, 'rgba(0,0,0,0)'); grad.addColorStop(1, 'rgba(0,0,0,0.72)');
+    g.fillStyle = grad; g.fillRect(0, top - 360, W, 360);
+    g.fillStyle = '#ffffff'; g.textAlign = 'left';
+    g.font = '600 40px ' + font; g.fillText('우리 여행 역할 발표', pad, top - 170);
+    fitText(g, trip.title, pad, top - 82, W - pad * 2 - 200, 800, 76, 48, font);
+    var meta = [trip.destination, trip.startDate ? formatPeriod(trip.startDate, trip.endDate) : null, trip.members.length + '명']
+      .filter(Boolean).join(' · ');
+    g.font = '400 34px ' + font; g.fillStyle = 'rgba(255,255,255,0.86)'; g.fillText(meta, pad, top - 30, W - pad * 2 - 200);
+
+    // 역할마다 한 줄: 동그란 사진, 역할 이름, 사람, 첫 근거
+    var y = top + 64;
+    rows.forEach(function (row, i) {
+      var cx = pad + 64, cy = y + 70;
+      g.save(); g.beginPath(); g.arc(cx, cy, 64, 0, Math.PI * 2); g.clip();
+      drawCover(g, imgs[i + 1], cx - 64, cy - 64, 128, 128);
+      g.restore();
+      var tx = pad + 128 + 36, maxW = W - tx - pad;
+      g.fillStyle = '#5f6873'; g.font = '600 32px ' + font; g.fillText(row.role.title, tx, y + 34, maxW);
+      g.fillStyle = '#1b1f24';
+      fitText(g, row.cards.map(function (card) { return card.member.name; }).join(' · '), tx, y + 96, maxW, 800, 52, 34, font);
+      var reason = row.cards.map(function (card) { return card.reasons[0]; }).filter(Boolean)[0];
+      if (reason) { g.fillStyle = '#0e7c72'; g.font = '600 30px ' + font; g.fillText(reason, tx, y + 144, maxW); }
+      if (i < rows.length - 1) { g.fillStyle = '#e3e6ea'; g.fillRect(tx, y + rowH - 12, W - tx - pad, 2); }
+      y += rowH;
+    });
+    if (left) { g.fillStyle = '#5f6873'; g.font = '400 32px ' + font; g.fillText('아직 역할 없는 사람 ' + left + '명', pad, y + 20); }
+
+    // 도장: 정해졌다는 맛. 머리 사진 오른쪽 아래 경계에 비스듬히
+    g.save(); g.translate(W - pad - 96, top - 40); g.rotate(-0.21);
+    g.fillStyle = 'rgba(245,246,248,0.94)'; g.beginPath(); g.arc(0, 0, 92, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = 'rgba(220,53,69,0.9)'; g.lineWidth = 8;
+    g.beginPath(); g.arc(0, 0, 80, 0, Math.PI * 2); g.stroke();
+    g.fillStyle = 'rgba(220,53,69,0.9)'; g.textAlign = 'center'; g.font = '800 50px ' + font; g.fillText('확정', 0, 18);
+    g.restore();
+
+    // 바닥: 바꾸는 법과 주소
+    g.textAlign = 'left';
+    g.fillStyle = '#5f6873'; g.font = '400 32px ' + font; g.fillText('바꾸고 싶으면 방에서 카드만 옮기면 돼요', pad, H - 170, W - pad * 2);
+    g.fillStyle = '#1b1f24'; g.font = '800 44px ' + font; g.fillText('TripMate', pad, H - 96);
+    g.fillStyle = '#5f6873'; g.font = '400 32px ' + font; g.fillText('우리도 1분 만에 정해 보기 → ' + location.host, pad, H - 46, W - pad * 2);
+    return new Promise(function (resolve) { c.toBlob(resolve, 'image/jpeg', 0.9); }); // 사진이 들어 PNG 는 무거웠다
+  });
+}
+
+function shareRoleCard() {
+  var button = $('#btn-card').prop('disabled', true);
+  drawRoleCard().then(function (blob) {
+    return shareImage(blob, 'tripmate-roles.jpg', '[' + trip.title + '] 역할 나왔다 ㅋㅋ ' + location.origin + '/trips/' + tripId + '/roles',
+      '역할 카드를 저장했어요. 단톡방에 올려 주세요.');
+  }).catch(function () { showToast('카드를 만들지 못했어요. 다시 눌러 주세요.'); })
+    .finally(function () { button.prop('disabled', false); });
+}
+
 $(function () {
   $('#btn-recommend').click(recommend);
   $('#btn-roles-fill').click(fillShortage);
-  $('#btn-copy').text(shareLabel('카톡으로 결과 보내기', '결과 복사해서 단톡방에 붙이기')).click(copyResult);
+  $('#btn-card').text(shareLabel('카톡으로 결과 카드 보내기', '결과 카드 저장하기')).click(shareRoleCard);
+  $('#btn-copy').text(shareLabel('글로 보내기', '글로 복사하기')).click(copyResult);
   $('#btn-travel').click(loadTravel);
   $('#btn-add-role').click(function () { openEditor(null); });
   $('#role-form').on('submit', saveRole);

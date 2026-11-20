@@ -289,15 +289,8 @@ function shareQuizCard() {
   if (!quizBest) return;
   var button = $('#quiz-card').prop('disabled', true);
   drawQuizCard(quizBest).then(function (blob) {
-    var file = new File([blob], 'tripmate-' + quizBest.key + '.jpg', { type: 'image/jpeg' });
-    if (CAN_SHARE && navigator.canShare && navigator.canShare({ files: [file] })) {
-      return navigator.share({ files: [file], text: '나 여행 가면 "' + quizBest.name + '"래 ㅋㅋ 너는? ' + location.origin + '/#quiz' })
-        .catch(function () { /* 공유 창을 닫은 것 */ });
-    }
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob); a.download = file.name; a.click();
-    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
-    showToast('결과 카드를 저장했어요. 스토리나 단톡방에 올려 보세요.');
+    return shareImage(blob, 'tripmate-' + quizBest.key + '.jpg',
+      '나 여행 가면 "' + quizBest.name + '"래 ㅋㅋ 너는? ' + location.origin + '/#quiz', '결과 카드를 저장했어요. 스토리나 단톡방에 올려 보세요.');
   }).catch(function () { showToast('카드를 만들지 못했어요. 다시 눌러 주세요.'); })
     .finally(function () { button.prop('disabled', false); });
 }

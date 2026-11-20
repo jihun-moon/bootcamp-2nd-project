@@ -145,16 +145,7 @@ function shareReceipt() {
     r.classList.add('tear');
   }
   document.fonts.ready.then(drawPng).then(function (blob) {
-    var file = new File([blob], 'tripmate-receipt.png', { type: 'image/png' });
-    if (CAN_SHARE && navigator.canShare && navigator.canShare({ files: [file] })) {
-      return navigator.share({ files: [file], text: '우리 여행 영수증 나왔다 ㅋㅋ' }).catch(function () {});
-    }
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'tripmate-receipt.png';
-    a.click();
-    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
-    showToast('영수증 그림을 저장했어요. 단톡방에 올려 주세요.');
+    return shareImage(blob, 'tripmate-receipt.png', '우리 여행 영수증 나왔다 ㅋㅋ', '영수증 그림을 저장했어요. 단톡방에 올려 주세요.');
   }).finally(function () { $('#btn-receipt-share').prop('disabled', false); });
 }
 

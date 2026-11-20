@@ -82,6 +82,19 @@ function shareLabel(phone, pc) {
   return CAN_SHARE ? phone : pc;
 }
 
+// 그림 공유: 휴대폰은 공유 창에 그림 파일째(카톡을 고르면 사진으로 간다). 그림 공유가 안 되는 곳(PC·카톡 안 브라우저)은 내려받는다
+// shareImage(blob, 'tripmate-roles.jpg', '우리 역할 나왔다', '역할 카드를 저장했어요. 단톡방에 올려 주세요.')
+function shareImage(blob, fileName, text, savedMessage) {
+  var file = new File([blob], fileName, { type: blob.type });
+  if (CAN_SHARE && navigator.canShare && navigator.canShare({ files: [file] })) {
+    return navigator.share({ files: [file], text: text }).catch(function () { /* 공유 창을 닫은 것 */ });
+  }
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = fileName; a.click();
+  setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  showToast(savedMessage);
+}
+
 // 아직 안 한 사람 콕 찌르기. 방장만이 아니라 누구나 누른다(챙기는 일이 한 사람에게 몰리지 않게).
 // 이름과 그 화면 링크가 든 글을 단톡방으로. 다 했으면 줄을 숨긴다. 나는 빼고 센다(내 일은 화면이 따로 알려 준다)
 // renderNudge($('#dates-nudge'), trip, ['민지', '도윤'], '되는 날을 안 골랐어요', '되는 날만 눌러 줘요', '')

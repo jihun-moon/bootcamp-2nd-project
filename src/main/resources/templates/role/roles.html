@@ -8,6 +8,8 @@
     <div class="between wrap">
       <p class="muted small">카드를 누르면 역할을 바꿀 수 있어요. PC 에서는 끌어서 옮겨도 돼요.</p>
       <div class="row wrap">
+        <!-- 결과 카드(그림): 역할마다 사진·이름·근거. 단톡방에 그림째 올린다. 배정이 하나라도 있을 때만 -->
+        <button type="button" id="btn-card" class="btn primary" hidden>결과 카드</button>
         <button type="button" id="btn-copy" class="btn">카톡용 글 복사</button>
         <a th:href="@{/trips/{id}/receipt(id=${tripId})}" class="btn">영수증 뽑기</a>
         <button type="button" id="btn-add-role" class="btn" hidden>역할 더하기</button>

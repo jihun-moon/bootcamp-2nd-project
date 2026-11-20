@@ -37,15 +37,18 @@ function playPhone(phone) {
   phone.classList.add('no-anim', 'playing');
   void phone.offsetHeight; // 숨긴 상태를 먼저 그리게 한 뒤 전환을 다시 켠다
   phone.classList.remove('no-anim');
+  var firstRound = true;
   (async function loop() {
     for (;;) {
       phone.classList.remove('on-board');
       $(chatSteps).add(boardSteps).removeClass('shown');
       if (unread) unread.textContent = '7';
-      await wait(600);
+      // 첫 바퀴는 첫 메시지를 바로 띄운다. 들어오자마자 빈 휴대폰이 1.5초 보이면 "고장났나?"로 읽혔다
+      if (!firstRound) await wait(600);
       for (var i = 0; i < chatSteps.length; i++) {
         await untilVisible();
         var mine = chatSteps[i].classList.contains('mine');
+        if (firstRound && i === 0) { chatSteps[0].classList.add('shown'); await wait(700); continue; }
         // "…"(입력 중)은 남이 쓸 때만. 내가 보내는 링크는 바로 붙는다
         if (!mine) {
           typing.insertBefore(chatSteps[i]);
@@ -67,6 +70,7 @@ function playPhone(phone) {
         await wait(450);
       }
       await wait(4000);
+      firstRound = false;
     }
   })();
 }
@@ -110,6 +114,27 @@ function countUp(el, target) {
     if (t < 1) requestAnimationFrame(step);
   };
   requestAnimationFrame(step);
+}
+
+// 공감 숫자(76·74·82%)는 화면에 들어올 때 0부터 0.9초 동안 올라간다. 한 번만
+function countStats() {
+  var nums = document.querySelectorAll('[data-count-to]');
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      observer.unobserve(e.target);
+      var el = e.target, to = Number(el.dataset.countTo), start = performance.now();
+      var step = function (now) {
+        var t = Math.min(1, (now - start) / 900);
+        el.textContent = Math.round(to * (1 - Math.pow(1 - t, 3)));
+        if (t < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+      // 뒤쪽 탭처럼 그리기가 멈춘 곳에서도 0 으로 남지 않게 끝 값을 박아 둔다
+      setTimeout(function () { el.textContent = to; }, 1000);
+    });
+  }, { threshold: 0.6 });
+  nums.forEach(function (el) { el.textContent = '0'; observer.observe(el); });
 }
 
 // 절이 화면에 들어올 때 한 번만 살짝 올라온다. JS 가 붙인 .will-reveal 이 없으면 처음부터 그대로 보인다
@@ -175,4 +200,5 @@ $(function () {
     tiltPhone(phone);
   }
   revealOnScroll();
+  countStats();
 });

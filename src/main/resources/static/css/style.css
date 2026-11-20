@@ -415,15 +415,6 @@ tr:last-child td { border-bottom: 0; }
 .more { display: grid; gap: 0 32px; margin-top: 24px; }
 .more > li { padding: 12px 0; border-top: 1px solid var(--line); }
 
-.compare th, .compare td { text-align: center; }
-.compare th:first-child, .compare td:first-child { text-align: left; }
-.compare .us { background: var(--surface-2); font-weight: 600; }
-.compare thead th { vertical-align: bottom; } /* 열이 다섯이라 머리는 줄을 바꿔 좁게 */
-@media (max-width: 600px) {
-  .compare th, .compare td { padding: 8px 6px; font-size: var(--fs-xs); } /* 휴대폰 폭에서 다섯 칸이 옆으로 밀리지 않게 */
-}
-.yes { color: var(--ink); font-weight: 600; }
-.no { color: var(--muted); }
 
 .faq details { border-bottom: 1px solid var(--line); }
 .faq details p { padding-bottom: 16px; }
@@ -573,3 +564,26 @@ body:has(.cta) .site-footer { margin-top: 0; }
 .period.set { color: var(--accent); font-size: var(--fs-lg); }
 .cover.thin { aspect-ratio: 4 / 1; }
 .cal .cal-day:disabled { color: var(--line-strong); } /* 지난 토·일도 회색(다크 모드 파랑보다 뒤에 둬야 이긴다) */
+/* 휴대폰 폭에서는 장면을 조금 낮춰 한 화면 안에 휴대폰 전체와 아래 설명이 같이 보이게 */
+@media (max-width: 719px) { .phone-screen { height: 500px; } }
+.app-board .note { padding: 8px 12px; border: 0; background: #e3f3f0; color: #0e7c72; font-size: 12px; font-weight: 600; }
+.app-board .sum small { display: block; font-size: 11px; color: #0e7c72; }
+
+/* 비교: 기능 한 줄, 오른쪽에 우리 값, 아래 작은 글씨로 다른 곳. 이기는 칸은 청록, 지는 칸은 회색 */
+.vs { display: grid; gap: 0; border-top: 1px solid var(--line); }
+.vs li { padding: 16px 0; border-bottom: 1px solid var(--line); }
+.vs-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.vs-us { flex: none; font-weight: 700; color: var(--muted); }
+.vs-us.win { color: var(--accent); font-size: var(--fs-lg); }
+.vs-others { margin-top: 4px; font-size: var(--fs-sm); color: var(--muted); }
+.vs-lose-title { margin: 40px 0 8px; font-size: var(--fs-md); color: var(--muted); }
+.vs.lose b { font-weight: 600; color: var(--muted); }
+@media (min-width: 720px) { .vs:not(.lose) { grid-template-columns: 1fr 1fr; column-gap: 48px; } }
+
+/* 공감 숫자: 큰 숫자 셋. 숫자만 브랜드 색 */
+.stats ul { display: grid; gap: 24px; margin-top: 24px; }
+.stats li { display: grid; grid-template-columns: auto 1fr; align-items: baseline; column-gap: 4px; }
+.stats b { font-size: 3rem; line-height: 1; font-weight: 800; letter-spacing: -0.03em; color: var(--accent); font-variant-numeric: tabular-nums; }
+.stats li > span { font-size: var(--fs-xl); font-weight: 700; color: var(--accent); }
+.stats li p { grid-column: 1 / -1; margin-top: 4px; color: var(--muted); }
+@media (min-width: 720px) { .stats ul { grid-template-columns: repeat(3, 1fr); gap: 48px; } }

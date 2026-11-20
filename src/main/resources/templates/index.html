@@ -54,27 +54,27 @@
         </div>
           <div class="room-head"><span class="back" aria-hidden="true">‹</span><b>겨울 펜션 여행</b><span class="count">8</span></div>
           <ul class="chat-demo">
-            <li class="day"><span>2026년 11월 20일 목요일</span></li>
+            <li class="day"><span>2026년 11월 20일 금요일</span></li>
             <li class="msg" data-step>
               <span class="pf" style="background:#7fa7d9"><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="14" r="6.5" fill="#fff" fill-opacity=".92"/><path d="M5.5 33c1.6-6.4 6.6-10 12.5-10s10.9 3.6 12.5 10" fill="#fff" fill-opacity=".92"/></svg></span>
-              <div><span class="who">도윤</span><div class="line"><p class="bubble">운전은 누가 해…? 차 있는 사람?</p><span class="time">오후 8:41</span></div></div>
+              <div><span class="who">도윤</span><div class="line"><p class="bubble">운전 누가 해…? 기름값은 어떻게 나눠?</p><span class="time">오후 8:41</span></div></div>
             </li>
             <li class="msg" data-step>
               <span class="pf" style="background:#e6a57e"><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="14" r="6.5" fill="#fff" fill-opacity=".92"/><path d="M5.5 33c1.6-6.4 6.6-10 12.5-10s10.9 3.6 12.5 10" fill="#fff" fill-opacity=".92"/></svg></span>
-              <div><span class="who">서연</span><div class="line"><p class="bubble">숙소 투표 5:3인데 나 온수풀 없으면 좀…</p><span class="time">오후 8:42</span></div></div>
+              <div><span class="who">서연</span><div class="line"><p class="bubble">숙소는 아무거나~ 근데 온수풀 없으면 좀…</p><span class="time">오후 8:42</span></div></div>
             </li>
             <li class="msg mine" data-step>
               <div class="line"><span class="time"><span class="unread">7</span>오후 8:43</span>
                 <a class="link-card" tabindex="-1">
                   <span class="link-band">TripMate</span>
                   <span class="link-title">'겨울 펜션 2박 3일' 여행에 초대받았어요</span>
-                  <span class="link-desc">설문 1분이면 역할과 숙소를 같이 정해요</span>
+                  <span class="link-desc">다섯 번 누르면 역할·숙소·교통비까지 정해져요</span>
                   <span class="link-domain">tripmate · 초대 링크</span>
                 </a></div>
             </li>
             <li class="msg" data-step>
               <span class="pf" style="background:#9ccf8f"><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="14" r="6.5" fill="#fff" fill-opacity=".92"/><path d="M5.5 33c1.6-6.4 6.6-10 12.5-10s10.9 3.6 12.5 10" fill="#fff" fill-opacity=".92"/></svg></span>
-              <div><span class="who">민지</span><div class="line"><p class="bubble">오 설문 1분이면 끝이네 ㅋㅋ 바로 함</p><span class="time">오후 8:43</span></div></div>
+              <div><span class="who">민지</span><div class="line"><p class="bubble">ㅋㅋ 다섯 번 누르니까 끝남. 운전자 기름값 빼 주는 거 ㅇㅈ</p><span class="time">오후 8:43</span></div></div>
             </li>
           </ul>
           <div class="chat-input" aria-hidden="true"><span class="plus">+</span><span class="field">메시지 입력</span><span class="send">#</span></div>
@@ -89,13 +89,14 @@
         </div>
           <div class="app-head"><span class="logo"><img th:src="@{/img/logo-mark.svg}" width="20" height="20" alt=""><span class="wordmark">Trip<span>Mate</span></span></span><span class="avatar">재</span></div>
           <p class="app-title">겨울 펜션 2박 3일</p>
-          <p class="app-meta">가평 · 1월 15일 ~ 17일 · 8명</p>
+          <p class="app-meta">가평 · 1월 15일(금) ~ 17일(일) · 2박 3일 · 8명</p>
           <nav class="app-tabs" aria-hidden="true"><span>개요</span><span>설문</span><span class="on">역할</span><span>숙소</span></nav>
           <ul class="app-board">
+            <li data-step class="note">마지막 설문이 끝나 역할이 정해졌어요</li>
             <li data-step><div class="between"><b>운전</b><span class="tag">2/2</span></div><p>재현 · 민지 <span class="reason">차 있음 +4</span></p></li>
             <li data-step><div class="between"><b>총무</b><span class="tag">1/1</span></div><p>도윤 <span class="reason">계획형 +3</span></p></li>
             <li data-step><div class="between"><b>장보기</b><span class="tag">1/1</span></div><p>서연 <span class="reason">밖 활동 선호 +1</span></p></li>
-            <li data-step class="sum"><span>1인 교통비</span><b>약 <span data-count="8800">8,800</span>원</b></li>
+            <li data-step class="sum"><span>1인 교통비<small>우리 규칙 · 운전자 빼고</small></span><b>약 <span data-count="8800">8,800</span>원</b></li>
           </ul>
         </div>
       </div>
@@ -108,6 +109,18 @@
   <section class="photo-band">
     <img th:src="@{/img/photo/road-trip.jpg}" alt="햇살 드는 차 안, 친구들이 함께 떠나는 길" width="1600" height="800" loading="lazy">
     <p>"운전은 누가?" 1분이면 정해지고,<br>남은 건 출발뿐.</p>
+  </section>
+
+  <!-- 공감 숫자: 아직 우리 사용자 수가 없어서, 출처 있는 조사 숫자로 "나만 그런 게 아니구나"를 먼저 보인다.
+       스카이스캐너 조사(한국경제 2026-06-09 보도, hankyung.com/article/202606095916g). 표본 수는 기사에 없다 -->
+  <section class="section stats" data-reveal>
+    <h2>단체 여행, 다들 이랬대요</h2>
+    <ul>
+      <li><b data-count-to="76">76</b><span>%</span><p>단체 여행에서 갈등을 겪었다</p></li>
+      <li><b data-count-to="74">74</b><span>%</span><p>한두 명이 계획을 도맡는다</p></li>
+      <li><b data-count-to="82">82</b><span>%</span><p>계획 맡아 본 사람이 부담을 느꼈다</p></li>
+    </ul>
+    <p class="caption">스카이스캐너 조사, 한국경제 2026년 6월 보도</p>
   </section>
 
   <!-- 30초 미리 보기: 질문 셋으로 "나는 무슨 역할형?"을 바로 보여 준다. 공유하고 싶은 결과 한 줄이 목적.
@@ -208,19 +221,24 @@
 
   <section class="section" data-reveal>
     <h2>다른 데랑 뭐가 달라요?</h2>
-    <div class="box scroll">
-      <table class="compare">
-        <thead><tr><th></th><th>카톡 투표</th><th>토스·카카오페이 정산</th><th>NOL·마이리얼트립</th><th class="us">TripMate</th></tr></thead>
-        <tbody>
-          <tr><td>앱 설치 없이 바로</td><td class="yes">✓</td><td class="no">보내는 쪽 앱</td><td class="no">앱</td><td class="us yes">✓</td></tr>
-          <tr><td>역할 추천과 근거</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="us yes">✓</td></tr>
-          <tr><td>숙소 "의견 갈림" 표시</td><td class="no">표 수만</td><td class="no">—</td><td class="no">예약만</td><td class="us yes">✓</td></tr>
-          <tr><td>1인 교통비 근거</td><td class="no">—</td><td class="no">쓴 돈 나누기</td><td class="no">—</td><td class="us yes">출발 전 미리</td></tr>
-          <tr><td>실제 돈 보내기</td><td class="yes">송금 요청</td><td class="yes">✓</td><td class="yes">결제</td><td class="us">정산 앱으로</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="caption">2026년 11월 공개 페이지 기준</p>
+    <p class="muted">카톡, 토스·카카오뱅크, 예약 앱(NOL·여기어때·마이리얼트립), 정산·약속 앱(넛지·엔빵·트랩플랜)과 견줬어요.</p>
+    <!-- 다섯 칸 표는 휴대폰에서 옆으로 밀려 읽히지 않았다. 기능 한 줄 + 우리 값 + 다른 곳 한 줄로 바꿨다.
+         근거는 docs/11·12 의 조사 주소. 지는 칸도 숨기지 않는다 -->
+    <ul class="vs">
+      <li><div class="vs-head"><b>운전·총무 역할을 근거와 함께</b><span class="vs-us win">✓</span></div><p class="vs-others">카톡 — · 토스·카뱅 총무만 · 정산 앱 총무만 · 예약 앱 —</p></li>
+      <li><div class="vs-head"><b>숙소 값, 1인 얼마인지 미리</b><span class="vs-us win">✓</span></div><p class="vs-others">예약 앱 방 총액만 · 정산 앱 다녀와서 N빵 · 카톡·토스 —</p></li>
+      <li><div class="vs-head"><b>교통비, 운전자 빼고 나누기</b><span class="vs-us win">✓</span></div><p class="vs-others">카톡 통행료만 · 예약 앱 렌터카 값 · 정산 앱 —</p></li>
+      <li><div class="vs-head"><b>불참·술값 같은 돈 규칙 미리</b><span class="vs-us win">✓</span></div><p class="vs-others">카뱅 회비 알림 · 나머지는 단톡방에서 말로</p></li>
+      <li><div class="vs-head"><b>숙소 투표에 "누가 싫어하는지"</b><span class="vs-us win">✓</span></div><p class="vs-others">카톡·넛지는 표 수만</p></li>
+      <li><div class="vs-head"><b>설치·가입 없이 링크로</b><span class="vs-us win">✓</span></div><p class="vs-others">넛지·카뱅 빵나누기도 돼요 · 카톡은 앱 필요</p></li>
+    </ul>
+    <h3 class="vs-lose-title">아직 못 하는 것</h3>
+    <ul class="vs lose">
+      <li><div class="vs-head"><b>날짜 맞추기</b><span class="vs-us">아직</span></div><p class="vs-others">카톡 투표·톡캘린더, 넛지가 잘해요</p></li>
+      <li><div class="vs-head"><b>실제 송금</b><span class="vs-us">계산만</span></div><p class="vs-others">토스·카카오페이로 보내요</p></li>
+      <li><div class="vs-head"><b>숙소 예약·결제</b><span class="vs-us">—</span></div><p class="vs-others">NOL·여기어때에서 해요</p></li>
+    </ul>
+    <p class="caption">2026년 11월 공개 페이지·앱스토어 설명 기준</p>
   </section>
 
   <section class="section faq">

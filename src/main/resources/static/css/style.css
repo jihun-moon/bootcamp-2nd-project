@@ -3,12 +3,12 @@
    기본값처럼 보이는 꼴(같은 둥글기·그림자·알약·파스텔 상자·이모지 아이콘)은 쓰지 않는다. docs/08-화면-개편.md 6절 */
 
 :root {
-  --bg: #f7f6f2;
+  --bg: #f6f7f8;
   --surface: #ffffff;
-  --surface-2: #f1efe9;
+  --surface-2: #eef0f2;
   --ink: #1b1f24;
-  --muted: #6b7280;
-  --line: #e6e3dc;
+  --muted: #5f6873;
+  --line: #e2e5e9;
   --accent: #0e7c72;
   --accent-ink: #ffffff;
   --accent-soft: #e3f3f0;
@@ -58,10 +58,12 @@ body {
   overflow-wrap: anywhere;
 }
 
+h1, h2, h3 { text-wrap: balance; } /* 제목 마지막 줄에 한 글자만 남지 않게 */
+p { text-wrap: pretty; }
 h1 { font-size: 1.6rem; line-height: 1.3; margin: 4px 0; font-weight: 700; letter-spacing: -0.02em; }
 h2 { font-size: 1.15rem; margin: 0 0 8px; font-weight: 600; }
 h3 { font-size: 1rem; margin: 0 0 4px; font-weight: 600; }
-p { margin: 0; }
+p { margin: 0; max-width: 68ch; }
 a { color: inherit; text-decoration: none; }
 ul, ol { list-style: none; margin: 0; padding: 0; }
 [hidden] { display: none !important; }
@@ -84,13 +86,12 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 
 /* 글자 */
 .muted { color: var(--muted); }
-.small { font-size: 0.85rem; }
+.small { font-size: 0.875rem; }
 .strong { font-weight: 600; }
 .center { text-align: center; }
 .error { color: var(--error); }
 .notice { border: 1px solid var(--sun); background: var(--sun-soft); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 0.9rem; }
 .hint { background: var(--surface-2); border-radius: var(--radius-sm); padding: 12px; font-size: 0.9rem; color: var(--muted); }
-.eyebrow { color: var(--muted); font-weight: 600; font-size: 0.85rem; }
 
 /* 상자 */
 .box { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
@@ -144,9 +145,9 @@ button { font: inherit; cursor: pointer; }
 .score.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700; }
 
 /* 작은 표시 */
-.tag { margin-left: 6px; font-size: 0.75rem; font-weight: 500; color: var(--muted); }
+.tag { margin-left: 4px; font-size: 0.8125rem; font-weight: 500; color: var(--muted); }
 .tag.me { color: var(--ink); font-weight: 600; }
-.chip { display: inline-block; padding: 4px 8px; border-radius: var(--radius-sm); background: var(--surface-2); font-size: 0.8rem; color: var(--muted); }
+.chip { display: inline-block; padding: 4px 8px; border-radius: var(--radius-sm); background: var(--surface-2); font-size: 0.8125rem; color: var(--muted); }
 .chip.on { background: var(--surface-2); color: var(--ink); }
 label.chip { display: inline-flex; min-height: 40px; padding: 6px 12px; color: var(--ink); font-size: 0.9rem; cursor: pointer; }
 .chip.warn { background: var(--warn-soft); color: var(--warn); font-weight: 600; }
@@ -227,7 +228,7 @@ tr:last-child td { border-bottom: 0; }
 /* 첫 화면의 제품 미리보기. 그림 파일 대신 실제 화면과 같은 칸으로 그려 글자가 또렷하고 다크 모드도 따라간다 */
 .preview { display: grid; gap: 12px; }
 .preview .box { padding: 16px; }
-.preview .caption { font-size: 0.8rem; color: var(--muted); }
+.preview .caption { font-size: 0.8125rem; color: var(--muted); }
 
 .section { padding: 48px 0 8px; }
 .section > h2 { font-size: 1.45rem; margin-bottom: 8px; }
@@ -245,8 +246,11 @@ tr:last-child td { border-bottom: 0; }
   border: 1px solid var(--line); color: var(--ink); font-weight: 600;
 }
 
-.features { display: grid; gap: 0 32px; }
-.features > li { padding: 16px 0; border-top: 1px solid var(--line); }
+/* 핵심 둘은 크게(설명 + 실제 화면 조각), 나머지는 한 줄 목록. 같은 크기 카드를 늘어놓으면 모두 같은 무게로 읽힌다 */
+.core { display: grid; gap: 16px; }
+.core .box { display: grid; gap: 16px; }
+.more { display: grid; gap: 0 32px; margin-top: 24px; }
+.more > li { padding: 12px 0; border-top: 1px solid var(--line); }
 
 .compare th, .compare td { text-align: center; }
 .compare th:first-child, .compare td:first-child { text-align: left; }
@@ -276,7 +280,8 @@ body:has(.sticky-cta) .site-header .btn { display: none; } /* 아래 붙은 버�
   .page { padding: 28px 24px 64px; }
   .hero { grid-template-columns: 1.1fr 1fr; align-items: center; padding: 56px 0 24px; }
   .hero h1 { font-size: 2.6rem; }
-  .features { grid-template-columns: 1fr 1fr; }
+  .core { grid-template-columns: 1fr 1fr; }
+  .more { grid-template-columns: 1fr 1fr; }
   .steps { grid-template-columns: repeat(3, 1fr); }
   .steps li { grid-template-columns: 1fr; }
   .tabs { margin: 12px 0; padding: 0; }

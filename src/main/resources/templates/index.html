@@ -17,9 +17,8 @@
   <!-- 처음 온 사람이 3초 안에 "무엇을 해 주는지"를 알게: 문제 한 줄 + 해 주는 일 + 실제 화면 -->
   <section class="hero">
     <div class="stack loose">
-      <p class="eyebrow">7~8명 단체 여행 준비</p>
       <h1>단체 여행,<br>눈치 싸움 없이 정해요.</h1>
-      <p class="lead">설문 1분이면 운전·총무는 <b>근거와 함께</b>, 숙소는 <b>누가 싫어하는지까지</b> 보여 줘요.</p>
+      <p class="lead">7~8명이 가는 여행, 설문 1분이면 운전·총무는 <b>근거와 함께</b> 나누고 숙소는 <b>누가 싫어하는지까지</b> 보고 골라요.</p>
       <div class="stack">
         <div class="row wrap">
           <a th:href="@{/trips/new}" class="btn primary big">무료로 여행방 만들기</a>
@@ -75,31 +74,33 @@
   <section class="section">
     <h2>다른 방법과 무엇이 다른가요</h2>
     <p class="muted">정하기 싫은 두 가지(역할, 숙소)를 근거 있게 빨리 끝내는 데만 집중했어요.</p>
-    <ul class="features">
-      <li>
-        <h3>근거 있는 역할 추천</h3>
-        <p class="muted">"차 있음 +4"처럼 왜 그 사람인지 카드에 보여요. 한 사람만 좋은 배정이 아니라 모두의 합이 가장 큰 배정을 찾아요.</p>
-      </li>
-      <li>
-        <h3>"의견 갈림"이 보이는 숙소 투표</h3>
-        <p class="muted">평균과 함께 가장 낮은 점수를 보여 줘서, 다수결에 묻히는 한 사람의 "이건 꼭"을 놓치지 않아요.</p>
-      </li>
-      <li>
-        <h3>1인 교통비까지 계산</h3>
-        <p class="muted">출발지부터 거리·통행료를 찾고 그날 기름값으로 총무가 걷을 회비 근거를 만들어요.</p>
-      </li>
-      <li>
-        <h3>같이 보는 실시간 보드</h3>
-        <p class="muted">누가 카드를 옮기면 모두의 화면이 새로고침 없이 바뀌어요.</p>
-      </li>
-      <li>
-        <h3>말하기 어려운 사정은 조용히</h3>
-        <p class="muted">이동이 불편한 사정은 본인과 방장만 보고, 다른 사람에겐 "이동 적은 역할 우선"으로만 보여요.</p>
-      </li>
-      <li>
-        <h3>설치 없이 카톡 안에서</h3>
-        <p class="muted">링크를 누르면 카톡 안에서 열리고, 결과도 카톡에 붙일 글로 돌려줘요.</p>
-      </li>
+    <div class="core">
+      <article class="box">
+        <div>
+          <h3>근거 있는 역할 추천</h3>
+          <p class="muted">"차 있음 +4"처럼 왜 그 사람인지 카드에 보여요. 한 사람만 좋은 배정이 아니라 모두의 합이 가장 큰 배정을 찾아요.</p>
+        </div>
+        <ul class="rows small">
+          <li class="between"><span><b>운전</b> 재현</span><span class="muted">차 있음 +4 · 따로 출발 −2</span></li>
+          <li class="between"><span><b>총무</b> 도윤</span><span class="muted">계획형 +3</span></li>
+        </ul>
+      </article>
+      <article class="box">
+        <div>
+          <h3>"의견 갈림"이 보이는 숙소 투표</h3>
+          <p class="muted">평균과 함께 가장 낮은 점수를 보여 줘서, 다수결에 묻히는 한 사람의 "이건 꼭"을 놓치지 않아요.</p>
+        </div>
+        <ul class="rows small">
+          <li class="between"><span><b>1위</b> 숲속 독채</span><span class="chip">개별 바베큐</span></li>
+          <li class="between"><span><b>2위</b> 바다뷰 풀빌라</span><span class="chip warn">독채 없음</span></li>
+        </ul>
+      </article>
+    </div>
+    <ul class="more">
+      <li><h3>1인 교통비까지</h3><p class="muted">출발지부터 거리·통행료를 찾고 그날 기름값으로 회비 근거를 만들어요.</p></li>
+      <li><h3>같이 보는 실시간 보드</h3><p class="muted">누가 카드를 옮기면 모두의 화면이 새로고침 없이 바뀌어요.</p></li>
+      <li><h3>말하기 어려운 사정은 조용히</h3><p class="muted">이동이 불편한 사정은 본인과 방장만 보고, 다른 사람에겐 "이동 적은 역할 우선"으로만 보여요.</p></li>
+      <li><h3>설치 없이 카톡 안에서</h3><p class="muted">링크를 누르면 카톡 안에서 열리고, 결과도 카톡에 붙일 글로 돌려줘요.</p></li>
     </ul>
   </section>
 

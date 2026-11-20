@@ -122,7 +122,7 @@ class TravelTest {
 
         mvc.perform(get("/api/trips/1/roles/travel").session(host))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message", containsString("카카오 REST 키")));
+                .andExpect(jsonPath("$.message", containsString("길찾기를 쓸 수 없어")));
     }
 
     @Test

@@ -11,8 +11,10 @@
   <p th:if="${param.error}" class="notice">카카오 로그인에 실패했어요. 다시 시도해 주세요.</p>
   <p id="login-error" class="notice" hidden></p>
 
-  <a id="btn-kakao" href="/oauth2/authorization/kakao" class="btn kakao big block" hidden>카카오로 시작하기</a>
-  <p id="kakao-off" class="hint" hidden>카카오 키가 아직 없어 카카오 로그인을 숨겼어요. (KAKAO_CLIENT_ID)</p>
+  <!-- 문구는 카카오 로그인 디자인 가이드의 완성형("카카오 로그인"). "카카오로 시작하기"는 카카오싱크 전용이다 -->
+  <a id="btn-kakao" href="/oauth2/authorization/kakao" class="btn kakao big block" hidden>카카오 로그인</a>
+  <!-- 사용자에게는 까닭(키 설정)을 보이지 않는다. 개발자는 서버 로그와 README 로 안다 -->
+  <p id="kakao-off" class="hint" hidden>지금은 로그인을 쓸 수 없어요. 잠시 뒤 다시 와 주세요.</p>
 
   <section id="dev-login" class="box dashed stack" hidden>
     <h2>개발용 로그인</h2>

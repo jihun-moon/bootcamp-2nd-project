@@ -54,15 +54,10 @@ function renderNext(me, notYet) {
   }
 }
 
-function copied(message) {
-  showNotice(message);
-  setTimeout(function () { showNotice(''); }, 2500);
-}
-
 // 복사가 막힌 브라우저면 링크 칸을 골라 둬서 길게 눌러 직접 복사하게 한다
 function copyInvite() {
   copyText($('#invite-link').val()).then(
-    function () { copied('초대 링크를 복사했어요. 단톡방에 붙여 넣어 주세요.'); },
+    function () { showToast('초대 링크를 복사했어요. 단톡방에 붙여 넣어 주세요.'); },
     function () { $('#invite-link')[0].select(); showNotice('복사가 막혀 있어요. 링크 칸을 길게 눌러 복사해 주세요.'); });
 }
 
@@ -70,7 +65,7 @@ function copyReminder() {
   var names = trip.members.filter(function (m) { return !m.surveyDone; }).map(function (m) { return m.name; });
   var text = '[' + trip.title + '] ' + names.join(', ') + ' 님 설문 1분만 부탁해요. 역할이랑 숙소 정하려고요\n'
     + $('#invite-link').val();
-  copyText(text).then(function () { copied('재촉 글을 복사했어요. 단톡방에 붙여 넣어 주세요.'); });
+  copyText(text).then(function () { showToast('재촉 글을 복사했어요. 단톡방에 붙여 넣어 주세요.'); });
 }
 
 $(function () {

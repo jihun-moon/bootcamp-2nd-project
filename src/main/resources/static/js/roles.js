@@ -287,7 +287,7 @@ function resultText() {
 
 function copyResult() {
   copyText(resultText()).then(
-    function () { showNotice('복사했어요. 단톡방에 붙여 넣어 주세요.'); },
+    function () { showToast('복사했어요. 단톡방에 붙여 넣어 주세요.'); },
     function () { showNotice('복사하지 못했어요. 다시 눌러 주세요.'); }
   );
 }

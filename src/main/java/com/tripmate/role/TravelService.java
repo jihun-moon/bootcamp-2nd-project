@@ -1,5 +1,7 @@
 package com.tripmate.role;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -9,6 +11,8 @@ import java.util.ArrayList;
 // 운전 칸에 들어간 차만 모아 왕복으로 1인 교통비를 낸다. 총무가 회비를 걷을 때 근거로 쓴다
 @Service
 public class TravelService {
+
+    private static final Logger log = LoggerFactory.getLogger(TravelService.class);
 
     // 이보다 오래 혼자 운전하면 교대할 사람을 정해 두라고 알린다
     private static final int LONG_DRIVE_MINUTES = 120;
@@ -31,7 +35,9 @@ public class TravelService {
 
     public TravelDto.Summary estimate(TravelDto.Plan plan) {
         if (!kakaoMapClient.ready()) {
-            return TravelDto.Summary.unavailable("카카오 REST 키가 없어 길을 찾지 못해요. secrets.properties 에 KAKAO_CLIENT_ID 를 넣어 주세요.");
+            // 화면에는 사용자 말만. 설정 까닭은 개발자가 보는 로그에 남긴다
+            log.warn("카카오 REST 키가 없어 이동 근거를 건너뜀(secrets.properties 의 KAKAO_CLIENT_ID)");
+            return TravelDto.Summary.unavailable("지금은 길찾기를 쓸 수 없어 이동 근거를 셀 수 없어요. 잠시 뒤 다시 눌러 주세요.");
         }
         if (plan.destination() == null || plan.destination().isBlank()) {
             return TravelDto.Summary.unavailable("방 지역이 비어 있어요. 방장이 지역을 넣으면 셀 수 있어요.");

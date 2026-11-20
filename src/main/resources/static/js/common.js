@@ -41,6 +41,16 @@ function copyText(text) {
   return ok ? Promise.resolve() : Promise.reject();
 }
 
+// 결과만 짧게 알릴 때(복사했어요 등). 막힘·오류처럼 사람이 읽고 해야 할 일이 있으면 showNotice 를 쓴다
+var toastTimer = null;
+function showToast(message) {
+  var toast = $('#toast');
+  if (!toast.length) toast = $('<div id="toast" class="toast" role="status" aria-live="polite">').appendTo('body');
+  toast.text(message).prop('hidden', false);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { toast.prop('hidden', true); }, 2500);
+}
+
 function showNotice(message) {
   $('#notice').text(message).prop('hidden', !message);
 }

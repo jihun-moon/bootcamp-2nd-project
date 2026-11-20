@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="TripMate">
+  <!-- 지도 핀 안에 체크: "여행이 정해졌다". 청록 바탕은 주 단추와 같은 accent 색 -->
+  <rect width="32" height="32" rx="8" fill="#0e7c72"/>
+  <path d="M16 5.5c-4.7 0-8.5 3.6-8.5 8.2 0 6 8.5 12.8 8.5 12.8s8.5-6.8 8.5-12.8c0-4.6-3.8-8.2-8.5-8.2z" fill="#fff"/>
+  <path d="M12.3 13.9l2.5 2.5 4.9-5" fill="none" stroke="#0e7c72" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -62,6 +62,10 @@ public class Member {
         host = true;
     }
 
+    void stepDown() {
+        host = false;
+    }
+
     void depart() {
         departed = true;
         host = false;

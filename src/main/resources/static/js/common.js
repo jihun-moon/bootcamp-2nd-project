@@ -211,7 +211,8 @@ function dday(destination, startDate, endDate, meet) {
   var toStart = Math.round((day(startDate) - now) / 86400000);
   var place = destination || '여행';
   // 하루 전·당일에는 모일 시간·장소가 먼저(지각이 제일 흔한 다툼이라)
-  var at = meet && (meet.time || meet.place) ? [meet.time ? meet.time.slice(0, 5) : null, meet.place].filter(Boolean).join(' · ') : null;
+  var clock = function (t) { var h = Number(t.slice(0, 2)), m = t.slice(3, 5); return (h < 12 ? '오전 ' : '오후 ') + (h % 12 || 12) + (m === '00' ? '시' : ':' + m); };
+  var at = meet && (meet.time || meet.place) ? [meet.time ? clock(meet.time) : null, meet.place].filter(Boolean).join(' · ') : null;
   if (toStart === 1 && at) return '내일 ' + at;
   if (toStart > 0) return place + (destination ? '까지' : '') + ' D-' + toStart;
   if (toStart === 0) return at ? '오늘 ' + at + '에서 만나요' : '오늘 출발! 짐 다 챙겼죠?';

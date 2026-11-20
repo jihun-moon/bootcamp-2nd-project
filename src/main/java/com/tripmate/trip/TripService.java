@@ -132,6 +132,32 @@ public class TripService {
         return TripDto.Response.of(trip, host);
     }
 
+    // 방 이름·지역 고치기. 바뀌면 모두의 방 머리·사진(지역)이 다시 그려진다
+    @Transactional
+    public TripDto.Response rename(Long tripId, Member host, TripDto.RenameRequest req) {
+        var trip = tripRepository.findWithMembersById(tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        trip.rename(req.title(), req.destination());
+        events.publishEvent(new TripChanged(tripId, "trip"));
+        return TripDto.Response.of(trip, host);
+    }
+
+    // 방장 넘기기. 방장이 바쁘거나 다른 사람이 총대를 메기로 했을 때
+    @Transactional
+    public TripDto.Response handOver(Long tripId, Member host, Long memberId) {
+        var trip = tripRepository.findWithMembersById(tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        var members = trip.getMembers();
+        var from = members.stream().filter(m -> m.getId().equals(host.getId())).findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        var to = members.stream().filter(m -> m.getId().equals(memberId)).findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (from == to) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미 방장이에요");
+        trip.handOver(from, to);
+        events.publishEvent(new TripChanged(tripId, "members"));
+        return TripDto.Response.of(trip, from);
+    }
+
     // 모일 시간·장소. 방장이 적으면 모두의 방 머리(D-day 줄)에 뜬다
     @Transactional
     public TripDto.Response updateMeet(Long tripId, Member host, TripDto.Meet meet) {

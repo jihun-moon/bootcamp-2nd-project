@@ -65,4 +65,26 @@ class RoomRulesTest {
         mvc.perform(put("/api/trips/1/meet").session(TestLogin.as(mvc, "재현")).contentType(MediaType.APPLICATION_JSON)
                 .content("{ \"time\": null, \"place\": \"" + "가".repeat(41) + "\" }")).andExpect(status().isBadRequest());
     }
+
+    @Test
+    void 방장은_방_이름과_지역을_고치고_방장을_넘길_수_있다() throws Exception {
+        mvc.perform(put("/api/trips/1").session(TestLogin.as(mvc, "민지")).contentType(MediaType.APPLICATION_JSON)
+                .content("{ \"title\": \"강릉 우정 여행\", \"destination\": \"강릉\" }")).andExpect(status().isForbidden());
+        mvc.perform(put("/api/trips/1").session(TestLogin.as(mvc, "재현")).contentType(MediaType.APPLICATION_JSON)
+                .content("{ \"title\": \" 강릉 우정 여행 \", \"destination\": \"강릉\" }"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.title").value("강릉 우정 여행"))
+                .andExpect(jsonPath("$.destination").value("강릉"));
+        mvc.perform(put("/api/trips/1").session(TestLogin.as(mvc, "재현")).contentType(MediaType.APPLICATION_JSON)
+                .content("{ \"title\": \"\" }")).andExpect(status().isBadRequest());
+
+        // 재현이 민지(2)에게 방장을 넘기면 재현은 규칙을 못 바꾸고 민지는 바꾼다
+        mvc.perform(put("/api/trips/1/host").session(TestLogin.as(mvc, "재현")).contentType(MediaType.APPLICATION_JSON)
+                .content("{ \"memberId\": 2 }")).andExpect(status().isOk());
+        mvc.perform(put("/api/trips/1/rules").session(TestLogin.as(mvc, "재현")).contentType(MediaType.APPLICATION_JSON)
+                .content(RULES)).andExpect(status().isForbidden());
+        mvc.perform(put("/api/trips/1/rules").session(TestLogin.as(mvc, "민지")).contentType(MediaType.APPLICATION_JSON)
+                .content(RULES)).andExpect(status().isOk());
+        mvc.perform(put("/api/trips/1/host").session(TestLogin.as(mvc, "민지")).contentType(MediaType.APPLICATION_JSON)
+                .content("{ \"memberId\": 2 }")).andExpect(status().isBadRequest());
+    }
 }

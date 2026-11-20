@@ -40,7 +40,9 @@
   --fs-2xl: 2rem;
 }
 
+:root { color-scheme: light; }
 @media (prefers-color-scheme: dark) {
+  :root { color-scheme: dark; }
   :root {
     --bg: #0f1214;
     --surface: #171b1f;
@@ -742,7 +744,6 @@ button.link::after { content: ""; position: absolute; inset: -12px -8px; } /* �
 }
 
 /* 사람 줄 끝의 "빼기": 이름 줄을 밀지 않게 오른쪽 끝에 작게 */
-#members .member-out { margin-left: auto; color: var(--muted); }
 
 /* 정산: 보낼 줄은 크게 한 줄씩, 내가 보내거나 받는 줄은 청록 테로 먼저 눈에 */
 .settle-list { display: grid; gap: 8px; }
@@ -797,5 +798,14 @@ button.link::after { content: ""; position: absolute; inset: -12px -8px; } /* �
 
 /* 모이는 곳: 시간 칸은 좁게, 장소 칸이 나머지. 아래 방 규칙과 선 하나로 나눈다 */
 .meet { padding-bottom: 16px; border-bottom: 1px solid var(--line); }
-.meet-row input[type="time"] { flex: none; width: 128px; }
-.meet-row input[type="text"] { flex: 1; min-width: 0; }
+.meet-stepper { justify-content: space-between; padding: 6px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-2); }
+.meet-stepper .meet-time { flex: 1; font-size: var(--fs-lg); }
+
+/* 방장만: 사진 오른쪽 위 "이름·지역 고치기"(D-day 알약과 같은 꼴, 반대쪽) */
+.rename { position: absolute; right: 12px; top: 12px; padding: 6px 12px; border: 0; border-radius: 99px; background: rgb(0 0 0 / 0.5); color: #fff; font-size: var(--fs-xs); font-weight: 600; cursor: pointer; backdrop-filter: blur(6px); }
+/* 사람 줄 오른쪽 방장 도구(방장 주기·빼기) */
+#members .member-acts { margin-left: auto; display: inline-flex; gap: 12px; }
+#members .member-acts .link { color: var(--muted); }
+@media (min-width: 960px) { .ov-rename { grid-column: 1 / -1; } }
+.meet-quick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; } /* 휴대폰에서도 네 개가 한 줄 */
+.meet-quick .toggle { padding-inline: 4px; justify-content: center; }

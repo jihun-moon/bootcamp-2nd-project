@@ -97,6 +97,14 @@ public final class TripDto {
         }
     }
 
+    // PUT /api/trips/1  { "title": "강릉 우정 여행", "destination": "강릉" }   방장만
+    public record RenameRequest(@NotBlank @Size(max = 100) String title, @Size(max = 100) String destination) {
+    }
+
+    // PUT /api/trips/1/host  { "memberId": 3 }   방장만. 넘기면 나는 참여자가 된다
+    public record HostRequest(@NotNull Long memberId) {
+    }
+
     // PUT /api/trips/1/meet  { "time": "08:00", "place": "합정역 2번 출구" }   둘 다 null 이면 지운다
     public record Meet(LocalTime time, @Size(max = 40) String place) {
     }

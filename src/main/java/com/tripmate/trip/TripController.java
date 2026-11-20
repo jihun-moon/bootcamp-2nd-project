@@ -74,6 +74,20 @@ public class TripController {
         return ResponseEntity.ok(tripService.setDrinks(tripId, memberId, req.drinks(), me));
     }
 
+    // PUT: /api/trips/1  body = { "title": "강릉 우정 여행", "destination": "강릉" }   방장만
+    @PutMapping("/trips/{tripId}")
+    public ResponseEntity<TripDto.Response> rename(@PathVariable Long tripId, @Valid @RequestBody TripDto.RenameRequest req) {
+        var host = tripAccess.host(tripId);
+        return ResponseEntity.ok(tripService.rename(tripId, host, req));
+    }
+
+    // PUT: /api/trips/1/host  body = { "memberId": 3 }   방장만
+    @PutMapping("/trips/{tripId}/host")
+    public ResponseEntity<TripDto.Response> handOver(@PathVariable Long tripId, @Valid @RequestBody TripDto.HostRequest req) {
+        var host = tripAccess.host(tripId);
+        return ResponseEntity.ok(tripService.handOver(tripId, host, req.memberId()));
+    }
+
     // PUT: /api/trips/1/meet  body = { "time": "08:00", "place": "합정역 2번 출구" }   방장만
     @PutMapping("/trips/{tripId}/meet")
     public ResponseEntity<TripDto.Response> meet(@PathVariable Long tripId, @Valid @RequestBody TripDto.Meet meet) {

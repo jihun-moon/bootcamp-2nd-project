@@ -18,6 +18,7 @@ function render(t) {
   renderNext(me, notYet);
   renderProgress(notYet);
   renderMeet(me);
+  renderRename(me);
   renderRules(me);
   renderDates(me);
 
@@ -31,8 +32,11 @@ function render(t) {
     var row = $('<li class="row">').append(avatar(m.name, m.imageUrl), info).appendTo(list);
     // 방장은 못 오게 된 사람을 뺄 수 있다(빠진 사람이 남아 있으면 1인 금액이 다 틀린다)
     if (me.host && m.id !== me.id) {
-      row.append($('<button type="button" class="link small member-out">').text('빼기')
-        .attr('aria-label', m.name + ' 님 빼기').click(function () { leaveTrip(m, false); }));
+      row.append($('<span class="member-acts">').append(
+        $('<button type="button" class="link small">').text('방장 주기').attr('aria-label', m.name + ' 님에게 방장 넘기기')
+          .click(function () { handOver(m); }),
+        $('<button type="button" class="link small">').text('빼기').attr('aria-label', m.name + ' 님 빼기')
+          .click(function () { leaveTrip(m, false); })));
     }
   });
   // 여행 전에도 "이 멤버로 또" 를 열 수 있게 사람 상자 끝에 한 줄. 두 명 이상일 때만(혼자면 같은 멤버가 없다)
@@ -181,30 +185,61 @@ function drawBest(me, board) {
 }
 
 // 방 규칙 카드. 방장은 눌러서 고르고, 참여자는 정해진 것을 읽기만 한다
-// 모일 시간·장소. 방장은 시간·장소 칸(바꾸면 0.6초 뒤 저장), 참여자는 한 줄
+// 모일 시간·장소. 방장은 빠른 고르기(오전 7~10시) + 30분씩 −/+, 장소 칸. 바꾸면 0.6초 뒤 저장. 참여자는 한 줄.
+// 브라우저 시간 칸은 어두운 화면에서 흰 상자로 떠서(우리 디자인과 안 맞음) 우리 단추로 바꿨다
 // PUT /api/trips/1/meet  { "time": "08:00", "place": "합정역 2번 출구" }
 var meetTimer = null;
+var QUICK_TIMES = ['07:00', '08:00', '09:00', '10:00'];
+
+// "08:30" → "오전 8:30", "13:00" → "오후 1시"
+function koreanTime(hhmm) {
+  if (!hhmm) return '시간 미정';
+  var h = Number(hhmm.slice(0, 2)), m = hhmm.slice(3, 5);
+  var label = (h < 12 ? '오전 ' : '오후 ') + (h % 12 || 12);
+  return m === '00' ? label + '시' : label + ':' + m;
+}
+
 function renderMeet(me) {
   var box = $('#meet');
   var meet = trip.meet || {};
-  var text = meet.time || meet.place ? [meet.time ? meet.time.slice(0, 5) : null, meet.place].filter(Boolean).join(' · ') : null;
+  var text = meet.time || meet.place ? [meet.time ? koreanTime(meet.time.slice(0, 5)) : null, meet.place].filter(Boolean).join(' · ') : null;
   if (!me.host) {
     box.empty().append($('<h2>').text('모이는 곳'), $('<p>').text(text || '방장이 아직 안 정했어요.'));
     return;
   }
   if (box.find('input').length) return;   // 방장이 적는 중에 SSE 로 다시 그려 입력이 끊기지 않게
-  var time = $('<input type="time" aria-label="모일 시간">').val(meet.time ? meet.time.slice(0, 5) : '');
+  var value = meet.time ? meet.time.slice(0, 5) : null;
   var place = $('<input type="text" maxlength="40" placeholder="예: 합정역 2번 출구" aria-label="모일 곳">').val(meet.place || '');
   var save = function () {
     clearTimeout(meetTimer);
     meetTimer = setTimeout(function () {
-      api('PUT', '/api/trips/' + tripId + '/meet', { time: time.val() || null, place: place.val().trim() || null })
+      api('PUT', '/api/trips/' + tripId + '/meet', { time: value, place: place.val().trim() || null })
         .done(function (t) { trip = t; showToast('모일 곳을 저장했어요.'); renderDday(); });
     }, 600);
   };
-  time.on('change', save);
+  var shown = $('<b class="meet-time" aria-live="polite">');
+  var quick = $('<div class="toggles meet-quick" role="group" aria-label="자주 모이는 시간">');
+  var paint = function () {
+    shown.text(koreanTime(value));
+    quick.children().each(function () { $(this).attr('aria-pressed', $(this).data('t') === value); });
+  };
+  var set = function (t) { value = t; paint(); delight(shown[0]); save(); };
+  QUICK_TIMES.forEach(function (t) {
+    $('<button type="button" class="toggle">').text(koreanTime(t)).data('t', t).click(function () { set(t); }).appendTo(quick);
+  });
+  // 30분씩. 처음 누르면 오전 8시부터, 0시 아래·23:30 위로는 안 간다
+  var shift = function (minutes) {
+    var base = value ? Number(value.slice(0, 2)) * 60 + Number(value.slice(3, 5)) : 8 * 60 - minutes;
+    var next = Math.min(23 * 60 + 30, Math.max(0, base + minutes));
+    set(String(Math.floor(next / 60)).padStart(2, '0') + ':' + String(next % 60).padStart(2, '0'));
+  };
+  var stepper = $('<div class="stepper meet-stepper">').append(
+    $('<button type="button" class="btn" aria-label="30분 이르게">').text('−').click(function () { shift(-30); }),
+    shown,
+    $('<button type="button" class="btn" aria-label="30분 늦게">').text('+').click(function () { shift(30); }));
   place.on('input', save);
-  box.empty().append($('<h2>').text('모이는 곳'), $('<div class="row meet-row">').append(time, place),
+  paint();
+  box.empty().append($('<h2>').text('모이는 곳'), quick, stepper, place,
     $('<p class="muted small">').text('적어 두면 하루 전부터 모두의 방 위쪽에 떠요.'));
 }
 
@@ -259,6 +294,21 @@ function sendInvite() {
     '초대 글을 복사했어요. 단톡방에 붙여 넣어 주세요.');
 }
 
+// PUT: /api/trips/1/host  { "memberId": 3 }   방장 넘기기. 넘기면 나는 참여자가 된다
+function handOver(m) {
+  if (!window.confirm(m.name + ' 님에게 방장을 넘길까요? 날짜 정하기·규칙·빼기는 이제 ' + m.name + ' 님이 해요.')) return;
+  api('PUT', '/api/trips/' + tripId + '/host', { memberId: m.id }).done(function (t) {
+    showToast(m.name + ' 님이 이제 방장이에요.');
+    render(t);
+  });
+}
+
+// PUT: /api/trips/1  { "title", "destination" }   방장만. 사진 위 단추로 연다
+function renderRename(me) {
+  $('#btn-rename').prop('hidden', !me.host);
+  if (!me.host) $('#rename-form').prop('hidden', true);
+}
+
 // DELETE: /api/trips/1/members/7   나가기(본인) 또는 빼기(방장). 설문·숙소 표·장보기 맡은 것도 같이 빠진다
 function leaveTrip(m, self) {
   var ask = self
@@ -284,6 +334,22 @@ function sendReminder() {
 
 $(function () {
   $('#btn-invite').click(sendInvite);
+  $('#btn-rename').click(function () {
+    $('#rename-title').val(trip.title);
+    $('#rename-destination').val(trip.destination || '');
+    $('#rename-form').prop('hidden', false)[0].scrollIntoView({ behavior: REDUCE_MOTION ? 'auto' : 'smooth', block: 'center' });
+    $('#rename-title').trigger('focus');
+  });
+  $('#rename-cancel').click(function () { $('#rename-form').prop('hidden', true); });
+  $('#rename-form').on('submit', function (e) {
+    e.preventDefault();
+    api('PUT', '/api/trips/' + tripId, { title: $('#rename-title').val().trim(), destination: $('#rename-destination').val().trim() || null })
+      .done(function () {
+        $('#rename-form').prop('hidden', true);
+        showToast('방 이름·지역을 바꿨어요.');
+        loadTrip(tripId).done(render);   // 머리 줄·사진(지역)까지 다시
+      });
+  });
   // 공유도 복사도 막힌 곳에서 칸을 누르면 링크 전체가 골라져 바로 복사할 수 있게
   $('#invite-link').on('focus', function () { this.select(); });
   loadTrip(tripId).done(function (t) {

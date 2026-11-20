@@ -84,6 +84,18 @@ public class Trip {
         if (wasHost && !rest.isEmpty()) rest.get(0).makeHost();
     }
 
+    // 방 이름·지역 고치기(방장). 이름이 비면 그대로 둔다
+    public void rename(String title, String destination) {
+        if (title != null && !title.isBlank()) this.title = title.strip();
+        this.destination = destination == null || destination.isBlank() ? null : destination.strip();
+    }
+
+    // 방장 넘기기. 넘겨받는 사람은 지금 방에 있는 사람이어야 한다
+    void handOver(Member from, Member to) {
+        from.stepDown();
+        to.makeHost();
+    }
+
     public void updateMeet(LocalTime meetTime, String meetPlace) {
         this.meetTime = meetTime;
         this.meetPlace = meetPlace == null || meetPlace.isBlank() ? null : meetPlace.strip();

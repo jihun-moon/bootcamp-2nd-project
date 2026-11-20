@@ -128,7 +128,7 @@ function previewLink() {
     if (p.price) found.push('오늘 1박 ' + p.price.toLocaleString('ko-KR') + '원');
     if (p.amenities.length) found.push('조건 ' + p.amenities.length + '개');
     $('#preview-status').text(found.length
-      ? '링크에서 ' + found.join(', ') + '을 찾아 채웠어요. 날짜마다 값이 달라요. 틀리면 고쳐 주세요.'
+      ? '링크에서 찾아 채웠어요: ' + found.join(' · ') + '. 가격은 날짜마다 달라요. 틀리면 고쳐 주세요.'
       : (p.title ? '이름과 사진을 가져왔어요. 있는 조건만 눌러 주세요.' : '이 사이트는 정보를 안 보여 줘요. 이름과 조건만 적어 주세요.'));
   }).fail(function () {
     previewedUrl = null;

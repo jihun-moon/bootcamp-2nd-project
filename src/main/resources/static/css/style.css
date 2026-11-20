@@ -627,3 +627,6 @@ body:has(.cta) .site-footer { margin-top: 0; }
 .receipt .r-total b { color: #0e7c72; font-weight: 800; }
 .receipt .r-note { justify-content: center; color: #5f6873; font-size: var(--fs-xs); text-align: center; }
 .receipt-cut { margin: 14px 0; border: 0; border-top: 1px dashed #c4cad1; }
+/* 고른 날·많이 겹친 날은 진한 청록 위라 토(파랑)·일(빨강) 글자가 묻혔다. 기본 글자색으로 */
+.cal-day.avail[aria-pressed="true"], .cal-day.avail[data-heat="3"], .cal-day.avail[data-heat="4"] { color: var(--ink); }
+.cal-day.avail[aria-pressed="true"] small, .cal-day.avail[data-heat="4"] small { color: var(--ink); opacity: 0.75; }

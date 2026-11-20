@@ -74,17 +74,30 @@ function renderReceipt() {
 // 그림(PNG): 화면의 영수증과 같은 줄을 canvas 에 그린다. 라이브러리 없이, 글꼴은 이미 받아 둔 Pretendard
 function drawPng() {
   var W = 720, pad = 48, lh = { title: 64, meta: 40, row: 52, total: 72, note: 40, cut: 36 };
-  var H = pad * 2 + lines.reduce(function (h, l) { return h + lh[l.kind]; }, 0) + 24;
-  var canvas = document.createElement('canvas');
+  var font = '"Pretendard Variable", Pretendard, sans-serif';
+  var c = document.createElement('canvas').getContext('2d');
+  // 메모 줄이 그림 폭을 넘으면 낱말 단위로 줄을 나눈다(글자를 눌러 담지 않게)
+  c.font = '400 22px ' + font;
+  var drawn = [];
+  lines.forEach(function (l) {
+    if (l.kind !== 'note' || c.measureText(l.left).width <= W - pad * 2) { drawn.push(l); return; }
+    var cur = '';
+    l.left.split(' ').forEach(function (word) {
+      var next = cur ? cur + ' ' + word : word;
+      if (c.measureText(next).width > W - pad * 2 && cur) { drawn.push({ kind: 'note', left: cur }); cur = word; }
+      else cur = next;
+    });
+    if (cur) drawn.push({ kind: 'note', left: cur });
+  });
+  var H = pad * 2 + drawn.reduce(function (h, l) { return h + lh[l.kind]; }, 0) + 24;
+  var canvas = c.canvas;
   canvas.width = W; canvas.height = H;
-  var c = canvas.getContext('2d');
   c.fillStyle = '#ffffff'; c.fillRect(0, 0, W, H);
   // 아래 톱니
   c.fillStyle = '#0f1214';
   for (var x = 0; x < W; x += 24) { c.beginPath(); c.moveTo(x, H); c.lineTo(x + 12, H - 12); c.lineTo(x + 24, H); c.fill(); }
-  var font = '"Pretendard Variable", Pretendard, sans-serif';
   var y = pad;
-  lines.forEach(function (l) {
+  drawn.forEach(function (l) {
     y += lh[l.kind];
     var base = y - lh[l.kind] / 3;
     if (l.kind === 'cut') {
@@ -95,8 +108,10 @@ function drawPng() {
     var weight = (l.kind === 'title' || l.kind === 'total') ? 800 : (l.kind === 'row' ? 600 : 400);
     c.font = weight + ' ' + size + 'px ' + font;
     c.fillStyle = (l.kind === 'meta' || l.kind === 'note') ? '#5f6873' : '#1b1f24';
-    c.textAlign = 'left';
-    c.fillText(l.left, pad, base, l.right ? W - pad * 2 - 220 : W - pad * 2);
+    // 제목·날짜·메모는 화면처럼 가운데, 줄(역할·금액)은 왼쪽
+    var center = l.kind === 'title' || l.kind === 'meta' || l.kind === 'note';
+    c.textAlign = center ? 'center' : 'left';
+    c.fillText(l.left, center ? W / 2 : pad, base, l.right ? W - pad * 2 - 220 : W - pad * 2);
     if (l.right) {
       c.textAlign = 'right';
       c.fillStyle = l.kind === 'total' ? '#0e7c72' : '#1b1f24';

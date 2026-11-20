@@ -94,10 +94,14 @@ function drawBest(me, board) {
     return;
   }
   best.forEach(function (w) {
-    var who = w.missing.length ? ' (' + w.missing.map(function (m) { return m.name; }).join(', ') + ' 안 됨)' : ' 모두 돼요';
+    // 날짜는 굵은 한 줄, 박 수와 되는 사람은 아래 작은 줄(한 줄에 몰면 "2박 / 3일"로 꺾였다)
+    var who = w.missing.length
+      ? trip.members.length + '명 중 ' + w.ok.length + '명 (' + w.missing.map(function (m) { return m.name; }).join(', ') + ' 안 됨)'
+      : trip.members.length + '명 모두 돼요';
+    var stay = w.nights ? w.nights + '박 ' + (w.nights + 1) + '일' : '당일';
     var row = $('<li class="between best-date">').append($('<div>').append(
-      $('<div class="strong">').text(formatPeriod(w.start, w.end)),
-      $('<div class="muted small">').text(trip.members.length + '명 중 ' + w.ok.length + '명' + who)));
+      $('<div class="strong">').text(formatPeriod(w.start, w.end).split(' · ')[0]),
+      $('<div class="muted small">').text(stay + ' · ' + who)));
     if (me.host) {
       row.append($('<button type="button" class="btn primary">').text('이 날짜로').click(function () {
         api('PUT', '/api/trips/' + tripId + '/period', { startDate: w.start, endDate: w.end }).done(function (t) {
@@ -149,7 +153,8 @@ function saveRule(key, value) {
 // 링크만 던지면 무슨 링크인지 몰라 안 누른다. 할 일(1분 설문)과 까닭을 한 줄 붙인다
 function sendInvite() {
   var rules = rulesText(trip.rules);
-  shareText('[' + trip.title + '] 여행방 만들었어! 1분 설문만 해 줘. 운전·총무랑 숙소 같이 정하자\n'
+  var ask = trip.startDate ? '1분 설문만 해 줘' : '되는 날 누르고 1분 설문만 해 줘';
+  shareText('[' + trip.title + '] 여행방 만들었어! ' + ask + '. 운전·총무랑 숙소 같이 정하자\n'
     + (rules ? '규칙: ' + rules + '\n' : '') + $('#invite-link').val(),
     '초대 글을 복사했어요. 단톡방에 붙여 넣어 주세요.');
 }

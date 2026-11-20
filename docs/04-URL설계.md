@@ -28,6 +28,9 @@
 | | 내 되는 날 | PUT | `/api/trips/{id}/members/{memberId}/dates` | `{"dates": ["2027-01-15"]}` | 200 판 / 남의 것 403 / 지난 날·1년 넘음 400 | `TripService.saveDates` |
 | | 날짜 정하기(방장) | PUT | `/api/trips/{id}/period` | `{"startDate", "endDate"}` | 200 방 / 403 / 도착이 출발보다 앞 400 | `TripService.setPeriod` |
 | | 방 규칙(방장) | PUT | `/api/trips/{id}/rules` | `{"driverPaysFuel", "refundNoShow", "drinksSeparate"}` | 200 방 / 403 | `TripService.updateRules` |
+| REQ-05 | 방 이름·지역 고치기(방장) | PUT | `/api/trips/{id}` | `{"title", "destination"}` | 200 방 / 403 / 빈 이름 400 | `TripService.rename` |
+| | 방장 넘기기(방장) | PUT | `/api/trips/{id}/host` | `{"memberId": 3}` | 200 방 / 403 / 자기에게 400 | `TripService.handOver` |
+| | 방·침대 뽑기 | POST | `/api/trips/{id}/room-draw` | `{"rooms": 2}` | 200 방(roomDraw) / 2~6 밖 400 | `TripService.drawRooms`(SecureRandom) |
 | | 모일 시간·장소(방장) | PUT | `/api/trips/{id}/meet` | `{"time": "08:00", "place": "합정역 2번 출구"}` | 200 방 / 403 / 40자 넘음 400 | `TripService.updateMeet` |
 | | 같은 멤버로 다음 여행 | POST | `/api/trips/{id}/next` | | 201 `{tripId, created, memberCount}` / 이미 있으면 200 같은 방 / 동시에 겹치면 409 | `TripService.next`, `Trip.previousTripId`(unique) |
 

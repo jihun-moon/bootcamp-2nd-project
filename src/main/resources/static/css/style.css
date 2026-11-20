@@ -1051,3 +1051,6 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
 .compare-more > summary::after { content: "+"; font-size: var(--fs-lg); transition: transform var(--dur) var(--ease); }
 .compare-more[open] > summary::after { transform: rotate(45deg); }
 .compare-more[open] > summary { margin-bottom: 12px; }
+
+/* 체험 방: 탭 칸이 grid(.ov-grid)여도 숨김(hidden)이 이기게 */
+[data-panel][hidden] { display: none !important; }

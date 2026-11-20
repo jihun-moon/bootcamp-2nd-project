@@ -17,41 +17,96 @@
       <button type="button" class="tab active" data-tab="overview" role="tab" aria-selected="true">개요</button>
       <button type="button" class="tab" data-tab="roles" role="tab" aria-selected="false">역할</button>
       <button type="button" class="tab" data-tab="stays" role="tab" aria-selected="false">숙소</button>
-      <button type="button" class="tab" data-tab="receipt" role="tab" aria-selected="false">영수증</button>
+      <button type="button" class="tab" data-tab="shopping" role="tab" aria-selected="false">장보기</button>
+      <button type="button" class="tab" data-tab="receipt" role="tab" aria-selected="false">영수증·정산</button>
     </nav>
   </header>
 
   <main>
-    <!-- 개요 -->
-    <section class="stack" data-panel="overview">
-      <div class="box stack">
-        <h2>모두 설문을 끝냈어요</h2>
-        <p class="muted">마지막 사람이 설문을 끝내자 역할이 저절로 정해졌어요. 마음에 안 들면 보드에서 눌러 바꿔요.</p>
-        <div class="row wrap"><button type="button" class="btn primary" data-goto="roles">역할 보드 보기</button><button type="button" class="btn" data-goto="stays">숙소 투표 보기</button></div>
+    <!-- 개요: 실제 방 개요와 같은 칸·배치(휴대폰은 위아래 한 줄, PC 는 왼쪽 할 일 / 오른쪽 사람·규칙·차·회비).
+         값은 실제 방에서 8명이 끝까지 정했을 때 나오는 것(재현 마포·민지 수원 두 차, 회비 10만 원) -->
+    <section class="stack ov-grid" data-panel="overview">
+      <div class="ov-cover cover-wrap">
+        <img class="cover thin" th:src="@{/img/region/gapyeong.jpg}" alt="안개 낀 북한강과 소나무" width="1200" height="600">
+        <span class="dday">가평까지 D-21 · 오전 9시 합정역</span>
       </div>
-      <!-- 방 규칙: 실제 개요와 같은 칸. 참여자에게 보이는 꼴(방장이 정한 것을 읽기만) -->
-      <div class="box stack">
-        <h2>방 규칙</h2>
-        <p class="muted small">방장이 정해요. 결과 글에도 같이 나가요.</p>
-        <ul class="stack">
-          <li class="between"><span class="strong">운전한 사람 기름값</span><span>빼 줘요</span></li>
-          <li class="between"><span class="strong">전날 빠지면 예약금</span><span>안 돌려줘요</span></li>
-          <li class="between"><span class="strong">술값</span><span>마신 사람만</span></li>
-        </ul>
+      <div class="ov-main">
+        <div class="box stack">
+          <h2>모두 설문을 끝냈어요</h2>
+          <p class="muted">마지막 사람이 설문을 끝내자 역할이 저절로 정해졌어요. 마음에 안 들면 보드에서 눌러 바꿔요.</p>
+          <div class="row wrap"><button type="button" class="btn primary" data-goto="roles">역할 보드 보기</button><button type="button" class="btn" data-goto="stays">숙소 투표 보기</button><button type="button" class="btn" data-goto="receipt">우리 여행 영수증</button></div>
+        </div>
+        <div class="box stack">
+          <div class="between"><h2>준비 체크</h2><span class="muted small">4/5</span></div>
+          <ol class="progress-list">
+            <li><a href="#" class="progress-row done" data-goto="overview"><span class="progress-mark">✓</span><span class="strong">날짜</span><span class="muted small">1월 15일(금) ~ 17일(일) · 2박 3일</span></a></li>
+            <li><a href="#" class="progress-row done" data-goto="overview"><span class="progress-mark">✓</span><span class="strong">설문</span><span class="muted small">8/8명</span></a></li>
+            <li><a href="#" class="progress-row done" data-goto="roles"><span class="progress-mark">✓</span><span class="strong">역할</span><span class="muted small">8명 정해짐</span></a></li>
+            <li><a href="#" class="progress-row done" data-goto="stays"><span class="progress-mark">✓</span><span class="strong">숙소</span><span class="muted small">3곳 · 표 7/8</span></a></li>
+            <li><a href="#" class="progress-row" data-goto="shopping"><span class="progress-mark"></span><span class="strong">장보기</span><span class="muted small">9/15줄 맡음</span></a></li>
+          </ol>
+        </div>
+        <div class="box stack">
+          <h2>날짜 정했어요</h2>
+          <p class="strong">1월 15일(금) ~ 17일(일) · 2박 3일</p>
+          <p class="muted small">8명 중 8명 돼요. 되는 날을 다들 눌러서 겹친 날로 방장이 한 번에 정했어요.</p>
+        </div>
       </div>
-      <div class="box stack">
-        <div class="between small"><span class="strong">설문 진행</span><span class="muted">8/8명</span></div>
-        <div class="bar"><div class="fill" style="width:100%"></div></div>
-        <ul class="grid4">
-          <li class="row"><span class="avatar">재</span><div><div class="strong">재현<span class="tag">방장</span></div><span class="chip on">설문 완료</span></div></li>
-          <li class="row"><span class="avatar">민</span><div><div class="strong">민지</div><span class="chip on">설문 완료</span></div></li>
-          <li class="row"><span class="avatar">도</span><div><div class="strong">도윤</div><span class="chip on">설문 완료</span></div></li>
-          <li class="row"><span class="avatar">서</span><div><div class="strong">서연</div><span class="chip on">설문 완료</span></div></li>
-          <li class="row"><span class="avatar">하</span><div><div class="strong">하준</div><span class="chip on">설문 완료</span></div></li>
-          <li class="row"><span class="avatar">지</span><div><div class="strong">지우</div><span class="chip on">설문 완료</span></div></li>
-          <li class="row"><span class="avatar">예</span><div><div class="strong">예린</div><span class="chip on">설문 완료</span></div></li>
-          <li class="row"><span class="avatar">시</span><div><div class="strong">시우</div><span class="chip on">설문 완료</span></div></li>
-        </ul>
+      <div class="ov-side">
+        <div class="ov-people box stack">
+          <div class="between small"><span class="strong">함께하는 사람</span><span class="muted">설문 8/8명</span></div>
+          <div class="bar"><div class="fill" style="width:100%"></div></div>
+          <ul class="grid4">
+            <li class="row"><span class="avatar">재</span><div><div class="strong">재현<span class="tag">방장</span></div><span class="chip on">설문 완료</span></div></li>
+            <li class="row"><span class="avatar">민</span><div><div class="strong">민지</div><span class="chip on">설문 완료</span></div></li>
+            <li class="row"><span class="avatar">도</span><div><div class="strong">도윤</div><span class="chip on">설문 완료</span></div></li>
+            <li class="row"><span class="avatar">서</span><div><div class="strong">서연</div><span class="chip on">설문 완료</span></div></li>
+            <li class="row"><span class="avatar">하</span><div><div class="strong">하준</div><span class="chip on">설문 완료</span></div></li>
+            <li class="row"><span class="avatar">지</span><div><div class="strong">지우</div><span class="chip on">설문 완료</span></div></li>
+            <li class="row"><span class="avatar">예</span><div><div class="strong">예린</div><span class="chip on">설문 완료</span></div></li>
+            <li class="row"><span class="avatar">시</span><div><div class="strong">시우</div><span class="chip on">설문 완료</span></div></li>
+          </ul>
+        </div>
+        <!-- 방 규칙·모이는 곳: 실제 개요와 같은 칸. 참여자에게 보이는 꼴(방장이 정한 것을 읽기만) -->
+        <div class="box stack">
+          <h2>모이는 곳</h2>
+          <p>오전 9시 · 합정역 2번 출구</p>
+          <h2>방 규칙</h2>
+          <ul class="stack">
+            <li class="between"><span class="strong">운전한 사람 기름값</span><span>빼 줘요</span></li>
+            <li class="between"><span class="strong">전날 빠지면 예약금</span><span>안 돌려줘요</span></li>
+            <li class="between"><span class="strong">술값</span><span>마신 사람만</span></li>
+          </ul>
+        </div>
+        <div class="ov-cars box stack">
+          <h2>차</h2>
+          <p class="muted small">차마다 가까운 곳에서 태워요. 기름값은 그 차에 탄 사람끼리 나눠요.</p>
+          <div class="car stack">
+            <div class="between"><span class="strong">재현 차</span><span class="small muted">4명</span></div>
+            <span class="small">태우는 곳 오전 9시 · 합정역 2번 출구</span>
+            <div class="row wrap"><span class="chip">도윤</span><span class="chip">예린</span><span class="chip">시우</span></div>
+          </div>
+          <div class="car stack mine">
+            <div class="between"><span class="strong">민지 차</span><span class="small muted">4명</span></div>
+            <span class="small">태우는 곳 오전 8시 · 수원역 4번 출구</span>
+            <div class="row wrap"><span class="chip">서연</span><span class="chip">하준</span><span class="chip">지우</span></div>
+          </div>
+          <button type="button" class="link small" data-demo-action>나는 따로 가요(기차·버스)</button>
+        </div>
+        <div class="ov-dues box stack">
+          <h2>회비</h2>
+          <div class="between"><span class="strong">1인 100,000원 · 도윤에게</span></div>
+          <p class="muted small">6/7명 냈어요 · 모인 돈 700,000원(총무 몫 포함)</p>
+          <p class="nudge"><span class="muted small">시우 님이 아직 회비를 안 냈어요</span><button type="button" class="btn small" data-demo-action>콕 찌르기</button></p>
+          <button type="button" class="btn primary block" data-demo-action>100,000원 냈어요</button>
+        </div>
+        <div class="box stack">
+          <div class="between"><h2>방·침대 뽑기</h2><span class="muted small">민지가 뽑음</span></div>
+          <ul class="stack small">
+            <li class="between"><span class="strong">1번 방</span><span>재현 · 도윤 · 하준 · 시우</span></li>
+            <li class="between"><span class="strong">2번 방</span><span>민지 · 서연 · 지우 · 예린</span></li>
+          </ul>
+        </div>
       </div>
     </section>
 
@@ -128,6 +183,36 @@
     </section>
 
     <!-- 영수증: 실제 방의 receipt.js 가 그리는 것과 같은 꼴. 값은 위 예시(역할·숲속 독채 1박 32만원·운전자 빼고 교통비)에서 셈 -->
+    <!-- 장보기: 인원·술 마시는 사람·박 수로 서버가 센 양(8명·7명 마심·2박). 맡은 줄은 이름, 안 맡은 줄은 "내가 살게" -->
+    <section class="stack" data-panel="shopping" hidden>
+      <div class="box stack">
+        <div class="between"><h2>얼마나 사요?</h2><span class="muted small">8명 · 2박 기준</span></div>
+        <div class="between"><span>술 마시는 사람</span><b>7명</b></div>
+        <div class="between"><span>1인 고기</span><b>300g</b></div>
+      </div>
+      <p class="hint">"내가 살게"를 누르면 그 줄은 내가 사 오기로 찜해요. 다른 사람 화면에도 이름이 떠서 겹쳐 사지 않아요.</p>
+      <ul class="shop-list">
+        <li class="shop-group">고기</li>
+        <li class="shop-row taken"><div><span class="strong">삼겹살</span><b class="shop-qty">3.4kg</b></div><span class="muted small">서연이 사요 · 96,000원</span></li>
+        <li class="shop-row"><div><span class="strong">목살</span><b class="shop-qty">1.5kg</b></div><button type="button" class="btn" data-demo-action>내가 살게</button></li>
+        <li class="shop-group">곁들임</li>
+        <li class="shop-row taken"><div><span class="strong">쌈채소</span><b class="shop-qty">4봉</b></div><span class="muted small">서연이 사요</span></li>
+        <li class="shop-row"><div><span class="strong">쌈장</span><b class="shop-qty">1통</b></div><button type="button" class="btn" data-demo-action>내가 살게</button></li>
+        <li class="shop-group">술</li>
+        <li class="shop-row taken"><div><span class="strong">소주</span><b class="shop-qty">10병</b></div><span class="muted small">도윤이 사요 · 21,000원</span></li>
+        <li class="shop-row"><div><span class="strong">맥주 500ml</span><b class="shop-qty">28캔</b></div><button type="button" class="btn" data-demo-action>내가 살게</button></li>
+        <li class="shop-group">바베큐</li>
+        <li class="shop-row taken"><div><span class="strong">숯 3kg</span><b class="shop-qty">4봉</b></div><span class="muted small">하준이 사요 · 18,000원</span></li>
+        <li class="shop-group">챙겨 갈 것</li>
+        <li class="shop-row taken"><div><span class="strong">블루투스 스피커</span><b class="shop-qty">1개</b></div><span class="muted small">지우가 챙겨요</span></li>
+        <li class="shop-row"><div><span class="strong">보드게임·카드</span><b class="shop-qty">1개</b></div><button type="button" class="btn" data-demo-action>내가 챙길게</button></li>
+      </ul>
+      <div class="box stack">
+        <div class="between"><span class="strong">쓴 돈</span><span class="strong">135,000원 · 1인 16,900원</span></div>
+        <p class="muted small">9/15줄 맡음 · 안 맡은 줄은 "내가 살게"를 눌러 주세요</p>
+      </div>
+    </section>
+
     <section class="stack" data-panel="receipt" hidden>
       <div class="receipt-box"><div class="receipt-printer" aria-hidden="true"></div>
       <div class="receipt-feed"><article class="receipt printing">
@@ -143,7 +228,8 @@
         <p class="r-row"><span>기록 담당  시우</span><b>밖 활동 선호 +2</b></p>
         <hr class="receipt-cut">
         <p class="r-row"><span>숙소  숲속 독채 펜션</span><b>80,000원</b></p>
-        <p class="r-row"><span>교통  기름값·통행료(운전자 빼고)</span><b>8,800원</b></p>
+        <p class="r-row"><span>교통  재현 차 4명(운전자 빼고)</span><b>8,800원</b></p>
+        <p class="r-row"><span>교통  민지 차 4명(운전자 빼고)</span><b>9,600원</b></p>
         <p class="r-row"><span>장보기  9줄</span><b>27,500원</b></p>
         <p class="r-total"><span>1인 합계</span><b>116,300원</b></p>
         <hr class="receipt-cut">

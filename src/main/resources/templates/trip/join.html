@@ -2,7 +2,7 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/common :: head('여행방 초대')}"></head>
 <body th:data-invite-code="${inviteCode}">
-<header th:replace="~{fragments/common :: siteHeader}"></header>
+<header th:replace="~{fragments/common :: siteHeader(false)}"></header>
 <main class="page narrow center stack">
   <h1 th:text="${ogTitle} ?: '여행방 초대'">여행방 초대</h1>
   <p id="message" class="muted">방에 들어가는 중…</p>

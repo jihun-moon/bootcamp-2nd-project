@@ -26,11 +26,12 @@
   <script th:src="@{/js/common.js}"></script>
 </head>
 
-<!-- 방 밖 화면(첫 화면·로그인·방 만들기)의 위쪽 -->
-<header th:fragment="siteHeader" class="site-header">
+<!-- 방 밖 화면(첫 화면·로그인·방 만들기)의 위쪽. "여행방 만들기"는 첫 화면에서만(cta=true).
+     로그인·방 만들기 화면에서는 지금 하려는 일과 겹치거나 같은 곳을 가리켜서 뺀다 -->
+<header th:fragment="siteHeader(cta)" class="site-header">
   <div class="inner">
     <a th:href="@{/}" class="logo">Trip<span>Mate</span></a>
-    <nav class="row">
+    <nav class="row" th:if="${cta}">
       <a th:href="@{/trips/new}" class="btn primary">여행방 만들기</a>
     </nav>
   </div>

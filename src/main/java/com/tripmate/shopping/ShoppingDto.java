@@ -18,7 +18,9 @@ public final class ShoppingDto {
     public record Board(int people, int nights, int drinkers, int meatGrams, List<Item> items, int spent, int perPerson) {
     }
 
-    public record Item(ShoppingItem key, String label, String group, String quantity, Long buyerId, String buyerName, Integer amount) {
+    // bring 이 true 면 사는 게 아니라 챙겨 가는 줄("내가 챙길게", 쓴 돈 없음)
+    public record Item(ShoppingItem key, String label, String group, String quantity, Long buyerId, String buyerName, Integer amount,
+                       boolean bring) {
     }
 
     // PUT /api/trips/1/shopping/plan  { "drinkers": 6, "meatGrams": 300 }   drinkers null = 전원

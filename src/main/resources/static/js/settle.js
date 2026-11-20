@@ -8,13 +8,6 @@ var settle = null;
 var settleKind = 'STAY';
 var SETTLE_KINDS = [['STAY', '숙소'], ['FUEL', '주유·톨비'], ['FOOD', '식비'], ['DRINK', '술'], ['OTHER', '기타']];
 
-// 이름 뒤 이/가: 받침이 있으면 "문지훈이·재현이", 없으면 "민지가"(한글이 아니면 "이(가)")
-function withSubject(name) {
-  var code = name.charCodeAt(name.length - 1) - 0xAC00;
-  if (code < 0 || code > 11171) return name + '이(가)';
-  return name + (code % 28 ? '이' : '가');
-}
-
 function renderSettle(board, trip) {
   settle = board;
   $('#settle-total').text(board.total ? '모두 ' + won(board.total) : '');

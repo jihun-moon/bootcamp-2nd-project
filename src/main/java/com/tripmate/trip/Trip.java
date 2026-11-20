@@ -4,6 +4,7 @@ import com.tripmate.user.AppUser;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -29,6 +30,10 @@ public class Trip {
     private Boolean driverPaysFuel;  // 운전한 사람도 기름값을 같이 내나
     private Boolean refundNoShow;    // 전날 빠지면 예약금을 돌려주나
     private Boolean drinksSeparate;  // 술값은 마신 사람만 내나
+
+    // 모일 시간·장소(출발일 기준). 커뮤니티 불편 "지각·늦은 출발"(docs/17 8절). 방장이 한 번 적으면 D-day 줄에 뜬다
+    private LocalTime meetTime;
+    private String meetPlace;
 
     // 같은 멤버로 다음 여행을 만들면 지난 방 id 를 남긴다. 단톡방에서 두 사람이 같이 눌러도 다음 방이 하나만 생기게(unique)
     @Column(unique = true)
@@ -79,6 +84,11 @@ public class Trip {
         if (wasHost && !rest.isEmpty()) rest.get(0).makeHost();
     }
 
+    public void updateMeet(LocalTime meetTime, String meetPlace) {
+        this.meetTime = meetTime;
+        this.meetPlace = meetPlace == null || meetPlace.isBlank() ? null : meetPlace.strip();
+    }
+
     public void updatePeriod(LocalDate startDate, LocalDate endDate) {
         this.startDate = startDate;
         this.endDate = endDate;
@@ -92,6 +102,8 @@ public class Trip {
 
     public Long getId() { return id; }
     public Long getPreviousTripId() { return previousTripId; }
+    public LocalTime getMeetTime() { return meetTime; }
+    public String getMeetPlace() { return meetPlace; }
     public String getInviteCode() { return inviteCode; }
     public String getTitle() { return title; }
     public String getDestination() { return destination; }

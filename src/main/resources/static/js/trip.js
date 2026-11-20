@@ -12,12 +12,12 @@ function render(t) {
   var photo = tripPhoto(trip.destination, trip.startDate);
   var cover = $('.ov-cover img');
   if (photo && cover.attr('src') !== photo.src) cover.attr({ src: photo.src, alt: photo.alt });
-  var d = dday(trip.destination, trip.startDate, trip.endDate);
-  $('#dday').text(d || '').prop('hidden', !d);
+  renderDday();
   $('#survey-count').text('설문 ' + done + '/' + trip.members.length + '명');
   $('#survey-bar').css('width', (done / trip.members.length * 100) + '%');
   renderNext(me, notYet);
   renderProgress(notYet);
+  renderMeet(me);
   renderRules(me);
   renderDates(me);
 
@@ -181,6 +181,38 @@ function drawBest(me, board) {
 }
 
 // 방 규칙 카드. 방장은 눌러서 고르고, 참여자는 정해진 것을 읽기만 한다
+// 모일 시간·장소. 방장은 시간·장소 칸(바꾸면 0.6초 뒤 저장), 참여자는 한 줄
+// PUT /api/trips/1/meet  { "time": "08:00", "place": "합정역 2번 출구" }
+var meetTimer = null;
+function renderMeet(me) {
+  var box = $('#meet');
+  var meet = trip.meet || {};
+  var text = meet.time || meet.place ? [meet.time ? meet.time.slice(0, 5) : null, meet.place].filter(Boolean).join(' · ') : null;
+  if (!me.host) {
+    box.empty().append($('<h2>').text('모이는 곳'), $('<p>').text(text || '방장이 아직 안 정했어요.'));
+    return;
+  }
+  if (box.find('input').length) return;   // 방장이 적는 중에 SSE 로 다시 그려 입력이 끊기지 않게
+  var time = $('<input type="time" aria-label="모일 시간">').val(meet.time ? meet.time.slice(0, 5) : '');
+  var place = $('<input type="text" maxlength="40" placeholder="예: 합정역 2번 출구" aria-label="모일 곳">').val(meet.place || '');
+  var save = function () {
+    clearTimeout(meetTimer);
+    meetTimer = setTimeout(function () {
+      api('PUT', '/api/trips/' + tripId + '/meet', { time: time.val() || null, place: place.val().trim() || null })
+        .done(function (t) { trip = t; showToast('모일 곳을 저장했어요.'); renderDday(); });
+    }, 600);
+  };
+  time.on('change', save);
+  place.on('input', save);
+  box.empty().append($('<h2>').text('모이는 곳'), $('<div class="row meet-row">').append(time, place),
+    $('<p class="muted small">').text('적어 두면 하루 전부터 모두의 방 위쪽에 떠요.'));
+}
+
+function renderDday() {
+  var d = dday(trip.destination, trip.startDate, trip.endDate, trip.meet);
+  $('#dday').text(d || '').prop('hidden', !d);
+}
+
 function renderRules(me) {
   var list = $('#rules').empty();
   $('#rules-note').text(me.host ? '처음에 정해 두면 나중에 안 싸워요. 모두의 화면과 결과 글에 보여요.' : '방장이 정해요. 결과 글에도 같이 나가요.');

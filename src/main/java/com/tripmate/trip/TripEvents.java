@@ -23,15 +23,18 @@ public class TripEvents {
     private static final int MAX_PER_TRIP = 40;
 
     private final Map<Long, Set<SseEmitter>> emitters = new ConcurrentHashMap<>();
+    // 연결마다 누구 것인지. 방을 나간(뺀) 사람의 연결을 바로 닫으려고(전에는 30분까지 열려 이벤트 이름이 갔다, 리뷰 #10)
+    private final Map<SseEmitter, Long> owners = new ConcurrentHashMap<>();
 
-    SseEmitter subscribe(Long tripId) throws IOException {
+    SseEmitter subscribe(Long tripId, Long memberId) throws IOException {
         var emitter = new SseEmitter(TIMEOUT);
         var set = emitters.computeIfAbsent(tripId, id -> new CopyOnWriteArraySet<>());
         if (set.size() >= MAX_PER_TRIP) set.iterator().next().complete();
         set.add(emitter);
-        emitter.onCompletion(() -> set.remove(emitter));
+        owners.put(emitter, memberId);
+        emitter.onCompletion(() -> { set.remove(emitter); owners.remove(emitter); });
         emitter.onTimeout(emitter::complete);
-        emitter.onError(e -> set.remove(emitter));
+        emitter.onError(e -> { set.remove(emitter); owners.remove(emitter); });
         // 첫 바이트를 바로 보내야 프록시가 응답 머리를 붙잡지 않고 넘긴다
         emitter.send(SseEmitter.event().comment("connected"));
         return emitter;
@@ -42,6 +45,14 @@ public class TripEvents {
     @TransactionalEventListener(fallbackExecution = true)
     void send(TripChanged event) {
         sendAll(emitters.getOrDefault(event.tripId(), Set.of()), "change", event.what());
+    }
+
+    // 나가기·빼기가 커밋된 뒤 그 사람의 연결을 닫는다. 브라우저가 다시 붙으려 하면 404 라 더 못 듣는다
+    @TransactionalEventListener(fallbackExecution = true)
+    void close(MemberLeaving event) {
+        emitters.getOrDefault(event.tripId(), Set.of()).stream()
+                .filter(emitter -> event.memberId().equals(owners.get(emitter)))
+                .forEach(SseEmitter::complete);
     }
 
     // 서버가 꺼져도 중간 프록시가 브라우저 쪽 연결을 열어 두면 브라우저는 끊긴 줄 모른다.

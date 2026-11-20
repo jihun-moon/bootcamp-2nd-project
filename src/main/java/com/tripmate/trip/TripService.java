@@ -132,6 +132,16 @@ public class TripService {
         return TripDto.Response.of(trip, host);
     }
 
+    // 모일 시간·장소. 방장이 적으면 모두의 방 머리(D-day 줄)에 뜬다
+    @Transactional
+    public TripDto.Response updateMeet(Long tripId, Member host, TripDto.Meet meet) {
+        var trip = tripRepository.findWithMembersById(tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        trip.updateMeet(meet.time(), meet.place());
+        events.publishEvent(new TripChanged(tripId, "trip"));
+        return TripDto.Response.of(trip, host);
+    }
+
     // 방장이 방 규칙을 바꾸면 모두의 화면(개요·역할 보드의 교통비·결과 글)이 다시 읽는다
     @Transactional
     public TripDto.Response updateRules(Long tripId, Member host, TripDto.Rules rules) {

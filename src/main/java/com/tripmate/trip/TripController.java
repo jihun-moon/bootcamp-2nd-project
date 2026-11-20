@@ -74,6 +74,13 @@ public class TripController {
         return ResponseEntity.ok(tripService.setDrinks(tripId, memberId, req.drinks(), me));
     }
 
+    // PUT: /api/trips/1/meet  body = { "time": "08:00", "place": "합정역 2번 출구" }   방장만
+    @PutMapping("/trips/{tripId}/meet")
+    public ResponseEntity<TripDto.Response> meet(@PathVariable Long tripId, @Valid @RequestBody TripDto.Meet meet) {
+        var host = tripAccess.host(tripId);
+        return ResponseEntity.ok(tripService.updateMeet(tripId, host, meet));
+    }
+
     // GET: /api/trips/1/dates   날짜 맞추기 판(참여자 누구나)
     @GetMapping("/trips/{tripId}/dates")
     public ResponseEntity<TripDto.DatesBoard> dates(@PathVariable Long tripId) {
@@ -118,11 +125,11 @@ public class TripController {
     // 받는 것: event: change, data: roles | members | stays
     @GetMapping(path = "/trips/{tripId}/events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public ResponseEntity<SseEmitter> events(@PathVariable Long tripId) throws IOException {
-        tripAccess.me(tripId);
+        var me = tripAccess.me(tripId);
         // 배포 때 앞에 둔 중간 서버(nginx 등)가 gzip 으로 묶거나 모아 두면 알림이 바로 안 간다. no-transform 이면 압축을 건너뛴다
         return ResponseEntity.ok()
                 .header(HttpHeaders.CACHE_CONTROL, "no-cache, no-transform")
                 .header("X-Accel-Buffering", "no")
-                .body(tripEvents.subscribe(tripId));
+                .body(tripEvents.subscribe(tripId, me.getId()));
     }
 }

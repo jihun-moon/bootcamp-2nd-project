@@ -14,7 +14,13 @@ public enum ShoppingItem {
     RICE("햇반", "아침"),
     RAMEN("라면", "아침"),
     WATER("생수 2L", "물"),
-    DISPOSABLES("일회용 접시·컵·수저", "기타");
+    DISPOSABLES("일회용 접시·컵·수저", "기타"),
+    // 사는 게 아니라 집에서 챙겨 가는 것. 커뮤니티 불편 "공용 준비물이 겹치거나 아무도 안 챙김"(docs/17 8절).
+    // 장보기의 "내가 살게"를 그대로 써서 "내가 챙길게" 한 번이면 된다. 돈은 안 든다
+    SPEAKER("블루투스 스피커", "챙겨 갈 것"),
+    POWER_STRIP("멀티탭·충전기", "챙겨 갈 것"),
+    BOARD_GAME("보드게임·카드", "챙겨 갈 것"),
+    MEDICINE("상비약(소화제·밴드)", "챙겨 갈 것");
 
     private final String label;
     private final String group;
@@ -30,6 +36,9 @@ public enum ShoppingItem {
     // 방 규칙 "술값은 마신 사람만"이면 이 줄들은 술 마시는 사람끼리 나눈다(정산)
     public boolean isDrink() { return "술".equals(group); }
 
+    // 사는 게 아니라 챙겨 가는 줄(쓴 돈 칸이 없다)
+    public boolean isBring() { return "챙겨 갈 것".equals(group); }
+
     // 사는 양을 사람이 읽는 글로. 고기는 100g 단위로 올려 kg, 나머지는 개수
     String quantity(int people, int drinkers, int nights, int meatGrams) {
         var bbq = nights;
@@ -44,6 +53,7 @@ public enum ShoppingItem {
             case RICE, RAMEN -> people * nights + "개";
             case WATER -> ceil(people / 2.0) * (nights + 1) + "병";
             case DISPOSABLES -> ceil(people / 10.0) + "세트";
+            case SPEAKER, POWER_STRIP, BOARD_GAME, MEDICINE -> "1개";
         };
     }
 

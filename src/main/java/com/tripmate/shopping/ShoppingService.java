@@ -53,7 +53,7 @@ public class ShoppingService {
             var c = claims.get(i);
             return new ShoppingDto.Item(i, i.getLabel(), i.getGroup(), i.quantity(people, drinkers, nights, meatGrams),
                     c == null ? null : c.getMember().getId(), c == null ? null : c.getMember().getName(),
-                    c == null ? null : c.getAmount());
+                    c == null ? null : c.getAmount(), i.isBring());
         }).toList();
         var spent = claims.values().stream().mapToInt(c -> c.getAmount() == null ? 0 : c.getAmount()).sum();
         // 1인 몫은 100원 단위로 올린다(회비 걷을 때 그대로 쓰게)

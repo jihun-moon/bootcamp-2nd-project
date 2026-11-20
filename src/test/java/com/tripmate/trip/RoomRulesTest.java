@@ -51,4 +51,18 @@ class RoomRulesTest {
                         .contentType(MediaType.APPLICATION_JSON).content(RULES))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    void 모일_시간과_장소는_방장이_적고_모두에게_보인다() throws Exception {
+        var meet = "{ \"time\": \"08:00\", \"place\": \" 합정역 2번 출구 \" }";
+        mvc.perform(put("/api/trips/1/meet").session(TestLogin.as(mvc, "민지"))
+                .contentType(MediaType.APPLICATION_JSON).content(meet)).andExpect(status().isForbidden());
+        mvc.perform(put("/api/trips/1/meet").session(TestLogin.as(mvc, "재현"))
+                .contentType(MediaType.APPLICATION_JSON).content(meet)).andExpect(status().isOk());
+        mvc.perform(get("/api/trips/1").session(TestLogin.as(mvc, "민지")))
+                .andExpect(jsonPath("$.meet.time").value(org.hamcrest.Matchers.startsWith("08:00")))
+                .andExpect(jsonPath("$.meet.place").value("합정역 2번 출구"));
+        mvc.perform(put("/api/trips/1/meet").session(TestLogin.as(mvc, "재현")).contentType(MediaType.APPLICATION_JSON)
+                .content("{ \"time\": null, \"place\": \"" + "가".repeat(41) + "\" }")).andExpect(status().isBadRequest());
+    }
 }

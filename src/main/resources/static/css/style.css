@@ -794,3 +794,8 @@ button.link::after { content: ""; position: absolute; inset: -12px -8px; } /* �
 
 /* 설문의 달력·출발 동네·여러 개 고르기: 한 줄로, 넓은 화면에서도 480px 까지만(달력이 너무 넓으면 날짜 칸이 납작해진다) */
 .grid2.single { grid-template-columns: minmax(0, 480px); }
+
+/* 모이는 곳: 시간 칸은 좁게, 장소 칸이 나머지. 아래 방 규칙과 선 하나로 나눈다 */
+.meet { padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+.meet-row input[type="time"] { flex: none; width: 128px; }
+.meet-row input[type="text"] { flex: 1; min-width: 0; }

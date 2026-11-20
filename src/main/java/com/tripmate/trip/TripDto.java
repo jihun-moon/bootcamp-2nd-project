@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,8 @@ public final class TripDto {
     // meId 는 요청한 사람의 이 방 참여자 id. 화면이 "나"를 고르는 단계 없이 바로 쓴다.
     // nextTripId 는 이 방에서 이어 만든 다음 여행 방(없으면 null). 개요가 "2탄 방이 열렸어요"를 띄운다
     public record Response(Long id, String title, String destination, LocalDate startDate, LocalDate endDate,
-                           String inviteCode, Long meId, List<MemberResponse> members, Rules rules, Long nextTripId) {
+                           String inviteCode, Long meId, List<MemberResponse> members, Rules rules, Long nextTripId,
+                           Meet meet) {
 
         static Response of(Trip trip, Member me) {
             return of(trip, me, null);
@@ -42,7 +44,7 @@ public final class TripDto {
         static Response of(Trip trip, Member me, Long nextTripId) {
             var members = trip.getMembers().stream().map(MemberResponse::from).toList();
             return new Response(trip.getId(), trip.getTitle(), trip.getDestination(), trip.getStartDate(), trip.getEndDate(),
-                    trip.getInviteCode(), me.getId(), members, Rules.of(trip), nextTripId);
+                    trip.getInviteCode(), me.getId(), members, Rules.of(trip), nextTripId, new Meet(trip.getMeetTime(), trip.getMeetPlace()));
         }
     }
 
@@ -93,6 +95,10 @@ public final class TripDto {
         static MemberResponse from(Member m) {
             return new MemberResponse(m.getId(), m.getName(), m.isHost(), m.isSurveyDone(), m.getImageUrl(), m.drinks());
         }
+    }
+
+    // PUT /api/trips/1/meet  { "time": "08:00", "place": "합정역 2번 출구" }   둘 다 null 이면 지운다
+    public record Meet(LocalTime time, @Size(max = 40) String place) {
     }
 
     // PUT /api/trips/1/members/2/drinks  { "drinks": false }

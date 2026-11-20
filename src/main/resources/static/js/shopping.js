@@ -48,11 +48,11 @@ function renderPlan() {
     stepper('1인 고기', board.meatGrams, 'g', 50, 100, 600, 'meatGrams'));
 }
 
-// 줄 오른쪽: 아무도 안 맡았으면 "내가 살게", 내가 맡았으면 쓴 돈 칸과 내려놓기, 남이 맡았으면 이름
+// 줄 오른쪽: 아무도 안 맡았으면 "내가 살게"(챙겨 갈 것은 "내가 챙길게"), 내가 맡았으면 쓴 돈 칸과 내려놓기, 남이 맡았으면 이름
 function claimPart(item) {
   var url = '/api/trips/' + tripId + '/shopping/items/' + item.key;
   if (!item.buyerId) {
-    return $('<button type="button" class="btn">').text('내가 살게').click(function () {
+    return $('<button type="button" class="btn">').text(item.bring ? '내가 챙길게' : '내가 살게').click(function () {
       api('PUT', url, { amount: null }).done(function (b) {
         board = b;
         render();
@@ -62,11 +62,19 @@ function claimPart(item) {
     });
   }
   if (item.buyerId !== trip.meId) {
-    var part = $('<span class="muted small">').text(item.buyerName + '가 사요' + (item.amount ? ' · ' + won(item.amount) : ''));
+    var part = $('<span class="muted small">').text(withSubject(item.buyerName) + (item.bring ? ' 챙겨요' : ' 사요')
+      + (item.amount ? ' · ' + won(item.amount) : ''));
     if (!me().host) return part;
     return $('<div class="row">').append(part, $('<button type="button" class="link small">').text('풀기').click(function () {
       api('DELETE', url).done(function (b) { board = b; render(); });
     }));
+  }
+  // 챙겨 갈 것은 돈이 안 드니 내려놓기만
+  if (item.bring) {
+    return $('<div class="row">').append($('<span class="muted small">').text('내가 챙겨요'),
+      $('<button type="button" class="link small">').text('내려놓기').click(function () {
+        api('DELETE', url).done(function (b) { board = b; render(); });
+      }));
   }
   // 산 뒤 금액을 적으면 칸을 벗어날 때 저장(엔터도)
   var input = $('<input type="number" min="0" max="10000000" step="1" inputmode="numeric" class="shop-amount">')
@@ -86,7 +94,7 @@ function claimPart(item) {
 function shareList() {
   var lines = ['[' + trip.title + '] 장보기 (' + board.people + '명 · ' + board.nights + '박)'];
   board.items.forEach(function (i) { lines.push('· ' + i.label + ' ' + i.quantity + ' — ' + (i.buyerName || '누가?')); });
-  lines.push('맡을 사람은 여기서 "내가 살게" ' + location.origin + '/join/' + trip.inviteCode);
+  lines.push('맡을 사람은 여기서 "내가 살게"·"내가 챙길게" ' + location.origin + '/join/' + trip.inviteCode);
   shareText(lines.join('\n'), '장보기 목록을 복사했어요. 단톡방에 붙여 넣어 주세요.');
 }
 

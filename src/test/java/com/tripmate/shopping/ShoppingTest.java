@@ -85,4 +85,17 @@ class ShoppingTest {
                 .andExpect(jsonPath("$.items[?(@.key == 'CHARCOAL')].buyerName").value(hasItem((Object) null)));
         mvc.perform(get("/api/trips/1/shopping/items/NOPE").session(TestLogin.as(mvc, "민지"))).andExpect(status().is4xxClientError());
     }
+
+    @Test
+    void 챙겨_갈_것은_내가_챙길게로_맡고_돈은_안_든다() throws Exception {
+        var minji = TestLogin.as(mvc, "민지");
+        mvc.perform(get("/api/trips/1/shopping").session(minji))
+                .andExpect(jsonPath("$.items[?(@.key == 'SPEAKER')].bring").value(hasItem(true)))
+                .andExpect(jsonPath("$.items[?(@.key == 'SPEAKER')].quantity").value(hasItem("1개")))
+                .andExpect(jsonPath("$.items[?(@.key == 'SOJU')].bring").value(hasItem(false)));
+        claim(minji, "SPEAKER", null).andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[?(@.key == 'SPEAKER')].buyerName").value(hasItem("민지")))
+                .andExpect(jsonPath("$.spent").value(0));
+        claim(TestLogin.as(mvc, "도윤"), "SPEAKER", null).andExpect(status().isConflict());
+    }
 }

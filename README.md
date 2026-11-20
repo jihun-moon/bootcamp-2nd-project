@@ -55,6 +55,7 @@ JDK 17 이상만 있으면 된다. DB 는 메모리 H2 라 설치할 것이 없�
 | 내 되는 날 | PUT | `/api/trips/{id}/members/{memberId}/dates` | 200 판<br>요청 `{"dates": ["2027-01-15", "2027-01-16"]}` | 남의 것 403, 지난 날·1년 넘는 날 400 | 문지훈 |
 | 날짜 정하기 | PUT | `/api/trips/{id}/period` | 200 방<br>요청 `{"startDate": "2027-01-15", "endDate": "2027-01-17"}` | 방장이 아니면 403, 도착이 출발보다 앞이면 400 | 문지훈 |
 | 방 규칙 | PUT | `/api/trips/{id}/rules` | 200 방<br>요청 `{"driverPaysFuel": false, "refundNoShow": false, "drinksSeparate": true}` | 방장이 아니면 403 | 문지훈 |
+| 모일 시간·장소 | PUT | `/api/trips/{id}/meet` | 200 방(`meet: {"time": "08:00", "place": "합정역 2번 출구"}`), 하루 전부터 방 머리에 "내일 08:00 · 합정역 2번 출구" | 방장이 아니면 403, 장소 40자 넘으면 400 | 문지훈 |
 | 같은 멤버로 다음 여행 | POST | `/api/trips/{id}/next` | 201 `{"tripId": 7, "created": true, "memberCount": 8}` (이미 있으면 200 같은 방) | 방에 없으면 404, 동시에 겹치면 409 | 문지훈 |
 | 나가기·빼기 | DELETE | `/api/trips/{id}/members/{memberId}` | 204 (설문·역할·숙소 표·장보기·정산이 같이 빠짐) | 남을 빼려는 참여자 403, 혼자 남은 방 400 | 문지훈 |
 | 장보기 | GET / PUT / DELETE | `/api/trips/{id}/shopping`, `/shopping/plan`, `/shopping/items/{item}` | 200 `{"people": 8, "items": [...], "spent": 52000, "perPerson": 6500}` | 남이 맡은 줄 409, 범위 밖 400 | 문지훈 |

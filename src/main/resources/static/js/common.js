@@ -204,17 +204,27 @@ function tripPhoto(destination, startDate) {
 }
 
 // 방 머리 사진 위 한 줄: 떠나기 전엔 D-day, 여행 중엔 몇째 날, 다녀와선 며칠 지났는지(그날그날 다른 말이 보이게)
-function dday(destination, startDate, endDate) {
+function dday(destination, startDate, endDate, meet) {
   if (!startDate) return null;
   var day = function (s) { return new Date(s + 'T00:00:00'); };
   var now = new Date(); now = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   var toStart = Math.round((day(startDate) - now) / 86400000);
   var place = destination || '여행';
+  // 하루 전·당일에는 모일 시간·장소가 먼저(지각이 제일 흔한 다툼이라)
+  var at = meet && (meet.time || meet.place) ? [meet.time ? meet.time.slice(0, 5) : null, meet.place].filter(Boolean).join(' · ') : null;
+  if (toStart === 1 && at) return '내일 ' + at;
   if (toStart > 0) return place + (destination ? '까지' : '') + ' D-' + toStart;
-  if (toStart === 0) return '오늘 출발! 짐 다 챙겼죠?';
+  if (toStart === 0) return at ? '오늘 ' + at + '에서 만나요' : '오늘 출발! 짐 다 챙겼죠?';
   var sinceEnd = Math.round((now - day(endDate || startDate)) / 86400000);
   if (sinceEnd <= 0) return place + ' ' + (1 - toStart) + '일째';
   return place + ' 다녀온 지 ' + sinceEnd + '일';
+}
+
+// 이름 뒤 이/가: 받침이 있으면 "문지훈이·재현이", 없으면 "민지가"(한글이 아니면 "이(가)")
+function withSubject(name) {
+  var code = name.charCodeAt(name.length - 1) - 0xAC00;
+  if (code < 0 || code > 11171) return name + '이(가)';
+  return name + (code % 28 ? '이' : '가');
 }
 
 // 같은 멤버로 다음 여행. POST: /api/trips/1/next -> { "tripId": 7, "created": true, "memberCount": 8 }

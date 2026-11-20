@@ -81,6 +81,16 @@ class StayControllerTest {
     }
 
     @Test
+    void 네이버_지도_공유_글을_붙이면_링크만_저장하고_이름은_글에서() throws Exception {
+        // 네이버는 미리보기를 막아 빈 값이 온다(429)
+        when(linkPreview.fetch("https://naver.me/5abc")).thenReturn(LinkPreview.Result.EMPTY);
+        postStay("{ \"url\": \"[네이버 지도]\\n강변 펜션\\n경기 가평군 청평면 1\\nhttps://naver.me/5abc\" }")
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.title").value("강변 펜션"))
+                .andExpect(jsonPath("$.url").value("https://naver.me/5abc"));
+    }
+
+    @Test
     void 방_사람이_아니면_미리보기도_못_한다() throws Exception {
         mvc.perform(post("/api/trips/1/stays/preview").session(TestLogin.as(mvc, "남"))
                         .contentType(MediaType.APPLICATION_JSON).content("{ \"url\": \"https://stay.example.com/1\" }"))

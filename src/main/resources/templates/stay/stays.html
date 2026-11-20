@@ -21,8 +21,12 @@
 
     <form id="stay-form" class="box dashed stack">
       <h2>숙소 링크 올리기</h2>
-      <p class="muted small">예약 사이트 링크를 붙여 넣으면 이름·사진·조건을 알아서 채워요. 맞는지만 보고 올리면 돼요.</p>
-      <input type="url" id="stay-url" required placeholder="https://..." inputmode="url" enterkeyhint="done">
+      <p class="muted small">찾은 곳에서 "공유"를 눌러 복사한 글을 그대로 붙여 넣어요. 이름·사진·조건은 알아서 채워요.</p>
+      <!-- 공유 글(이름·주소·링크가 섞인 여러 줄)도 받아야 해서 textarea. input 은 붙여 넣을 때 줄바꿈을 지워 이름과 주소가 붙는다.
+           링크를 뽑는 건 서버(ShareText) -->
+      <textarea id="stay-url" class="paste-box" rows="2" required maxlength="2000" autocomplete="off"
+                placeholder="링크나 공유 글 붙여 넣기"></textarea>
+      <p class="muted small stay-sources">네이버 지도 · 카카오맵 · 에어비앤비 · 야놀자 · 여기어때 · 네이버 호텔 · 아고다 · 블로그 글</p>
       <!-- 링크를 읽은 결과. 사진과 이름이 보이면 맞는 링크인지 바로 안다 -->
       <div id="stay-preview" class="stay-preview" hidden>
         <img id="preview-photo" alt="" referrerpolicy="no-referrer" hidden>

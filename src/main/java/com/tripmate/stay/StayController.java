@@ -89,29 +89,32 @@ public class StayController {
         if (stayRepository.countByTripId(tripId) >= MAX_STAYS) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "숙소는 " + MAX_STAYS + "개까지 올릴 수 있어요");
         }
-        var preview = linkPreview.fetch(req.url());
-        var title = firstNonBlank(req.title(), preview.title(), hostOf(req.url()));
+        var shared = ShareText.of(req.url());
+        var preview = linkPreview.fetch(shared.url());
+        var title = firstNonBlank(req.title(), preview.title(), shared.name(), hostOf(shared.url()));
         var imageUrl = (preview.imageUrl() != null && preview.imageUrl().length() <= MAX_URL) ? preview.imageUrl() : null;
         var amenities = (req.amenities() == null) ? EnumSet.noneOf(Amenity.class) : req.amenities();
 
         var trip = tripRepository.getReferenceById(tripId);
         // 가격 칸을 비우고 올렸으면(미리보기 전에 눌렀으면) 링크가 알려 준 값을 쓴다
         var price = (req.price() != null) ? req.price() : preview.price();
-        var stay = stayRepository.save(new Stay(trip, member, title, req.url(), imageUrl, price, amenities));
+        var stay = stayRepository.save(new Stay(trip, member, title, shared.url(), imageUrl, price, amenities));
         events.publishEvent(new TripChanged(tripId, "stays"));
         return ResponseEntity.status(HttpStatus.CREATED).body(new StayDto.StayView(stay.getId(), stay.getTitle(),
                 stay.getUrl(), stay.getImageUrl(), stay.getPrice(), Set.copyOf(stay.getAmenities()), List.of()));
     }
 
-    // POST: /api/trips/1/stays/preview  body = { "url": "https://..." }
+    // POST: /api/trips/1/stays/preview  body = { "url": "https://..." } 또는 { "url": "[카카오맵] 가평펜션 ... https://kko.to/x" }(공유 글 통째)
     // 링크를 붙여 넣자마자 이름·사진과 소개 글에서 찾은 조건을 돌려준다. 사람은 칠해진 조건이 맞는지만 보고 올린다
     @PostMapping("/stays/preview")
     public ResponseEntity<StayDto.Preview> preview(@PathVariable Long tripId, @Valid @RequestBody StayDto.PreviewRequest req) {
         tripAccess.me(tripId);
-        var preview = linkPreview.fetch(req.url());
+        var shared = ShareText.of(req.url());
+        var preview = linkPreview.fetch(shared.url());
         var imageUrl = (preview.imageUrl() != null && preview.imageUrl().length() <= MAX_URL) ? preview.imageUrl() : null;
-        var text = Objects.toString(preview.title(), "") + " " + Objects.toString(preview.description(), "");
-        return ResponseEntity.ok(new StayDto.Preview(preview.title(), imageUrl, preview.price(), Amenity.guess(text)));
+        var title = (preview.title() != null) ? preview.title() : shared.name();
+        var text = Objects.toString(title, "") + " " + Objects.toString(preview.description(), "");
+        return ResponseEntity.ok(new StayDto.Preview(title, imageUrl, preview.price(), Amenity.guess(text)));
     }
 
     // PUT: /api/trips/1/votes/2  body = { "stayId": 3 }  (한 사람 한 표라 다시 보내면 표를 옮긴다. 본인 표만)

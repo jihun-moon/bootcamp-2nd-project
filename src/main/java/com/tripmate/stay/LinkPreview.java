@@ -11,6 +11,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -37,6 +38,9 @@ public class LinkPreview {
     private static final Pattern PRICE = Pattern.compile("\"(?:price|lowPrice)\"\\s*:\\s*\"?(\\d{4,9})(?:\\.\\d+)?\"?");
     private static final Pattern TITLE = Pattern.compile("<title[^>]*>([^<]{1,300})</title>", Pattern.CASE_INSENSITIVE);
     // 메타 태그마다 정규식을 새로 만들면 숙소 하나에 수백 개가 생긴다. 쓰는 속성 셋만 미리 만들어 둔다
+    // 지도 앱 첫 화면 제목. 장소 페이지가 아니라 앱 껍데기를 읽은 것이라 이름으로 쓰지 않는다(공유 글의 이름이 대신 들어간다)
+    private static final Set<String> APP_TITLES = Set.of("네이버 지도", "NAVER Map", "네이버 플레이스", "카카오맵", "Kakao Map", "다음지도");
+    private static final Pattern KAKAO_ITEM = Pattern.compile("(?:^|&)itemId=(\\d{1,15})");
     private static final Map<String, Pattern> ATTRS = Map.of(
             "property", attrPattern("property"), "name", attrPattern("name"), "content", attrPattern("content"));
 
@@ -51,9 +55,12 @@ public class LinkPreview {
         try {
             var uri = URI.create(url);
             for (var hop = 0; hop <= MAX_REDIRECTS; hop++) {
+                uri = placePage(uri);
                 requirePublic(uri);
+                // 카톡·슬랙 미리보기처럼 "compatible; 이름" 꼴로 우리라고 밝힌다. 브라우저인 척하지 않는다
                 var request = HttpRequest.newBuilder(uri).timeout(TIMEOUT)
-                        .header("User-Agent", "TripMate-LinkPreview").GET().build();
+                        .header("User-Agent", "Mozilla/5.0 (compatible; TripMate-LinkPreview/1.0)")
+                        .header("Accept-Language", "ko-KR,ko;q=0.9").GET().build();
                 var response = client.send(request, HttpResponse.BodyHandlers.ofInputStream());
                 try (var body = response.body()) {
                     var location = response.headers().firstValue("location");
@@ -94,6 +101,14 @@ public class LinkPreview {
         }
     }
 
+    // 카카오맵 공유 링크(kko.to)는 map.kakao.com/?itemId=123 으로 넘어간다. 그 주소는 미리보기 태그가 없는 지도 화면이라
+    // 같은 장소의 소개 페이지(place.map.kakao.com/123, og:title·사진 있음)로 바꿔 읽는다
+    static URI placePage(URI uri) {
+        if (!"map.kakao.com".equals(uri.getHost()) || uri.getRawQuery() == null) return uri;
+        var item = KAKAO_ITEM.matcher(uri.getRawQuery());
+        return item.find() ? URI.create("https://place.map.kakao.com/" + item.group(1)) : uri;
+    }
+
     // shortcut: 검사한 뒤 HttpClient 가 DNS 를 다시 찾으므로 DNS 리바인딩은 못 막는다. 공개 서비스로 열면 검사한 IP 로 직접 붙게 바꾼다
     static void requirePublic(URI uri) throws IOException {
         var scheme = uri.getScheme();
@@ -132,7 +147,10 @@ public class LinkPreview {
             var t = TITLE.matcher(html);
             if (t.find()) title = t.group(1);
         }
-        return new Result(shortTitle(clean(title)), absoluteHttp(image, base), clean(description), lowestPrice(html));
+        var name = shortTitle(clean(title));
+        // 제목이 없거나 앱 이름뿐이면 사진도 앱 기본 그림(네이버 지도 og-map)이라 같이 버린다
+        if (name == null || APP_TITLES.contains(name)) return Result.EMPTY;
+        return new Result(name, absoluteHttp(image, base), clean(description), lowestPrice(html));
     }
 
     // 회원가·정가처럼 값이 여럿이면 가장 낮은 값. 할인 금액(-81360)처럼 음수나 천 원 아래 값은 버린다

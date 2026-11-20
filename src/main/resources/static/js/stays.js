@@ -108,12 +108,12 @@ function pickedAmenities() {
   return $('#stay-amenities .toggle[aria-pressed="true"]').map(function () { return $(this).data('key'); }).get();
 }
 
-// POST: /api/trips/1/stays/preview  { "url": "https://..." } -> { "title", "imageUrl", "amenities": ["DETACHED"] }
+// POST: /api/trips/1/stays/preview  { "url": "https://..." 또는 앱 공유 글 } -> { "title", "imageUrl", "amenities": ["DETACHED"] }
 // 링크를 붙여 넣으면 바로 읽어 이름·사진을 보이고, 소개 글에서 찾은 조건을 칠해 둔다. 사람이 이미 고친 칸은 건드리지 않는다
 var previewedUrl = null;
 function previewLink() {
   var url = $('#stay-url').val().trim();
-  if (!/^https?:\/\/\S+\.\S+/.test(url) || url === previewedUrl) return;
+  if (!/https?:\/\/\S+\.\S+/.test(url) || url === previewedUrl) return;
   previewedUrl = url;
   $('#stay-preview').prop('hidden', false);
   $('#preview-photo').prop('hidden', true);

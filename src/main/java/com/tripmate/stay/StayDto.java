@@ -15,16 +15,19 @@ public final class StayDto {
     private StayDto() {
     }
 
+    // url 에는 앱 공유 글을 통째로 넣어도 된다(ShareText 가 링크와 이름을 뽑는다). 그래서 링크가 들어 있기만 보면 된다
+    private static final String SHARED = "(?s).*https?://\\S+.*";
+
     // { "url": "https://example.com/stay/1", "title": "숲속 독채", "amenities": ["DETACHED", "PRIVATE_BBQ"] }
-    // title 을 비우면 링크의 og:title 을 쓴다. 올린 사람은 로그인한 본인
-    public record CreateRequest(@NotBlank @Size(max = 2000) @Pattern(regexp = "https?://\\S+") String url,
+    // title 을 비우면 링크의 og:title, 그것도 없으면 공유 글의 이름을 쓴다. 올린 사람은 로그인한 본인
+    public record CreateRequest(@NotBlank @Size(max = 2000) @Pattern(regexp = SHARED) String url,
                                 @Size(max = 200) String title,
                                 @PositiveOrZero @Max(100_000_000) Integer price,
                                 Set<Amenity> amenities) {
     }
 
     // POST /api/trips/1/stays/preview  { "url": "https://..." }
-    public record PreviewRequest(@NotBlank @Size(max = 2000) @Pattern(regexp = "https?://\\S+") String url) {
+    public record PreviewRequest(@NotBlank @Size(max = 2000) @Pattern(regexp = SHARED) String url) {
     }
 
     // -> { "title": "가평 숲속 독채", "imageUrl": "https://...", "amenities": ["DETACHED", "PRIVATE_BBQ"] }

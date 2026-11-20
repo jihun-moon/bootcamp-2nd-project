@@ -124,11 +124,11 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 .rows > li:last-child { border-bottom: 0; padding-bottom: 0; }
 
 /* 입력 */
-input[type=text], input[type=url], input[type=date], input[type=number] {
+input[type=text], input[type=url], input[type=date], input[type=number], textarea.paste-box {
   width: 100%; min-height: var(--tap); padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm);
   background: var(--surface); color: var(--ink); font: inherit;
 }
-input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+input:focus, textarea.paste-box:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
 input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--accent); }
 .row > input { flex: 1; }
 label { display: block; color: var(--muted); font-size: var(--fs-sm); flex: 1; }
@@ -826,3 +826,10 @@ button.link::after { content: ""; position: absolute; inset: -12px -8px; } /* �
 /* 날짜 후보 위 "몇 박": 다섯 개가 휴대폰 한 줄에 */
 .dates-length { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
 .dates-length .toggle { justify-content: center; padding-inline: 4px; }
+
+/* 되돌릴 수 없는 일(방 지우기)은 붉은 글자 단추 하나, 저장 단추와 떨어뜨려 */
+.danger-link { justify-self: start; margin-top: 8px; color: var(--error); }
+
+/* 숙소 링크 칸: 공유 글이 여러 줄이라 textarea. 두 줄 높이로 두고 손잡이는 숨긴다 */
+textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height: 3.2em; }
+.stay-sources { margin-top: -4px; }

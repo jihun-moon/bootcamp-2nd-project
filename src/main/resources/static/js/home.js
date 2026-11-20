@@ -59,12 +59,13 @@ function playPhone(phone) {
       phone.classList.remove('on-board');
       $(chatSteps).add(boardSteps).removeClass('shown');
       if (unread) unread.textContent = '7';
-      // 첫 바퀴는 첫 메시지를 바로 띄운다. 들어오자마자 빈 휴대폰이 1.5초 보이면 "고장났나?"로 읽혔다
+      // 첫 바퀴는 싸움거리 세 줄(운전·숙소·날짜)을 바로 띄운다. 들어오자마자 빈 휴대폰이 보이면 "고장났나?"로 읽혔고,
+      // 말풍선 하나만으로는 "우리 단톡방 얘기네"가 안 됐다
       if (!firstRound) await wait(600);
       for (var i = 0; i < chatSteps.length; i++) {
         await untilVisible();
         var mine = chatSteps[i].classList.contains('mine');
-        if (firstRound && i === 0) { chatSteps[0].classList.add('shown'); await wait(700); continue; }
+        if (firstRound && i < 3) { chatSteps[i].classList.add('shown'); await wait(i < 2 ? 250 : 900); continue; }
         // "…"(입력 중)은 남이 쓸 때만. 내가 보내는 링크는 바로 붙는다
         if (!mine) {
           typing.insertBefore(chatSteps[i]);

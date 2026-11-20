@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,15 +50,24 @@ public final class TripDto {
     public record Next(Long tripId, boolean created, int memberCount) {
     }
 
-    // GET /api/me/trips 의 한 줄. 첫 화면에서 들어갈 방을 고르는 데 필요한 것만
+    // GET /api/me/trips 의 한 줄. 첫 화면에서 들어갈 방을 고르는 데 필요한 것만.
+    // todo 는 이 방에서 "내가" 아직 안 한 일(급한 순서): invite(혼자 있는 방장) → survey → dates(방 날짜가 없고 내 되는 날도 없음).
+    // 알림을 보내는 대신 로그인해 첫 화면에 오면 바로 보이게 한다(지훈: "알림보다 들어오면 하라고 안내")
     public record Summary(Long id, String title, String destination, LocalDate startDate, LocalDate endDate,
-                          int memberCount, long surveyDone, boolean host) {
+                          int memberCount, long surveyDone, boolean host, List<String> todo) {
 
         static Summary of(Trip trip, AppUser user) {
             var members = trip.getMembers();
-            var host = members.stream().anyMatch(m -> m.isHost() && m.belongsTo(user));
+            var me = members.stream().filter(m -> m.belongsTo(user)).findFirst().orElse(null);
+            var host = me != null && me.isHost();
+            var todo = new ArrayList<String>();
+            if (me != null) {
+                if (host && members.size() == 1) todo.add("invite");
+                if (!me.isSurveyDone()) todo.add("survey");
+                else if (trip.getStartDate() == null && me.getAvailableDates().isEmpty()) todo.add("dates");
+            }
             return new Summary(trip.getId(), trip.getTitle(), trip.getDestination(), trip.getStartDate(), trip.getEndDate(),
-                    members.size(), members.stream().filter(Member::isSurveyDone).count(), host);
+                    members.size(), members.stream().filter(Member::isSurveyDone).count(), host, todo);
         }
     }
 

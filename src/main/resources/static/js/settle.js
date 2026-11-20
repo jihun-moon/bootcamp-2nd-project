@@ -13,8 +13,9 @@ function renderSettle(board, trip) {
   if (!board.lines.length) {
     list.append($('<li class="muted">').text('먼저 낸 돈을 적으면 누가 누구에게 얼마 보낼지 바로 나와요.'));
   } else if (!board.transfers.length) {
-    list.append($('<li class="muted">').text('모두 딱 맞게 냈어요. 보낼 돈이 없어요.'));
+    list.append($('<li class="settled muted">').append($('<span>').text('모두 딱 맞게 냈어요. 보낼 돈이 없어요.')));
   }
+  settledStamp(board.lines.length > 0 && !board.transfers.length);
   board.transfers.forEach(function (t) {
     var mine = t.fromId === trip.meId || t.toId === trip.meId;
     $('<li class="settle-row">').toggleClass('mine', mine).append(
@@ -36,6 +37,16 @@ function renderSettle(board, trip) {
     lines.append(row);
   });
   $('#settle-rule').text(board.driverPaysFuel === false ? '우리 규칙: 기름값·톨비는 운전한 사람 빼고 나눠요.' : '');
+}
+
+function settledStamp(on) {
+  var box = $('#settle-transfers .settled');
+  if (!on || !box.length) return;
+  var key = 'tripmate.settled.' + tripId, first = false;
+  try { first = !localStorage.getItem(key); localStorage.setItem(key, '1'); } catch (e) { /* 도장 연출만 매번 */ }
+  var stamp = $('<div class="stamp keep" aria-hidden="true">').text('정산 끝').toggleClass('quiet', !first || REDUCE_MOTION).appendTo(box);
+  if (first && navigator.vibrate && window.matchMedia('(pointer: coarse)').matches) navigator.vibrate([20, 40, 30]);
+  return stamp;
 }
 
 function settleText(trip) {

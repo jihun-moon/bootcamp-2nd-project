@@ -5,11 +5,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -32,6 +35,35 @@ class MyTripsTest {
                 .andExpect(jsonPath("$[0].host").value(true));
         mvc.perform(get("/api/me/trips").session(TestLogin.as(mvc, "민지")))
                 .andExpect(jsonPath("$[0].host").value(false));
+    }
+
+    @Test
+    void 로그인하면_방마다_내가_안_한_일이_보인다() throws Exception {
+        // 예시 방은 날짜가 있어서 설문만 남는다
+        mvc.perform(get("/api/me/trips").session(TestLogin.as(mvc, "민지")))
+                .andExpect(jsonPath("$[0].todo[0]").value("survey"));
+        mvc.perform(put("/api/trips/1/members/2/survey").session(TestLogin.as(mvc, "민지"))
+                .contentType(MediaType.APPLICATION_JSON).content("""
+                        { "activity": "BOTH", "planning": "OUTLINE", "hasCar": false, "separateDeparture": false,
+                          "departure": null, "mobilityLimited": false, "avoid": [] }"""));
+        mvc.perform(get("/api/me/trips").session(TestLogin.as(mvc, "민지")))
+                .andExpect(jsonPath("$[0].todo.length()").value(0));
+
+        // 날짜 없는 방을 혼자 만들면 초대 → 설문, 설문을 하고 되는 날을 안 눌렀으면 날짜
+        var solo = TestLogin.as(mvc, "혼자");
+        var trip = mvc.perform(post("/api/trips").session(solo).contentType(MediaType.APPLICATION_JSON)
+                .content("{ \"title\": \"속초 여행\" }")).andReturn().getResponse().getContentAsString();
+        var node = tools.jackson.databind.json.JsonMapper.builder().build().readTree(trip);
+        mvc.perform(get("/api/me/trips").session(solo))
+                .andExpect(jsonPath("$[0].todo[0]").value("invite"))
+                .andExpect(jsonPath("$[0].todo[1]").value("survey"));
+        mvc.perform(put("/api/trips/" + node.get("id").asLong() + "/members/" + node.get("meId").asLong() + "/survey").session(solo)
+                .contentType(MediaType.APPLICATION_JSON).content("""
+                        { "activity": "BOTH", "planning": "OUTLINE", "hasCar": false, "separateDeparture": false,
+                          "departure": null, "mobilityLimited": false, "avoid": [] }"""));
+        mvc.perform(get("/api/me/trips").session(solo))
+                .andExpect(jsonPath("$[0].todo[0]").value("invite"))
+                .andExpect(jsonPath("$[0].todo[1]").value("dates"));
     }
 
     @Test

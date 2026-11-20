@@ -5,18 +5,34 @@ var wait = function (ms) { return new Promise(function (r) { setTimeout(r, ms); 
 // GET: /api/me/trips  -> [{ "id": 1, "title": "겨울 펜션 2박 3일", "destination": "가평", "startDate": "2027-01-15",
 //                           "memberCount": 8, "surveyDone": 3, "host": true }]
 // api() 는 401 이면 로그인 화면으로 보낸다. 첫 화면은 로그인 안 한 사람이 보는 게 정상이라 $.ajax 를 직접 쓴다
+// 로그인하고 첫 화면에 오면 방마다 "내가 아직 안 한 일"을 먼저 보여 주고, 누르면 그 일로 바로 간다.
+// 알림을 보내는 대신 들어온 김에 하게(지훈: "알림보다 로그인하면 하라고 안내")
+var MY_TODO = {
+  invite: { label: '친구 부르기', path: '' },
+  survey: { label: '내 설문 (1분)', path: '/survey' },
+  dates: { label: '되는 날 누르기', path: '#dates-card' }
+};
+
 function loadMyTrips() {
   $.ajax({ url: '/api/me/trips', type: 'GET' }).done(function (trips) {
     if (!trips.length) return;
     var list = $('#trip-list').empty();
+    var todoCount = 0;
     trips.forEach(function (t) {
-      var meta = [t.destination || '지역 미정', t.startDate || '날짜 미정', '설문 ' + t.surveyDone + '/' + t.memberCount].join(' · ');
+      var meta = [t.destination || '지역 미정', t.startDate ? formatPeriod(t.startDate, t.endDate) : '날짜 미정',
+        '설문 ' + t.surveyDone + '/' + t.memberCount].join(' · ');
+      var first = (t.todo || [])[0] && MY_TODO[t.todo[0]];
+      todoCount += (t.todo || []).length;
       var info = $('<div>').append(
         $('<div class="strong">').text(t.title).append(t.host ? $('<span class="tag me">').text('방장') : null),
-        $('<div class="muted small">').text(meta));
-      $('<li>').append($('<a class="card trip-item">').attr('href', '/trips/' + t.id)
-        .append(info, $('<span class="link">').text('들어가기'))).appendTo(list);
+        $('<div class="muted small">').text(meta),
+        first ? $('<div class="todo-line small">').text('할 일 · ' + t.todo.map(function (k) { return MY_TODO[k].label; }).join(', ')) : null);
+      $('<li>').append($('<a class="card trip-item">').toggleClass('has-todo', !!first)
+        .attr('href', '/trips/' + t.id + (first ? first.path : ''))
+        .append(info, $('<span class="link">').text(first ? '하러 가기' : '들어가기'))).appendTo(list);
     });
+    $('#my-trips-todo').text(todoCount ? '할 일 ' + todoCount : '').prop('hidden', !todoCount);
+    $('#my-trips-clear').prop('hidden', todoCount > 0);
     $('#my-trips').prop('hidden', false);
   });
 }

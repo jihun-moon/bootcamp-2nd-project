@@ -760,3 +760,17 @@ button.link::after { content: ""; position: absolute; inset: -12px -8px; } /* �
 .cover-wrap { position: relative; }
 .dday { position: absolute; left: 16px; bottom: 14px; padding: 6px 14px; border-radius: 99px; background: rgb(0 0 0 / 0.55); color: #fff; font-size: var(--fs-sm); font-weight: 700; letter-spacing: -0.01em; backdrop-filter: blur(6px); }
 @media (min-width: 720px) { .dday { left: 20px; bottom: 18px; font-size: var(--fs-md); } }
+
+/* 내 여행방: 내가 아직 안 한 일이 있는 방은 청록 점과 한 줄로 먼저 눈에 */
+.trip-item.has-todo { border-color: var(--accent); }
+.todo-line { margin-top: 4px; color: var(--accent); font-weight: 600; }
+.todo-line::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 6px; border-radius: 50%; background: var(--accent); vertical-align: middle; }
+
+/* 남는 도장("정산 끝"): 청록, 찍힌 뒤 사라지지 않는다. 처음이 아니면 움직임 없이 붙어만 있다 */
+.stamp.keep { position: static; flex: none; border-color: var(--accent); color: var(--accent); font-size: var(--fs-lg); animation: stamp-in 0.6s var(--ease) both; }
+.settle-list .settled { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 72px; } /* 도장이 글을 덮지 않게 같은 줄 오른쪽 */
+.stamp.keep.quiet { animation: none; }
+@keyframes stamp-in { 0% { opacity: 0; transform: rotate(-12deg) scale(2.4); } 60% { opacity: 1; transform: rotate(-12deg) scale(0.92); } 100% { opacity: 1; transform: rotate(-12deg) scale(1); } }
+/* 내 여행방: "하러 가기"가 두 줄로 꺾이지 않게, "+ 새 방"은 손가락 크기만큼 누르는 영역 */
+.trip-item .link { white-space: nowrap; }
+#my-trips .between .link { padding: 12px 6px; margin: -12px -6px; }

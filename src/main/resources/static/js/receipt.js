@@ -158,7 +158,10 @@ function shareReceipt() {
   }).finally(function () { $('#btn-receipt-share').prop('disabled', false); });
 }
 
+var PRINTING_LINES = ['영수증 종이 끼우는 중…', '총무가 계산기 두드리는 중…', '1원까지 맞춰 보는 중…', '잉크 채우는 중…'];
+
 $(function () {
+  $('#receipt .muted').text(PRINTING_LINES[Math.floor(Math.random() * PRINTING_LINES.length)]);
   $('#btn-receipt-share').text(shareLabel('카톡으로 영수증 보내기', '영수증 그림 저장하기')).click(shareReceipt);
   $('#btn-next-trip').click(function () { startNextTrip(tripId, this); });
   loadTrip(tripId).done(function (trip) {

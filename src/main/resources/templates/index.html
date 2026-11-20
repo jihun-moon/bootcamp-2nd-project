@@ -8,9 +8,10 @@
   <!-- 로그인한 사람에게만 보인다. 다시 온 사람이 첫 화면에서 바로 자기 방으로 가게 -->
   <section id="my-trips" class="box stack" hidden>
     <div class="between">
-      <h2>내 여행방</h2>
+      <h2>내 여행방 <span id="my-trips-todo" class="tag" hidden></span></h2>
       <a th:href="@{/trips/new}" class="link">+ 새 방</a>
     </div>
+    <p id="my-trips-clear" class="muted small" hidden>할 일 다 했어요. 이제 짐만 싸면 돼요.</p>
     <ul id="trip-list" class="trip-list"></ul>
   </section>
 
@@ -105,14 +106,15 @@
     </div>
   </section>
 
-  <!-- 우리 자리: 조사(docs/12)에서 본 시장 지도를 세 줄로. 예약 앱은 "어디서", 정산 앱은 "다녀와서", 가기 전 "누가 뭘·1인 얼마"는 비어 있다 -->
+  <!-- 우리 자리: 조사(docs/12)에서 본 시장 지도를 세 줄로. 예약 앱은 "어디서", 정산 앱은 "다녀와서 N빵".
+       우리는 가기 전 "누가 뭘·1인 얼마"부터 다녀와서 "누가 누구에게 얼마"까지, 출발 전에 정한 규칙 그대로 -->
   <section class="position" aria-label="TripMate 는 어디에 있나">
     <ul>
       <li><span>예약 앱</span><b>어디서 잘지</b></li>
       <li><span>정산 앱</span><b>다녀와서 누가 냈나</b></li>
-      <li class="us"><span>TripMate</span><b>가기 전에, 누가 뭘 하고 1인 얼마인지</b></li>
+      <li class="us"><span>TripMate</span><b>가기 전 "누가 뭘·1인 얼마"부터 다녀와서 "누가 누구에게"까지</b></li>
     </ul>
-    <p class="muted small">단체 여행에서 제일 오래 걸리는 "정하기"만 하는 곳은 아직 여기뿐이에요.</p>
+    <p class="muted small">정하기부터 나누기까지, 처음 정한 우리 규칙 그대로 이어지는 곳은 아직 여기뿐이에요.</p>
   </section>
 
   <!-- 사진 띠: 첫 화면 다음에 여행 기분을 한 장으로. Unsplash 무료 사진(unsplash.com/photos/Y5F1JAbo6IU) -->
@@ -250,11 +252,13 @@
       <li><div class="vs-head"><b>교통비, 운전자 빼고 나누기</b><span class="vs-us win">✓</span></div><p class="vs-others">카톡 통행료만 · 예약 앱 렌터카 값 · 정산 앱 —</p></li>
       <li><div class="vs-head"><b>불참·술값 같은 돈 규칙 미리</b><span class="vs-us win">✓</span></div><p class="vs-others">카뱅 회비 알림 · 나머지는 단톡방에서 말로</p></li>
       <li><div class="vs-head"><b>숙소 투표에 "누가 싫어하는지"</b><span class="vs-us win">✓</span></div><p class="vs-others">카톡·넛지는 표 수만</p></li>
+      <li><div class="vs-head"><b>다녀와서 누가 누구에게 얼마, 우리 규칙대로</b><span class="vs-us win">✓</span></div><p class="vs-others">정산 앱은 다녀와서 N빵 · 출발 전 규칙(운전자 기름값)과 이어지진 않아요</p></li>
+      <li><div class="vs-head"><b>같은 멤버로 2탄, 한 번 누르면</b><span class="vs-us win">✓</span></div><p class="vs-others">단톡방은 남지만 날짜·규칙·투표는 처음부터 다시</p></li>
       <li><div class="vs-head"><b>설치·가입 없이 링크로</b><span class="vs-us win">✓</span></div><p class="vs-others">넛지·카뱅 빵나누기도 돼요 · 카톡은 앱 필요</p></li>
     </ul>
     <h3 class="vs-lose-title">아직 못 하는 것</h3>
     <ul class="vs lose">
-      <li><div class="vs-head"><b>실제 송금</b><span class="vs-us">계산만</span></div><p class="vs-others">토스·카카오페이로 보내요</p></li>
+      <li><div class="vs-head"><b>실제 송금</b><span class="vs-us">줄까지</span></div><p class="vs-others">"누가 누구에게 얼마"까지 뽑아 주고, 보내는 건 토스·카카오페이로</p></li>
       <li><div class="vs-head"><b>숙소 예약·결제</b><span class="vs-us">—</span></div><p class="vs-others">NOL·여기어때에서 해요</p></li>
     </ul>
     <p class="caption">2026년 11월 공개 페이지·앱스토어 설명 기준</p>
@@ -291,7 +295,8 @@
     <details><summary>친구들도 가입해야 하나요?</summary><p>카카오 로그인 한 번이면 돼요. 비밀번호는 TripMate 가 저장하지 않아요.</p></details>
     <details><summary>출발 동네 같은 정보는 누가 보나요?</summary><p>출발 동네와 이동이 불편한 사정은 본인과 방장만 봐요. 다른 사람에게는 거리·시간이나 "이동 적은 역할 우선"으로만 보여요.</p></details>
     <details><summary>돈 문제로 안 싸우려면요?</summary><p>방장이 처음에 방 규칙 세 가지(운전한 사람 기름값, 전날 빠지면 예약금, 술값)를 골라 두면 모두의 화면과 결과 글에 같이 나가요.</p></details>
-    <details><summary>정산·송금도 되나요?</summary><p>돈이 오가는 건 토스·카카오페이가 더 잘해요. TripMate 는 출발 전에 "1인 얼마, 왜"를 정해 주고, 결과 글을 단톡방에 붙이면 거기서 송금하면 돼요.</p></details>
+    <details><summary>정산·송금도 되나요?</summary><p>다녀와서 먼저 낸 돈(숙소·기름값·식비)을 적으면 "도윤 → 재현 53,200원"처럼 누가 누구에게 얼마 보낼지 바로 나와요. 장보기에서 적은 돈은 저절로 들어가고, 기름값은 우리 규칙대로 운전자를 빼고 나눠요. 보내는 건 그 글을 단톡방에 붙여 토스·카카오페이로 하면 돼요.</p></details>
+    <details><summary>다음 여행도 또 만들어야 하나요?</summary><p>다녀온 방에서 "2탄 방 열기"를 누르면 같은 사람·같은 규칙으로 새 방이 열려요. 초대 링크를 다시 돌릴 필요 없이 날짜만 맞추면 돼요.</p></details>
     <details><summary>몇 명까지 되나요?</summary><p>정해진 인원은 없어요. 셋이 가도, 열다섯이 가도 설문 모인 만큼 나눠요. 역할이 모자라면 방장이 더하면 돼요.</p></details>
     <details><summary>추천이 마음에 안 들면요?</summary><p>역할 카드를 눌러 바로 옮길 수 있어요. 방장은 "설거지" 같은 역할을 더하거나 고칠 수 있어요.</p></details>
   </section>

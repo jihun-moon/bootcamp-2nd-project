@@ -123,7 +123,14 @@ var datesTimer = null;
 function renderDates(me) {
   $('#dates-card').prop('hidden', !!trip.startDate);
   if (trip.startDate) return;
-  api('GET', '/api/trips/' + tripId + '/dates').done(function (board) { drawDates(me, board); });
+  api('GET', '/api/trips/' + tripId + '/dates').done(function (board) {
+    drawDates(me, board);
+    // 첫 화면 "되는 날 누르기"로 왔으면 달력까지 내려 준다(숨어 있던 칸이라 주소의 #만으로는 안 내려간다). 한 번만
+    if (location.hash === '#dates-card') {
+      history.replaceState(null, '', location.pathname);
+      document.getElementById('dates-card').scrollIntoView({ behavior: REDUCE_MOTION ? 'auto' : 'smooth', block: 'start' });
+    }
+  });
 }
 
 function drawDates(me, board) {

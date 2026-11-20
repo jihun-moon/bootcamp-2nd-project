@@ -58,6 +58,7 @@ public class Member {
     }
 
     Trip getTrip() { return trip; }
+    AppUser getUser() { return user; }
     public Long getId() { return id; }
     public String getName() { return name; }
     public boolean isHost() { return host; }

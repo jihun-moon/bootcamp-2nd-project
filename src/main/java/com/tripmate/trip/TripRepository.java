@@ -15,6 +15,10 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     @EntityGraph(attributePaths = "members")
     Optional<Trip> findByInviteCode(String inviteCode);
 
+    // 이 방에서 이어 만든 다음 여행 방(있으면 하나)
+    @EntityGraph(attributePaths = "members")
+    Optional<Trip> findByPreviousTripId(Long previousTripId);
+
     // 방 목록에 인원·설문 수를 같이 보여 주려고 참여자까지 한 번에 읽는다
     @EntityGraph(attributePaths = "members")
     List<Trip> findByIdIn(List<Long> ids);

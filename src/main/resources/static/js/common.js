@@ -177,9 +177,27 @@ function listen(tripId, onChange) {
   }, 10000);
 }
 
-// 방 화면 공통: 로그아웃 버튼
+// 같은 멤버로 다음 여행. POST: /api/trips/1/next -> { "tripId": 7, "created": true, "memberCount": 8 }
+// 새 방(누가 먼저 만들었으면 그 방)으로 옮겨 가고, 옮겨 간 화면에서 한 줄로 알린다
+function startNextTrip(tripId, button) {
+  $(button).prop('disabled', true);
+  return api('POST', '/api/trips/' + tripId + '/next').done(function (r) {
+    try {
+      sessionStorage.setItem('tripmate.toast', r.created
+        ? '2탄 방을 열었어요. ' + r.memberCount + '명이 그대로 들어와 있어요. 되는 날부터 눌러 주세요.'
+        : '먼저 열린 2탄 방으로 왔어요.');
+    } catch (e) { /* 알림만 못 띄울 뿐 옮겨 가는 데는 지장 없다 */ }
+    location.href = '/trips/' + r.tripId;
+  }).fail(function () { $(button).prop('disabled', false); });
+}
+
+// 방 화면 공통: 로그아웃 버튼, 앞 화면이 남긴 알림 한 줄
 // POST: /api/logout  -> 204
 $(function () {
+  try {
+    var toast = sessionStorage.getItem('tripmate.toast');
+    if (toast) { sessionStorage.removeItem('tripmate.toast'); showToast(toast); }
+  } catch (e) { /* 저장소가 막힌 창(사생활 보호)이면 알림 없이 */ }
   $('#btn-logout').click(function () {
     api('POST', '/api/logout').always(function () { location.href = '/'; });
   });

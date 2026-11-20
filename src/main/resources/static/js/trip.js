@@ -25,6 +25,11 @@ function render(t) {
       $('<span class="chip">').toggleClass('on', m.surveyDone).text(m.surveyDone ? '설문 완료' : '설문 전'));
     $('<li class="row">').append(avatar(m.name, m.imageUrl), info).appendTo(list);
   });
+  // 여행 전에도 "이 멤버로 또" 를 열 수 있게 사람 상자 끝에 한 줄. 두 명 이상일 때만(혼자면 같은 멤버가 없다)
+  var again = $('#next-trip').empty().prop('hidden', trip.members.length < 2);
+  if (trip.nextTripId) again.append($('<a>').attr('href', '/trips/' + trip.nextTripId).text('2탄 방 보기 →'));
+  else again.append($('<button type="button" class="link">').text('이 멤버 그대로 다음 여행 열기 →')
+    .click(function () { startNextTrip(tripId, this); }));
 }
 
 // 내 상태에 따라 할 일 하나를 크게 보여 준다: 혼자면 초대 → 내 설문 → (방장) 안 한 사람 부르기 → 결과 보기
@@ -33,7 +38,17 @@ function renderNext(me, notYet) {
   var link = function (label, href, primary) {
     return $('<a class="btn">').toggleClass('primary', !!primary).attr('href', href).text(label);
   };
-  if (trip.members.length === 1) {
+  var ended = trip.endDate && trip.endDate < isoDate(new Date());
+  if (trip.nextTripId) {
+    $('#next-title').text('2탄 방이 열렸어요');
+    $('#next-text').text('같은 사람, 같은 규칙으로 들어가 있어요. 되는 날만 다시 누르면 돼요.');
+    actions.append(link('2탄 방으로', '/trips/' + trip.nextTripId, true), link('이번 영수증', '/trips/' + tripId + '/receipt'));
+  } else if (ended) {
+    $('#next-title').text('다녀왔어요? 이 멤버로 2탄');
+    $('#next-text').text('사람·방 규칙은 그대로 새 방을 열어요. 초대 링크를 다시 돌릴 필요 없이 날짜만 맞추면 돼요.');
+    actions.append($('<button type="button" class="btn primary">').text('2탄 방 열기').click(function () { startNextTrip(tripId, this); }),
+      link('이번 영수증', '/trips/' + tripId + '/receipt'));
+  } else if (trip.members.length === 1) {
     $('#next-title').text('먼저 친구들을 불러요');
     $('#next-text').text(shareLabel('누르면 카톡을 골라 바로 보낼 수 있어요.', '복사한 글을 단톡방에 붙여 넣으면 돼요.') + ' 친구는 링크 한 번 누르고 1분 설문만 하면 돼요.');
     actions.append($('<button type="button" class="btn primary">').text(shareLabel('카톡으로 초대 보내기', '초대 글 복사하기')).click(sendInvite),

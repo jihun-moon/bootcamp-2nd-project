@@ -2,6 +2,7 @@ package com.tripmate.trip;
 
 import com.tripmate.user.CurrentUser;
 import jakarta.validation.Valid;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -41,6 +42,20 @@ public class TripController {
     public ResponseEntity<TripDto.Response> updateRules(@PathVariable Long tripId, @RequestBody TripDto.Rules rules) {
         var host = tripAccess.host(tripId);
         return ResponseEntity.ok(tripService.updateRules(tripId, host, rules));
+    }
+
+    // POST: /api/trips/1/next   같은 멤버로 다음 여행(참여자 누구나). 만들면 201, 이미 있던 방이면 200
+    @PostMapping("/trips/{tripId}/next")
+    public ResponseEntity<TripDto.Next> next(@PathVariable Long tripId) {
+        tripAccess.me(tripId);
+        var next = tripService.next(tripId, currentUser.get());
+        return ResponseEntity.status(next.created() ? HttpStatus.CREATED : HttpStatus.OK).body(next);
+    }
+
+    // 두 사람이 같은 순간에 눌러 다음 방이 두 번 만들어지려 하면 unique 가 막는다. 다시 누르면 먼저 생긴 방으로 간다
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<String> conflict() {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body("방금 다른 사람이 만들었어요. 다시 눌러 주세요.");
     }
 
     // GET: /api/trips/1/dates   날짜 맞추기 판(참여자 누구나)

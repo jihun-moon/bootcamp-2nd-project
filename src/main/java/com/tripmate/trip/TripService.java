@@ -35,7 +35,36 @@ public class TripService {
     public TripDto.Response find(Long tripId, Member me) {
         var trip = tripRepository.findWithMembersById(tripId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        return TripDto.Response.of(trip, me);
+        var next = tripRepository.findByPreviousTripId(tripId).map(Trip::getId).orElse(null);
+        return TripDto.Response.of(trip, me, next);
+    }
+
+    // 같은 멤버로 다음 여행. 계정 있는 참여자를 그대로 옮기고 방 규칙도 잇는다. 누른 사람이 새 방 방장이고 날짜는 다시 맞춘다.
+    // 이미 누가 만들었으면 새로 만들지 않고 그 방으로 보낸다(그 사이 들어온 사람이면 그 방에 넣어 준다)
+    @Transactional
+    public TripDto.Next next(Long tripId, AppUser user) {
+        var existing = tripRepository.findByPreviousTripId(tripId);
+        if (existing.isPresent()) {
+            var next = existing.get();
+            if (next.getMembers().stream().noneMatch(m -> m.belongsTo(user))) {
+                next.addMember(user, user.getNickname(), false);
+                events.publishEvent(new TripChanged(next.getId(), "members"));
+            }
+            return new TripDto.Next(next.getId(), false, next.getMembers().size());
+        }
+        var trip = tripRepository.findWithMembersById(tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        var next = trip.nextTrip();
+        var me = trip.getMembers().stream().filter(m -> m.belongsTo(user)).findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        next.addMember(user, me.getName(), true);
+        trip.getMembers().stream()
+                .filter(m -> m.getUser() != null && m != me)
+                .forEach(m -> next.addMember(m.getUser(), m.getName(), false));
+        tripRepository.save(next);
+        roleRepository.saveAll(Role.defaultsFor(next));
+        events.publishEvent(new TripChanged(tripId, "trip"));
+        return new TripDto.Next(next.getId(), true, next.getMembers().size());
     }
 
     // 참여한 방을 최근 것부터. 방 id 를 먼저 모은 뒤 참여자와 같이 한 번에 읽는다(방마다 따로 읽지 않게)

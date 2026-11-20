@@ -29,15 +29,24 @@ public final class TripDto {
         }
     }
 
-    // meId 는 요청한 사람의 이 방 참여자 id. 화면이 "나"를 고르는 단계 없이 바로 쓴다
+    // meId 는 요청한 사람의 이 방 참여자 id. 화면이 "나"를 고르는 단계 없이 바로 쓴다.
+    // nextTripId 는 이 방에서 이어 만든 다음 여행 방(없으면 null). 개요가 "2탄 방이 열렸어요"를 띄운다
     public record Response(Long id, String title, String destination, LocalDate startDate, LocalDate endDate,
-                           String inviteCode, Long meId, List<MemberResponse> members, Rules rules) {
+                           String inviteCode, Long meId, List<MemberResponse> members, Rules rules, Long nextTripId) {
 
         static Response of(Trip trip, Member me) {
-            var members = trip.getMembers().stream().map(MemberResponse::from).toList();
-            return new Response(trip.getId(), trip.getTitle(), trip.getDestination(),
-                    trip.getStartDate(), trip.getEndDate(), trip.getInviteCode(), me.getId(), members, Rules.of(trip));
+            return of(trip, me, null);
         }
+
+        static Response of(Trip trip, Member me, Long nextTripId) {
+            var members = trip.getMembers().stream().map(MemberResponse::from).toList();
+            return new Response(trip.getId(), trip.getTitle(), trip.getDestination(), trip.getStartDate(), trip.getEndDate(),
+                    trip.getInviteCode(), me.getId(), members, Rules.of(trip), nextTripId);
+        }
+    }
+
+    // POST /api/trips/1/next -> { "tripId": 7, "created": true }  이미 누가 만들었으면 created 가 false 이고 그 방
+    public record Next(Long tripId, boolean created, int memberCount) {
     }
 
     // GET /api/me/trips 의 한 줄. 첫 화면에서 들어갈 방을 고르는 데 필요한 것만

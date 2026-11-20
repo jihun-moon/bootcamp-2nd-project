@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Entity
 public class Trip {
@@ -29,6 +30,10 @@ public class Trip {
     private Boolean refundNoShow;    // 전날 빠지면 예약금을 돌려주나
     private Boolean drinksSeparate;  // 술값은 마신 사람만 내나
 
+    // 같은 멤버로 다음 여행을 만들면 지난 방 id 를 남긴다. 단톡방에서 두 사람이 같이 눌러도 다음 방이 하나만 생기게(unique)
+    @Column(unique = true)
+    private Long previousTripId;
+
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id")
     private List<Member> members = new ArrayList<>();
@@ -41,6 +46,23 @@ public class Trip {
         this.destination = destination;
         this.startDate = startDate;
         this.endDate = endDate;
+    }
+
+    // "가평 2박 3일" -> "가평 2박 3일 2탄", "… 2탄" -> "… 3탄". 다음 방 이름은 손으로 안 쓴다
+    private static final Pattern SEQUEL = Pattern.compile("^(.*) (\\d+)탄$");
+
+    static String sequelOf(String title) {
+        var m = SEQUEL.matcher(title);
+        var next = m.matches() ? m.group(1) + " " + (Integer.parseInt(m.group(2)) + 1) + "탄" : title + " 2탄";
+        return next.length() <= 100 ? next : next.substring(next.length() - 100);
+    }
+
+    // 다음 여행 방: 이름·지역·규칙은 잇고, 날짜는 다시 맞춘다
+    Trip nextTrip() {
+        var next = new Trip(sequelOf(title), destination, null, null);
+        next.previousTripId = id;
+        next.updateRules(driverPaysFuel, refundNoShow, drinksSeparate);
+        return next;
     }
 
     public Member addMember(AppUser user, String name, boolean host) {
@@ -61,6 +83,7 @@ public class Trip {
     }
 
     public Long getId() { return id; }
+    public Long getPreviousTripId() { return previousTripId; }
     public String getInviteCode() { return inviteCode; }
     public String getTitle() { return title; }
     public String getDestination() { return destination; }

@@ -17,14 +17,14 @@
 JDK 17 이상만 있으면 된다. DB 는 메모리 H2 라 설치할 것이 없다.
 
 1. IntelliJ 로 저장소 폴더를 열고 Gradle 을 불러온다
-2. 오른쪽 위 실행 메뉴 **`tripmate`** ▶ (개발용 로그인이 켜져 있다)
-3. http://localhost:8080/login 에서 예시 방 참여자를 누른다. **재현**이 방장이다
+2. `secrets.properties` 에 카카오 REST 키를 넣는다(아래 카카오 절). 개발용 로그인은 2026-11-20 에 지웠다. 서비스와 같은 카카오 로그인 하나로 들어간다
+3. 오른쪽 위 실행 메뉴 **`tripmate`** ▶ 뒤 http://localhost:8080 에서 방을 만든다
 
 ```bash
-DEV_LOGIN=true ./gradlew bootRun
+./gradlew bootRun
 ```
 
-서버를 다시 켜면 데이터는 처음으로 돌아간다. 실시간은 창을 두 개(하나는 시크릿 창) 띄워 다른 사람으로 들어가 보면 보인다.
+서버를 다시 켜면 데이터는 처음으로 돌아간다. 로그인 없이 화면만 보려면 http://localhost:8080/demo (체험 방). 실시간은 카카오 계정 둘로 창을 두 개 띄우면 보인다.
 
 ## API
 
@@ -33,8 +33,7 @@ DEV_LOGIN=true ./gradlew bootRun
 
 | 기능 | HTTP 메소드 | 경로(URI) | 응답 | 실패조건 | 담당 |
 |---|---|---|---|---|---|
-| 개발용 로그인 | POST | `/api/dev/login` | 204 + 세션 쿠키<br>요청 `{"name": "민지"}` | 이름이 비었거나 20자 넘으면 400 | 박재현 |
-| 로그인 버튼 고르기 | GET | `/api/auth/options` | 200 `{"kakao": false, "dev": true}` | | 박재현 |
+| 로그인 버튼 고르기 | GET | `/api/auth/options` | 200 `{"kakao": true}` | | 박재현 |
 | 내 정보 | GET | `/api/me` | 200 `{"id": 2, "nickname": "민지"}` | 로그인 안 했으면 401 | 박재현 |
 | 로그아웃 | POST | `/api/logout` | 204 | | 박재현 |
 | 여행방 만들기 | POST | `/api/trips` | 201 방 JSON(만든 사람이 방장)<br>요청 `{"title": "겨울 펜션", "destination": "가평", "startDate": "2027-01-15", "endDate": "2027-01-17"}` | 여행 이름이 비면 400 | 박재현 |
@@ -48,10 +47,11 @@ DEV_LOGIN=true ./gradlew bootRun
 | 이동·회비 근거 | GET | `/api/trips/{id}/roles/travel` | 200 `{"legs": [{"name": "재현", "driver": true, "km": 62, "minutes": 70, "toll": 3200, "fuel": 8800}], "perPerson": 6000, ...}` | 키가 없으면 200 + `message` 안내 | 문지훈 |
 | 역할 카드 옮기기 | PATCH | `/api/trips/{id}/roles/assignments/{memberId}` | 200 보드<br>요청 `{"roleId": 4, "version": 0}` (roleId null = 미배정) | 그 사이 누가 옮겼으면(version 다름) 409 | 문지훈 |
 | 숙소 목록·그룹 취향 | GET | `/api/trips/{id}/stays` | 200 `{"amenities": [...], "preferences": {"DETACHED": {"avg": 4.5, "min": 3}}, "surveyed": 3, "stays": [...]}` | | 김현수 |
-| 숙소 올리기 | POST | `/api/trips/{id}/stays` | 201 숙소<br>요청 `{"url": "https://...", "title": "숲속 독채", "amenities": ["DETACHED"]}` | url 이 `http(s)://` 가 아니면 400 | 김현수 |
+| 숙소 링크 미리보기 | POST | `/api/trips/{id}/stays/preview` | 200 `{"title": "가평 무지개 독채펜션", "imageUrl": "https://...", "price": 238640, "amenities": ["DETACHED"]}`<br>요청 `{"url": "https://..."}` | url 이 `http(s)://` 가 아니면 400 | 김현수 |
+| 숙소 올리기 | POST | `/api/trips/{id}/stays` | 201 숙소<br>요청 `{"url": "https://...", "title": "숲속 독채", "price": 240000, "amenities": ["DETACHED"]}` | url 이 `http(s)://` 가 아니거나 가격이 음수면 400 | 김현수 |
 | 숙소 투표 | PUT | `/api/trips/{id}/votes/{memberId}` | 204<br>요청 `{"stayId": 3}` (null = 취소) | 남의 표면 403, 숙소가 없으면 404 | 김현수 |
 
-화면 주소(`/trips/1/roles` 같은 것)는 [화면 설계](docs/02-화면설계.md)에 있다. API 를 직접 불러 보려면 IntelliJ HTTP Client 나 Talend API Tester 에서 `POST /api/dev/login` 으로 세션부터 받는다.
+화면 주소(`/trips/1/roles` 같은 것)는 [화면 설계](docs/02-화면설계.md)에 있다. API 를 직접 불러 보려면 브라우저에서 카카오로 로그인한 뒤 `JSESSIONID` 쿠키를 IntelliJ HTTP Client 나 Talend API Tester 에 붙인다. 테스트는 `TestLogin`(src/test)이 같은 세션을 바로 만든다.
 
 ## 구조
 

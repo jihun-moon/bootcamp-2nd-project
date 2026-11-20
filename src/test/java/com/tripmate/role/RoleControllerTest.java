@@ -75,6 +75,24 @@ class RoleControllerTest {
     }
 
     @Test
+    void 마지막_사람이_설문을_끝내면_역할이_저절로_정해진다() throws Exception {
+        for (var id = 1; id <= 7; id++) survey(id, "BOTH", "OUTLINE", id <= 2, false);
+        mvc.perform(get("/api/trips/1/roles").session(minji)).andExpect(jsonPath("$.assignments", hasSize(0)));
+
+        survey(8, "BOTH", "OUTLINE", false, false);
+        mvc.perform(get("/api/trips/1/roles").session(minji))
+                .andExpect(jsonPath("$.assignments", hasSize(8)))
+                .andExpect(jsonPath("$.assignments[?(@.roleId == 2)].memberId", containsInAnyOrder(1, 2)));
+    }
+
+    @Test
+    void 이미_배정이_있으면_설문이_끝나도_그대로_둔다() throws Exception {
+        move(2, 4, null).andExpect(status().isOk());
+        for (var id = 1; id <= 8; id++) survey(id, "BOTH", "OUTLINE", false, false);
+        mvc.perform(get("/api/trips/1/roles").session(minji)).andExpect(jsonPath("$.assignments", hasSize(1)));
+    }
+
+    @Test
     void 추천은_방장만_한다() throws Exception {
         recommend(minji).andExpect(status().isForbidden());
     }

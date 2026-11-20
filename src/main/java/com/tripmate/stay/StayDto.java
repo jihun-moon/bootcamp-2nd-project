@@ -1,7 +1,9 @@
 package com.tripmate.stay;
 
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 
 import java.util.List;
@@ -17,7 +19,17 @@ public final class StayDto {
     // title 을 비우면 링크의 og:title 을 쓴다. 올린 사람은 로그인한 본인
     public record CreateRequest(@NotBlank @Size(max = 2000) @Pattern(regexp = "https?://\\S+") String url,
                                 @Size(max = 200) String title,
+                                @PositiveOrZero @Max(100_000_000) Integer price,
                                 Set<Amenity> amenities) {
+    }
+
+    // POST /api/trips/1/stays/preview  { "url": "https://..." }
+    public record PreviewRequest(@NotBlank @Size(max = 2000) @Pattern(regexp = "https?://\\S+") String url) {
+    }
+
+    // -> { "title": "가평 숲속 독채", "imageUrl": "https://...", "amenities": ["DETACHED", "PRIVATE_BBQ"] }
+    // price 는 링크가 알려 준 1박 가격(원). 날짜마다 달라 "링크 기준"으로만 보인다
+    public record Preview(String title, String imageUrl, Integer price, Set<Amenity> amenities) {
     }
 
     // { "stayId": 3 }   stayId null = 표 취소
@@ -36,7 +48,7 @@ public final class StayDto {
     public record Preference(double avg, int min) {
     }
 
-    public record StayView(Long id, String title, String url, String imageUrl, Set<Amenity> amenities,
+    public record StayView(Long id, String title, String url, String imageUrl, Integer price, Set<Amenity> amenities,
                            List<Long> voterIds) {
     }
 }

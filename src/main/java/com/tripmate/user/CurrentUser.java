@@ -6,7 +6,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 
-// 지금 요청을 보낸 로그인 사용자. 카카오·개발용 로그인 모두 authentication.getName() 이 loginId 다
+// 지금 요청을 보낸 로그인 사용자. authentication.getName() 이 loginId 다(카카오는 "kakao:회원번호")
 @Component
 public class CurrentUser {
 

@@ -18,16 +18,7 @@
   </a>
   <!-- 사용자에게는 까닭(키 설정)을 보이지 않는다. 개발자는 서버 로그와 README 로 안다 -->
   <p id="kakao-off" class="hint" hidden>지금은 로그인을 쓸 수 없어요. 잠시 뒤 다시 와 주세요.</p>
-
-  <section id="dev-login" class="box dashed stack" hidden>
-    <h2>개발용 로그인</h2>
-    <p class="muted small">예시 방 참여자로 들어가요. 배포에서는 꺼져 있어요.</p>
-    <div id="demo-names" class="grid4"></div>
-    <form id="dev-form" class="row">
-      <input type="text" id="dev-name" required maxlength="20" placeholder="새 이름으로">
-      <button type="submit" class="btn">들어가기</button>
-    </form>
-  </section>
+  <p class="muted small center">로그인 전에 둘러보고 싶다면 <a th:href="@{/demo}" class="link">체험 방</a>을 눌러 보세요.</p>
 </main>
 <script th:src="@{/js/login.js}"></script>
 </body>

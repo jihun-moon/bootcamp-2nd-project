@@ -22,7 +22,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 // 화면(Thymeleaf)은 누구나 열 수 있고, 데이터는 화면의 jQuery 가 /api 로 읽는다. 로그인 검사는 /api 에서 한다
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/options", "/api/dev/login").permitAll()
+                        .requestMatchers("/api/auth/options").permitAll()
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll())
                 // API 는 로그인 화면으로 넘기지 않고 401 만 준다. 화면의 common.js 가 받아서 /login 으로 보낸다

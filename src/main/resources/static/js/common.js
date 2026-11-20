@@ -44,6 +44,44 @@ function copyText(text) {
   return ok ? Promise.resolve() : Promise.reject();
 }
 
+// 휴대폰이면 공유 창(카톡 고르면 바로 그 대화방에 붙는다)을 띄우고, PC 면 복사한다. 손이 "복사 → 카톡 열기 → 붙여 넣기" 세 번에서 한 번으로 준다.
+// PC 크롬·엣지도 share 가 있지만 윈도우 공유 창에는 카톡 PC 가 잘 안 떠서, 손가락으로 쓰는 기기(pointer: coarse)에서만 띄운다.
+// 공유 창을 사람이 닫으면(AbortError) 아무것도 하지 않는다. 카톡 안 브라우저처럼 share 가 없으면 복사로 간다
+var CAN_SHARE = !!navigator.share && window.isSecureContext && window.matchMedia('(pointer: coarse)').matches;
+function shareText(text, copiedMessage) {
+  if (CAN_SHARE) {
+    return navigator.share({ text: text }).catch(function (e) {
+      if (e && e.name === 'AbortError') return;
+      return copyAndTell(text, copiedMessage);
+    });
+  }
+  return copyAndTell(text, copiedMessage);
+}
+
+function copyAndTell(text, copiedMessage) {
+  return copyText(text).then(
+    function () { showToast(copiedMessage || '복사했어요. 단톡방에 붙여 넣어 주세요.'); },
+    function () { showNotice('복사가 막혀 있어요. 화면의 링크를 길게 눌러 복사해 주세요.'); });
+}
+
+// "2027-01-15", "2027-01-17" -> "1월 15일(금) ~ 17일(일) · 2박 3일". 날짜 글자(ISO)를 그대로 보이면 읽는 데 한 번 더 걸린다
+var WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+function formatPeriod(start, end) {
+  if (!start) return '날짜 미정';
+  var a = new Date(start + 'T00:00:00');
+  var text = (a.getMonth() + 1) + '월 ' + a.getDate() + '일(' + WEEKDAYS[a.getDay()] + ')';
+  if (!end || end === start) return text + ' 당일';
+  var b = new Date(end + 'T00:00:00');
+  var nights = Math.round((b - a) / 86400000);
+  var endText = (b.getMonth() === a.getMonth() ? '' : (b.getMonth() + 1) + '월 ') + b.getDate() + '일(' + WEEKDAYS[b.getDay()] + ')';
+  return text + ' ~ ' + endText + ' · ' + nights + '박 ' + (nights + 1) + '일';
+}
+
+// 단추 글을 기기에 맞춘다. 휴대폰 "카톡으로 보내기", PC "복사해서 단톡방에 붙이기"
+function shareLabel(phone, pc) {
+  return CAN_SHARE ? phone : pc;
+}
+
 // 결과만 짧게 알릴 때(복사했어요 등). 막힘·오류처럼 사람이 읽고 해야 할 일이 있으면 showNotice 를 쓴다
 var toastTimer = null;
 function showToast(message) {
@@ -68,7 +106,7 @@ function avatar(name, imageUrl) {
 function loadTrip(tripId) {
   return api('GET', '/api/trips/' + tripId).done(function (trip) {
     var me = trip.members.find(function (m) { return m.id === trip.meId; });
-    var period = trip.startDate ? trip.startDate + ' ~ ' + (trip.endDate || '') : '날짜 미정';
+    var period = formatPeriod(trip.startDate, trip.endDate);
     document.title = trip.title + ' | TripMate';
     $('#trip-title').text(trip.title);
     $('#trip-meta').text((trip.destination || '지역 미정') + ' · ' + period + ' · ' + trip.members.length + '명');

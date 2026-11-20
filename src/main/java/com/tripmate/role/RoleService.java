@@ -2,6 +2,7 @@ package com.tripmate.role;
 
 import com.tripmate.survey.SurveyAnswer;
 import com.tripmate.survey.SurveyAnswerRepository;
+import com.tripmate.trip.Member;
 import com.tripmate.trip.MemberRepository;
 import com.tripmate.trip.TripChanged;
 import com.tripmate.trip.TripRepository;
@@ -133,6 +134,16 @@ public class RoleService {
                         drivers.contains(m.getId())))
                 .toList();
         return new TravelDto.Plan(trip.getDestination(), trip.getMembers().size(), cars);
+    }
+
+    // 마지막 사람이 설문을 끝내면 방장이 단추를 누르지 않아도 역할이 정해진다.
+    // 이미 배정이 있으면(방장이 추천받았거나 누가 손으로 옮겼으면) 건드리지 않는다. 혼자 있는 방은 아직 부를 친구가 남아 기다린다
+    @Transactional
+    public void recommendWhenAllDone(Long tripId) {
+        var members = tripRepository.findWithMembersById(tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)).getMembers();
+        var allDone = members.size() >= 2 && members.stream().allMatch(Member::isSurveyDone);
+        if (allDone && !assignmentRepository.existsByRoleTripId(tripId)) recommend(tripId);
     }
 
     // 손으로 옮긴 배정까지 지우고 설문으로 처음부터 다시 짠다. 점수 규칙은 RoleScorer, 배정은 HungarianAssigner

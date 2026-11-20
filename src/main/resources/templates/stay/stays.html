@@ -21,12 +21,20 @@
 
     <form id="stay-form" class="box dashed stack">
       <h2>숙소 링크 올리기</h2>
-      <p class="muted small">링크만 넣으면 제목과 사진은 알아서 가져와요.</p>
-      <input type="url" id="stay-url" required placeholder="https://...">
+      <p class="muted small">예약 사이트 링크를 붙여 넣으면 이름·사진·조건을 알아서 채워요. 맞는지만 보고 올리면 돼요.</p>
+      <input type="url" id="stay-url" required placeholder="https://..." inputmode="url" enterkeyhint="done">
+      <!-- 링크를 읽은 결과. 사진과 이름이 보이면 맞는 링크인지 바로 안다 -->
+      <div id="stay-preview" class="stay-preview" hidden>
+        <img id="preview-photo" alt="" referrerpolicy="no-referrer" hidden>
+        <p id="preview-status" class="muted small" aria-live="polite"></p>
+      </div>
       <input type="text" id="stay-title" maxlength="200" placeholder="이름 (비우면 링크 제목을 가져와요)">
+      <label>1박 가격 (원, 몰라도 돼요)
+        <input type="number" id="stay-price" min="0" max="100000000" step="1000" inputmode="numeric" placeholder="예: 240000">
+      </label>
       <fieldset>
-        <legend class="muted small">있는 조건을 체크해 주세요</legend>
-        <div id="stay-amenities" class="row wrap"></div>
+        <legend class="muted small">이 숙소에 있는 것 (눌러서 고치기)</legend>
+        <div id="stay-amenities" class="toggles"></div>
       </fieldset>
       <button type="submit" id="btn-add" class="btn primary">올리기</button>
     </form>

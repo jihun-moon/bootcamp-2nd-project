@@ -42,6 +42,24 @@ class LinkPreviewTest {
     }
 
     @Test
+    void 구조화_데이터에서_가장_낮은_원화_가격을_읽는다() {
+        var html = """
+                <script type="application/ld+json">{"@type":"Hotel","makesOffer":[{"priceSpecification":{"price":238640,"priceCurrency":"KRW",
+                "priceComponent":[{"price":320000,"priceCurrency":"KRW"},{"price":-81360,"priceCurrency":"KRW"}]}}]}</script>
+                <script type="application/ld+json">{"@type":"Hotel","offers":{"price":"99","priceCurrency":"USD"}}</script>
+                """;
+        assertThat(LinkPreview.lowestPrice(html)).isEqualTo(238640);
+        assertThat(LinkPreview.lowestPrice("<html></html>")).isNull();
+    }
+
+    @Test
+    void 예약_사이트_제목에서_숙소_이름만_남긴다() {
+        assertThat(LinkPreview.shortTitle("가평 BROOK5(브룩5), 남이섬·가평읍, 가평 - 여기어때 특가")).isEqualTo("가평 BROOK5(브룩5)");
+        assertThat(LinkPreview.shortTitle("숲속 독채 | 에어비앤비")).isEqualTo("숲속 독채");
+        assertThat(LinkPreview.shortTitle("강변 펜션")).isEqualTo("강변 펜션");
+    }
+
+    @Test
     void og_제목이_없으면_title_태그를_쓰고_이상한_이미지_주소는_버린다() {
         var html = "<title> 강변 펜션 </title><meta property=\"og:image\" content=\"javascript:alert(1)\">";
         var result = LinkPreview.parse(html, URI.create("https://stay.example.com/"));

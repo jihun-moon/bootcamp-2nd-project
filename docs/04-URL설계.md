@@ -13,9 +13,8 @@
 |---|---|---|---|---|---|---|
 | REQ-01 | 카카오 로그인 시작 | GET | `/oauth2/authorization/kakao` | | 302 → 카카오 | Spring Security |
 | REQ-01 | 카카오가 돌려보내는 곳 | GET | `/login/oauth2/code/kakao` | | 302 → `/login/done` | Spring Security, `KakaoUserService` |
-| REQ-01 | 개발용 로그인(로컬만) | POST | `/api/dev/login` | `{"name": "민지"}` | 204 | `DevLoginController` |
 | REQ-01 | 내 정보 | GET | `/api/me` | | 200 `{id, nickname}` | `AuthController` |
-| REQ-01 | 로그인 버튼 고르기 | GET | `/api/auth/options` | | 200 `{kakao, dev}` | `AuthController` |
+| REQ-01 | 로그인 버튼 고르기 | GET | `/api/auth/options` | | 200 `{kakao}` | `AuthController` |
 | REQ-01 | 로그아웃 | POST | `/api/logout` | | 204 | Spring Security |
 | REQ-02 | 방 만들기 | POST | `/api/trips` | `{"title", "destination", "startDate", "endDate"}` | 201 방 | `TripController`, `TripService` |
 | REQ-04 | 방 보기 | GET | `/api/trips/{id}` | | 200 방(참여자, `meId`, `inviteCode`) | `TripController`, `TripService` |
@@ -47,4 +46,4 @@
 | REQ-14 | 투표·바꾸기·취소 | PUT | `/api/trips/{id}/votes/{memberId}` | `{"stayId": 3}` (null 이면 취소) | 204 | `StayController` |
 | REQ-16 | 숙소 고치기·지우기 *(남은 일)* | PATCH / DELETE | `/api/trips/{id}/stays/{stayId}` | 조건 | 200 / 204 | |
 
-API 는 IntelliJ HTTP Client 나 Talend API Tester 로 시험할 수 있다. 로그인이 필요하니 먼저 `POST /api/dev/login` 으로 세션 쿠키를 받는다.
+API 는 IntelliJ HTTP Client 나 Talend API Tester 로 시험할 수 있다. 로그인이 필요하니 브라우저에서 카카오로 로그인한 뒤 `JSESSIONID` 쿠키를 붙인다.

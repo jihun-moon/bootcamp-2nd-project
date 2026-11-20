@@ -20,6 +20,7 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.IntSummaryStatistics;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -72,7 +73,7 @@ public class StayController {
         var voters = voteRepository.findByStayTripId(tripId).stream().collect(Collectors.groupingBy(
                 v -> v.getStay().getId(), Collectors.mapping(v -> v.getMember().getId(), Collectors.toList())));
         var stays = stayRepository.findByTripIdOrderById(tripId).stream()
-                .map(s -> new StayDto.StayView(s.getId(), s.getTitle(), s.getUrl(), s.getImageUrl(),
+                .map(s -> new StayDto.StayView(s.getId(), s.getTitle(), s.getUrl(), s.getImageUrl(), s.getPrice(),
                         Set.copyOf(s.getAmenities()), voters.getOrDefault(s.getId(), List.of())))
                 .toList();
         var amenities = Arrays.stream(Amenity.values()).map(a -> new StayDto.AmenityView(a, a.getLabel())).toList();
@@ -94,10 +95,23 @@ public class StayController {
         var amenities = (req.amenities() == null) ? EnumSet.noneOf(Amenity.class) : req.amenities();
 
         var trip = tripRepository.getReferenceById(tripId);
-        var stay = stayRepository.save(new Stay(trip, member, title, req.url(), imageUrl, amenities));
+        // 가격 칸을 비우고 올렸으면(미리보기 전에 눌렀으면) 링크가 알려 준 값을 쓴다
+        var price = (req.price() != null) ? req.price() : preview.price();
+        var stay = stayRepository.save(new Stay(trip, member, title, req.url(), imageUrl, price, amenities));
         events.publishEvent(new TripChanged(tripId, "stays"));
         return ResponseEntity.status(HttpStatus.CREATED).body(new StayDto.StayView(stay.getId(), stay.getTitle(),
-                stay.getUrl(), stay.getImageUrl(), Set.copyOf(stay.getAmenities()), List.of()));
+                stay.getUrl(), stay.getImageUrl(), stay.getPrice(), Set.copyOf(stay.getAmenities()), List.of()));
+    }
+
+    // POST: /api/trips/1/stays/preview  body = { "url": "https://..." }
+    // 링크를 붙여 넣자마자 이름·사진과 소개 글에서 찾은 조건을 돌려준다. 사람은 칠해진 조건이 맞는지만 보고 올린다
+    @PostMapping("/stays/preview")
+    public ResponseEntity<StayDto.Preview> preview(@PathVariable Long tripId, @Valid @RequestBody StayDto.PreviewRequest req) {
+        tripAccess.me(tripId);
+        var preview = linkPreview.fetch(req.url());
+        var imageUrl = (preview.imageUrl() != null && preview.imageUrl().length() <= MAX_URL) ? preview.imageUrl() : null;
+        var text = Objects.toString(preview.title(), "") + " " + Objects.toString(preview.description(), "");
+        return ResponseEntity.ok(new StayDto.Preview(preview.title(), imageUrl, preview.price(), Amenity.guess(text)));
     }
 
     // PUT: /api/trips/1/votes/2  body = { "stayId": 3 }  (한 사람 한 표라 다시 보내면 표를 옮긴다. 본인 표만)

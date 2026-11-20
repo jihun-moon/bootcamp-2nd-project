@@ -1,6 +1,7 @@
 package com.tripmate.survey;
 
 import com.tripmate.role.Chore;
+import com.tripmate.role.RoleService;
 import com.tripmate.stay.Amenity;
 import com.tripmate.trip.Member;
 import com.tripmate.trip.MemberRepository;
@@ -19,12 +20,14 @@ public class SurveyService {
 
     private final MemberRepository memberRepository;
     private final SurveyAnswerRepository surveyAnswerRepository;
+    private final RoleService roleService;
     private final ApplicationEventPublisher events;
 
     public SurveyService(MemberRepository memberRepository, SurveyAnswerRepository surveyAnswerRepository,
-                         ApplicationEventPublisher events) {
+                         RoleService roleService, ApplicationEventPublisher events) {
         this.memberRepository = memberRepository;
         this.surveyAnswerRepository = surveyAnswerRepository;
+        this.roleService = roleService;
         this.events = events;
     }
 
@@ -45,6 +48,7 @@ public class SurveyService {
                 departure, req.mobilityLimited(), avoid, preferences);
         // 방 개요의 "설문 완료"가 바뀌니 같은 방 화면들에 알린다
         events.publishEvent(new TripChanged(tripId, "members"));
+        roleService.recommendWhenAllDone(tripId);
         return SurveyDto.Response.of(survey, true);
     }
 

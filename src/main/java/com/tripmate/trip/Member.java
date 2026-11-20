@@ -36,11 +36,6 @@ public class Member {
         surveyDone = true;
     }
 
-    // 개발용 로그인이 계정 없는 예시 참여자를 붙잡을 때만 쓴다
-    public void linkTo(AppUser user) {
-        this.user = user;
-    }
-
     public boolean belongsTo(AppUser other) {
         return user != null && user.getId().equals(other.getId());
     }

@@ -42,7 +42,7 @@ class StayControllerTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        when(linkPreview.fetch(anyString())).thenReturn(new LinkPreview.Result("미리보기 제목", "https://img.example.com/a.jpg"));
+        when(linkPreview.fetch(anyString())).thenReturn(new LinkPreview.Result("미리보기 제목", "https://img.example.com/a.jpg", "개별 바베큐가 있는 독채", 238640));
         minji = TestLogin.as(mvc, "민지");
         doyun = TestLogin.as(mvc, "도윤");
     }
@@ -69,6 +69,22 @@ class StayControllerTest {
                 .andExpect(jsonPath("$.title").value("미리보기 제목"))
                 .andExpect(jsonPath("$.imageUrl").value("https://img.example.com/a.jpg"))
                 .andExpect(jsonPath("$.amenities", containsInAnyOrder("DETACHED", "PRIVATE_BBQ")));
+    }
+
+    @Test
+    void 링크를_붙이면_소개_글에서_조건을_찾아_준다() throws Exception {
+        mvc.perform(post("/api/trips/1/stays/preview").session(minji).contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"url\": \"https://stay.example.com/1\" }"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("미리보기 제목"))
+                .andExpect(jsonPath("$.amenities", containsInAnyOrder("DETACHED", "PRIVATE_BBQ")));
+    }
+
+    @Test
+    void 방_사람이_아니면_미리보기도_못_한다() throws Exception {
+        mvc.perform(post("/api/trips/1/stays/preview").session(TestLogin.as(mvc, "남"))
+                        .contentType(MediaType.APPLICATION_JSON).content("{ \"url\": \"https://stay.example.com/1\" }"))
+                .andExpect(status().isNotFound());
     }
 
     @Test

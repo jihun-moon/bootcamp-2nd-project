@@ -228,6 +228,7 @@ function recommend() {
 // GET: /api/trips/1/roles/travel
 // -> { "message": null, "legs": [{ "name", "driver", "km", "minutes", "toll", "fuel", "note" }], "perPerson": 6000,
 //      "fuelPrice": 1700, "fuelSource": "어림값", "kmPerLiter": 12, "tips": [] }
+var travelTimer = null;
 function loadTravel() {
   $('#btn-travel').prop('disabled', true).text('계산 중…');
   api('GET', '/api/trips/' + tripId + '/roles/travel')
@@ -286,15 +287,12 @@ function resultText() {
 }
 
 function copyResult() {
-  copyText(resultText()).then(
-    function () { showToast('복사했어요. 단톡방에 붙여 넣어 주세요.'); },
-    function () { showNotice('복사하지 못했어요. 다시 눌러 주세요.'); }
-  );
+  shareText(resultText(), '복사했어요. 단톡방에 붙여 넣어 주세요.');
 }
 
 $(function () {
   $('#btn-recommend').click(recommend);
-  $('#btn-copy').click(copyResult);
+  $('#btn-copy').text(shareLabel('카톡으로 결과 보내기', '결과 복사해서 단톡방에 붙이기')).click(copyResult);
   $('#btn-travel').click(loadTravel);
   $('#btn-add-role').click(function () { openEditor(null); });
   $('#role-form').on('submit', saveRole);
@@ -307,17 +305,17 @@ $(function () {
 
   loadTrip(tripId).done(function (t) {
     trip = t;
-    loadBoard();
+    // 배정이 있으면 교통비도 바로 센다. "계산하기"를 찾아 누르지 않아도 보드 아래에 근거가 있다
+    loadBoard().done(function () { if (board.assignments.length) loadTravel(); });
     // 누가 들어오면 미배정 칸이 바뀌니 방 정보도 다시 읽는다
     listen(tripId, function (what) {
       if (what === 'members' || what === 'all') {
         loadTrip(tripId).done(function (t) { trip = t; loadBoard(); });
       } else if (what === 'roles') {
+        // 운전이 바뀌면 교통비도 바뀐다. 카드를 연달아 옮길 때마다 길찾기를 부르지 않게 멈춘 뒤 한 번만 센다
         loadBoard();
-        if (travel) {
-          travel = null;
-          $('#travel').empty().append($('<p class="hint">').text('역할이 바뀌었어요. 다시 계산해 주세요.'));
-        }
+        clearTimeout(travelTimer);
+        travelTimer = setTimeout(loadTravel, 1500);
       }
     });
   });

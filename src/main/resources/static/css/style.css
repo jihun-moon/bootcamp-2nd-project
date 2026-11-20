@@ -129,6 +129,7 @@ input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px 
 input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--accent); }
 .row > input { flex: 1; }
 label { display: block; color: var(--muted); font-size: var(--fs-sm); flex: 1; }
+.row > label { min-width: 0; } /* 날짜 칸 두 개가 휴대폰에서 상자 밖으로 밀려나지 않게 */
 label > input { margin-top: 4px; }
 label.row { display: flex; color: var(--ink); flex: none; }
 label.row > input { margin-top: 0; }
@@ -143,7 +144,7 @@ button { font: inherit; cursor: pointer; }
   transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
 }
 /* 누르는 순간 살짝 들어간다(실제 단추처럼). 휴대폰에도 보이도록 hover 와 따로 둔다 */
-.btn:active:not(:disabled), .choice:active, .score:active, .member-card:active { transform: scale(0.97); }
+.btn:active:not(:disabled), .choice:active, .member-card:active { transform: scale(0.97); }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 /* 카카오 로그인: 공식 그림을 가운데 두고 같은 노랑 바탕만 좌우로 늘린다(가이드의 확장 규칙). 둥글기는 공식 그림과 같은 8 */
 .kakao-login { display: flex; justify-content: center; align-items: center; height: 46px; border-radius: 8px; background: var(--kakao); }
@@ -173,8 +174,23 @@ button { font: inherit; cursor: pointer; }
   background: var(--surface); color: var(--ink); text-align: left; font-weight: 600;
 }
 .choice.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
-.score { width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
-.score.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700; }
+/* 숙소 조건: 이름 한 줄, 그 아래 세 단추를 꽉 채운다. 옆에 나란히 두면 휴대폰에서 이름이 세 줄로 깨졌다 */
+.pref { display: grid; gap: 8px; }
+/* 여럿 중 하나(설문 숙소 조건·출발): 한 줄로 붙은 단추. 고른 칸만 칠한다 */
+.segmented { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; }
+.segmented button { min-height: var(--tap); padding: 8px 4px; border: 0; border-left: 1px solid var(--line); background: var(--surface); color: var(--muted); font-size: var(--fs-sm); transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease); }
+.segmented button:first-child { border-left: 0; }
+.segmented button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+/* 여러 개 고르기(맡기 싫은 일, 숙소에 있는 조건): 칩 전체가 눌리는 칸. 체크 상자보다 손가락에 크다 */
+.toggles { display: flex; flex-wrap: wrap; gap: 8px; }
+.toggle { min-height: 40px; padding: 8px 14px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); font-size: var(--fs-sm); transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease); }
+.toggle[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.toggle:active { transform: scale(0.97); }
+/* 설문 장 넘김: 다음은 오른쪽에서, 이전은 왼쪽에서 */
+.slide-next { animation: slide-next var(--dur-slow) var(--ease); }
+.slide-back { animation: slide-back var(--dur-slow) var(--ease); }
+@keyframes slide-next { from { opacity: 0; transform: translateX(16px); } }
+@keyframes slide-back { from { opacity: 0; transform: translateX(-16px); } }
 
 /* 작은 표시 */
 .tag { margin-left: 4px; font-size: var(--fs-xs); font-weight: 500; color: var(--muted); }
@@ -244,7 +260,7 @@ label.chip { display: inline-flex; min-height: 40px; padding: 6px 12px; color: v
 /* 숙소 카드 */
 .stay-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
 .stay { display: flex; flex-direction: column; gap: 12px; }
-.stay .photo { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--radius-sm); background: var(--surface-2); }
+.stay .photo { width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--radius-sm); background: var(--surface-2); }
 .stay .rank { font-size: var(--fs-sm); font-weight: 600; color: var(--muted); white-space: nowrap; }
 .stay.best { border-color: var(--ink); }
 
@@ -345,9 +361,6 @@ tr:last-child td { border-bottom: 0; }
 
 /* 단계 설명: 한 줄 요약 → 하는 일 셋 → 안심시키는 한 줄. 줄 머리표 대신 왼쪽 선 하나로 묶는다 */
 .step-text { display: grid; gap: 12px; }
-.points { display: grid; gap: 8px; padding-left: 12px; border-left: 2px solid var(--line); }
-.points li { color: var(--ink); }
-.step-note { font-size: var(--fs-sm); color: var(--muted); }
 
 .mini-phone {
   display: grid; gap: 8px; align-content: start; min-height: 200px; padding: 16px; border-radius: 24px;
@@ -393,9 +406,9 @@ tr:last-child td { border-bottom: 0; }
 .compare th, .compare td { text-align: center; }
 .compare th:first-child, .compare td:first-child { text-align: left; }
 .compare .us { background: var(--surface-2); font-weight: 600; }
-.compare thead th { white-space: nowrap; }
+.compare thead th { vertical-align: bottom; } /* 열이 다섯이라 머리는 줄을 바꿔 좁게 */
 @media (max-width: 600px) {
-  .compare th, .compare td { padding: 8px 6px; font-size: var(--fs-xs); } /* 휴대폰 폭에서 네 칸이 줄바꿈 없이 들어가게 */
+  .compare th, .compare td { padding: 8px 6px; font-size: var(--fs-xs); } /* 휴대폰 폭에서 다섯 칸이 옆으로 밀리지 않게 */
 }
 .yes { color: var(--ink); font-weight: 600; }
 .no { color: var(--muted); }
@@ -449,7 +462,6 @@ body:has(.sticky-cta) .site-header .btn { display: none; } /* 아래 붙은 버�
   .steps > li > .mini-phone { grid-column: 1; grid-row: 1 / 3; position: sticky; top: 96px; min-height: 280px; }
   .steps > li > .step-text { grid-column: 2; grid-row: 2; align-self: start; max-width: 480px; }
   .steps > li > .step-text h3 { font-size: var(--fs-xl); }
-  .steps > li > .step-text .points li { font-size: var(--fs-md); }
   .tabs { margin: 12px 0; padding: 0; }
   .sticky-cta { display: none; }
   body:has(.sticky-cta) .site-footer { padding-bottom: 24px; }
@@ -463,3 +475,11 @@ body:has(.sticky-cta) .site-header .btn { display: none; } /* 아래 붙은 버�
 
 /* 재생을 시작하는 첫 순간에는 장면 전환을 끈다. 안 끄면 결과 화면이 사라지는 0.3초 동안 두 장면이 겹쳐 보인다 */
 .phone.no-anim .scene, .phone.no-anim [data-step] { transition: none !important; }
+/* 숙소 링크 미리보기: 사진 옆에 읽은 결과 한 줄 */
+.stay-preview { display: flex; gap: 12px; align-items: center; }
+.stay-preview img { width: 64px; height: 64px; object-fit: cover; border-radius: var(--radius-sm); flex: none; background: var(--surface-2); }
+/* 설문 마지막 장: 조건이 길어도 "다 했어요"가 늘 손 닿는 곳에 */
+#step-preferences > .between { position: sticky; bottom: 0; margin-inline: -16px; margin-bottom: -16px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--surface); border-top: 1px solid var(--line); border-radius: 0 0 var(--radius) var(--radius); }
+/* 숙소 가격: 이름 다음으로 크게. 예약 사이트에 다시 들어가지 않아도 1인 얼마인지 보인다 */
+.stay .price { font-size: var(--fs-lg); font-weight: 700; }
+.stay .price small { display: block; font-size: var(--fs-sm); font-weight: 400; color: var(--muted); }

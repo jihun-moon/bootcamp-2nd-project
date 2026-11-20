@@ -163,9 +163,8 @@ function showQuizResult() {
 
 $(function () {
   $('.quiz input').on('change', showQuizResult);
-  $('#quiz-share').on('click', function () {
-    var text = '나 여행 가면 "' + $('#quiz-role').text() + '"래 ㅋㅋ 너는? ' + location.origin + '/#quiz';
-    copyText(text).then(function () { showToast('복사했어요. 단톡방에 던져 보세요.'); });
+  $('#quiz-share').text(shareLabel('카톡으로 결과 던지기', '결과 복사해서 단톡방에 던지기')).on('click', function () {
+    shareText('나 여행 가면 "' + $('#quiz-role').text() + '"래 ㅋㅋ 너는? ' + location.origin + '/#quiz', '복사했어요. 단톡방에 던져 보세요.');
   });
   loadMyTrips();
   stickyAfterHero();

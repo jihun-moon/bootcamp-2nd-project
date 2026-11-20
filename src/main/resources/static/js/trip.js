@@ -32,8 +32,9 @@ function renderNext(me, notYet) {
   };
   if (trip.members.length === 1) {
     $('#next-title').text('먼저 친구들을 불러요');
-    $('#next-text').text('아래 초대 링크를 복사해 단톡방에 붙여 넣으세요. 친구가 누르면 카톡 안에서 바로 열려요.');
-    actions.append($('<button type="button" class="btn primary">').text('초대 링크 복사').click(copyInvite));
+    $('#next-text').text(shareLabel('누르면 카톡을 골라 바로 보낼 수 있어요.', '복사한 글을 단톡방에 붙여 넣으면 돼요.') + ' 친구는 링크 한 번 누르고 1분 설문만 하면 돼요.');
+    actions.append($('<button type="button" class="btn primary">').text(shareLabel('카톡으로 초대 보내기', '초대 글 복사하기')).click(sendInvite),
+      me.surveyDone ? null : link('내 설문 먼저 (1분)', '/trips/' + tripId + '/survey'));
   } else if (!me.surveyDone) {
     $('#next-title').text('내 설문부터 해요 (1분)');
     $('#next-text').text('차가 있는지, 맡기 싫은 일, 숙소에서 중요한 것만 물어요. 답에 따라 역할이 추천돼요.');
@@ -41,35 +42,35 @@ function renderNext(me, notYet) {
   } else if (notYet.length && me.host) {
     $('#next-title').text(notYet.length + '명이 아직 설문 전이에요');
     $('#next-text').text(notYet.map(function (m) { return m.name; }).join(', ') + ' 님에게 단톡방으로 한 번 더 알려 주세요.');
-    actions.append($('<button type="button" class="btn primary">').text('재촉 글 복사').click(copyReminder),
+    actions.append($('<button type="button" class="btn primary">').text('한 번 더 알리기').click(sendReminder),
       link('지금 역할 보기', '/trips/' + tripId + '/roles'));
   } else if (notYet.length) {
     $('#next-title').text('설문 고마워요!');
-    $('#next-text').text('다른 사람 ' + notYet.length + '명이 끝나면 방장이 역할을 추천받아요. 숙소 링크는 지금 올려도 돼요.');
+    $('#next-text').text('남은 ' + notYet.length + '명이 끝나면 역할이 자동으로 정해져요. 숙소 링크는 지금 올려도 돼요.');
     actions.append(link('숙소 올리기', '/trips/' + tripId + '/stays', true), link('역할 보드', '/trips/' + tripId + '/roles'));
   } else {
     $('#next-title').text('모두 설문을 끝냈어요');
-    $('#next-text').text(me.host ? '역할 보드에서 "설문으로 추천받기"를 눌러 주세요.' : '역할 보드와 숙소 투표를 확인해 주세요.');
+    $('#next-text').text('설문으로 역할이 정해졌어요. 마음에 안 들면 보드에서 눌러 바꿀 수 있어요.');
     actions.append(link('역할 보드', '/trips/' + tripId + '/roles', true), link('숙소 투표', '/trips/' + tripId + '/stays'));
   }
 }
 
-// 복사가 막힌 브라우저면 링크 칸을 골라 둬서 길게 눌러 직접 복사하게 한다
-function copyInvite() {
-  copyText($('#invite-link').val()).then(
-    function () { showToast('초대 링크를 복사했어요. 단톡방에 붙여 넣어 주세요.'); },
-    function () { $('#invite-link')[0].select(); showNotice('복사가 막혀 있어요. 링크 칸을 길게 눌러 복사해 주세요.'); });
+// 링크만 던지면 무슨 링크인지 몰라 안 누른다. 할 일(1분 설문)과 까닭을 한 줄 붙인다
+function sendInvite() {
+  shareText('[' + trip.title + '] 여행방 만들었어! 1분 설문만 해 줘. 운전·총무랑 숙소 같이 정하자\n' + $('#invite-link').val(),
+    '초대 글을 복사했어요. 단톡방에 붙여 넣어 주세요.');
 }
 
-function copyReminder() {
+function sendReminder() {
   var names = trip.members.filter(function (m) { return !m.surveyDone; }).map(function (m) { return m.name; });
-  var text = '[' + trip.title + '] ' + names.join(', ') + ' 님 설문 1분만 부탁해요. 역할이랑 숙소 정하려고요\n'
-    + $('#invite-link').val();
-  copyText(text).then(function () { showToast('재촉 글을 복사했어요. 단톡방에 붙여 넣어 주세요.'); });
+  shareText('[' + trip.title + '] ' + names.join(', ') + ' 님 설문 1분만 부탁해요. 다 모이면 역할이 자동으로 정해져요\n'
+    + $('#invite-link').val(), '알림 글을 복사했어요. 단톡방에 붙여 넣어 주세요.');
 }
 
 $(function () {
-  $('#btn-invite').click(copyInvite);
+  $('#btn-invite').click(sendInvite);
+  // 공유도 복사도 막힌 곳에서 칸을 누르면 링크 전체가 골라져 바로 복사할 수 있게
+  $('#invite-link').on('focus', function () { this.select(); });
   loadTrip(tripId).done(function (t) {
     render(t);
     listen(tripId, function () { loadTrip(tripId).done(render); });

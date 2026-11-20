@@ -41,7 +41,9 @@ function buildLines(trip, board, stays, travel) {
   var stay = pickStay(stays);
   if (stay) {
     var stayPart = (stay.price && nights !== null) ? Math.round(stay.price * Math.max(1, nights) / people / 100) * 100 : null;
-    out.push({ kind: 'row', left: '숙소  ' + stay.title, right: stayPart !== null ? won(stayPart) : '가격 미정' });
+    // 날짜가 아직이면 1인 몫을 못 세니 아는 만큼(1박 가격)만
+    var stayRight = stayPart !== null ? won(stayPart) : (stay.price ? '1박 ' + won(stay.price) : '가격 미정');
+    out.push({ kind: 'row', left: '숙소  ' + stay.title, right: stayRight });
     if (stayPart !== null) total += stayPart;
   }
   if (travel && travel.perPerson !== null) {

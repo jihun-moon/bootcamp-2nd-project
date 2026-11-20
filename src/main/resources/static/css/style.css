@@ -332,6 +332,12 @@ tr:last-child td { border-bottom: 0; }
 .phone.playing.on-board .board-scene { opacity: 1; transform: none; transition-delay: 0.25s; }
 .phone:not(.playing) .chat-scene { display: none; }
 
+/* 단계 설명: 한 줄 요약 → 하는 일 셋 → 안심시키는 한 줄. 줄 머리표 대신 왼쪽 선 하나로 묶는다 */
+.step-text { display: grid; gap: 12px; }
+.points { display: grid; gap: 8px; padding-left: 12px; border-left: 2px solid var(--line); }
+.points li { color: var(--ink); }
+.step-note { font-size: var(--fs-sm); color: var(--muted); }
+
 .mini-phone {
   display: grid; gap: 8px; align-content: start; min-height: 200px; padding: 16px; border-radius: 24px;
   border: 6px solid #111418; background: var(--bg); font-size: var(--fs-sm);
@@ -368,14 +374,22 @@ tr:last-child td { border-bottom: 0; }
 .compare th, .compare td { text-align: center; }
 .compare th:first-child, .compare td:first-child { text-align: left; }
 .compare .us { background: var(--surface-2); font-weight: 600; }
+.compare thead th { white-space: nowrap; }
+@media (max-width: 600px) {
+  .compare th, .compare td { padding: 8px 6px; font-size: var(--fs-xs); } /* 휴대폰 폭에서 네 칸이 줄바꿈 없이 들어가게 */
+}
 .yes { color: var(--ink); font-weight: 600; }
 .no { color: var(--muted); }
 
 .faq details { border-bottom: 1px solid var(--line); padding: 16px 0; }
-.faq summary { cursor: pointer; font-weight: 600; }
+.faq summary { display: flex; justify-content: space-between; align-items: center; gap: 16px; cursor: pointer; font-weight: 600; list-style: none; }
+.faq summary::-webkit-details-marker { display: none; } /* 브라우저 기본 ▶ 대신 오른쪽 + 하나 */
+.faq summary::after { content: "+"; font-size: var(--fs-lg); font-weight: 400; color: var(--muted); transition: transform var(--dur) var(--ease); }
+.faq details[open] summary::after { transform: rotate(45deg); }
 .faq details p { margin-top: 8px; color: var(--muted); }
 
 .cta { text-align: center; padding: 48px 0 16px; }
+.cta p { margin-inline: auto; } /* 본문 줄 길이 제한(68ch) 때문에 왼쪽으로 붙지 않게 */
 .site-footer { border-top: 1px solid var(--line); margin-top: 48px; padding: 24px 0; color: var(--muted); font-size: var(--fs-xs); }
 
 .trip-list { display: grid; gap: 8px; }
@@ -409,8 +423,9 @@ body:has(.sticky-cta) .site-header .btn { display: none; } /* 아래 붙은 버�
   .steps > li { grid-template-columns: 300px 1fr; grid-template-rows: auto 1fr; column-gap: 48px; min-height: 64vh; align-items: start; }
   .steps > li::before { grid-column: 2; grid-row: 1; margin-top: 96px; }
   .steps > li > .mini-phone { grid-column: 1; grid-row: 1 / 3; position: sticky; top: 96px; min-height: 280px; }
-  .steps > li > div:last-child { grid-column: 2; grid-row: 2; align-self: start; }
-  .steps > li > div:last-child h3 { font-size: var(--fs-xl); }
+  .steps > li > .step-text { grid-column: 2; grid-row: 2; align-self: start; max-width: 480px; }
+  .steps > li > .step-text h3 { font-size: var(--fs-xl); }
+  .steps > li > .step-text .points li { font-size: var(--fs-md); }
   .tabs { margin: 12px 0; padding: 0; }
   .sticky-cta { display: none; }
   body:has(.sticky-cta) .site-footer { padding-bottom: 24px; }

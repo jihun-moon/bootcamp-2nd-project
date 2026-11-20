@@ -5,6 +5,8 @@
 <div class="page">
   <header th:replace="~{fragments/common :: tripHeader}"></header>
   <main class="stack">
+    <!-- 방에 들어올 때마다 "여행 가는 방"이라는 느낌이 들게 얇은 풍경 띠 하나. Unsplash 무료 사진(unsplash.com/photos/NZZgWbjYu2Y) -->
+    <img class="cover thin" th:src="@{/img/photo/forest-hills.jpg}" alt="" width="1200" height="600">
     <!-- 지금 나에게 맞는 다음 할 일 하나. 처음 들어온 사람이 "여기서 뭘 하지?"를 고민하지 않게 trip.js 가 고른다 -->
     <section id="next" class="box stack">
       <h2 id="next-title"></h2>

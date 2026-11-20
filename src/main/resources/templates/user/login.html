@@ -4,9 +4,11 @@
 <body>
 <header th:replace="~{fragments/common :: siteHeader(false)}"></header>
 <main class="page narrow stack loose">
+  <!-- 친구가 초대 링크를 누르면 가장 먼저 보는 화면이라 차가운 로그인 대신 "같이 가자"는 사진. Unsplash 무료 사진(unsplash.com/photos/Z2k2Yod4vCY) -->
+  <img class="cover" th:src="@{/img/photo/friends.jpg}" alt="햇살 아래 함께 웃는 친구들" width="1200" height="600">
   <div class="stack">
-    <h1>로그인하고 시작해요</h1>
-    <p class="muted">카카오 계정으로 한 번이면 돼요. 비밀번호는 TripMate 가 저장하지 않고, 이름과 프로필 사진만 받아요.</p>
+    <h1>카카오로 바로 들어가요</h1>
+    <p class="muted">비밀번호는 받지 않아요. 이름과 프로필 사진만 써요.</p>
   </div>
   <p th:if="${param.error}" class="notice">카카오 로그인에 실패했어요. 다시 시도해 주세요.</p>
   <p id="login-error" class="notice" hidden></p>

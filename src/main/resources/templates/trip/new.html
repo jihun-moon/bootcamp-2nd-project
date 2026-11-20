@@ -3,19 +3,33 @@
 <head th:replace="~{fragments/common :: head('여행방 만들기')}"></head>
 <body>
 <header th:replace="~{fragments/common :: siteHeader(false)}"></header>
+<!-- 적는 칸 대신 누르는 칸. 지역은 자주 가는 곳을 누르고, 날짜는 달력에서 두 번 누르고, 이름은 비우면 "강릉 2박 3일"로 붙는다 -->
 <main class="page narrow stack loose">
+  <!-- Unsplash 무료 사진(unsplash.com/photos/sE-xn2CBnpQ) -->
+  <img class="cover" th:src="@{/img/photo/sea.jpg}" alt="맑은 날 바다로 이어지는 길" width="1200" height="600">
   <div class="stack">
-    <h1>여행방 만들기</h1>
-    <p class="muted">30초면 끝나요. 만든 사람이 방장이 되고, 다음 화면에서 초대 링크를 단톡방에 보내면 돼요.</p>
+    <h1>어디로, 언제 가요?</h1>
+    <p class="muted">누르기만 하면 돼요. 다 나중에 정해도 괜찮아요.</p>
   </div>
-  <form id="trip-form" class="box stack">
-    <label>여행 이름 <input type="text" id="title" required maxlength="100" placeholder="예: 겨울 펜션 2박 3일"></label>
-    <label>지역 <input type="text" id="destination" maxlength="100" placeholder="예: 가평 (길찾기·교통비 계산에 써요)"></label>
-    <div class="row">
-      <label>출발 <input type="date" id="startDate"></label>
-      <label>도착 <input type="date" id="endDate"></label>
-    </div>
-    <p id="period" class="muted small" aria-live="polite">지역과 날짜는 나중에 정해도 돼요.</p>
+  <form id="trip-form" class="stack loose">
+    <fieldset class="stack">
+      <legend class="strong">어디로?</legend>
+      <div id="regions" class="toggles"></div>
+      <input type="text" id="destination" maxlength="100" placeholder="예: 홍천 (길찾기·교통비 계산에 써요)" hidden>
+    </fieldset>
+
+    <fieldset class="stack">
+      <legend class="strong">언제?</legend>
+      <div id="quick-dates" class="row wrap"></div>
+      <div id="cal" class="cal" aria-label="출발일과 도착일 고르기"></div>
+      <p id="period" class="period" aria-live="polite">출발일과 도착일을 차례로 눌러 주세요.</p>
+      <input type="hidden" id="startDate">
+      <input type="hidden" id="endDate">
+    </fieldset>
+
+    <label>여행 이름 <span class="muted">(비우면 저절로 붙어요)</span>
+      <input type="text" id="title" maxlength="100" placeholder="우리 여행">
+    </label>
     <p id="form-error" class="error" hidden></p>
     <button type="submit" id="btn-create" class="btn primary big block">방 만들고 초대 링크 받기</button>
   </form>

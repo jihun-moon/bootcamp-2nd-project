@@ -543,3 +543,33 @@ body:has(.cta) .site-footer { margin-top: 0; }
   .faq > h2 { grid-row: 1 / span 20; position: sticky; top: 96px; }
   .faq > details { grid-column: 2; }
 }
+
+/* 화면 위 사진(방 만들기·로그인·개요). 둥근 판 하나, 16:9 고정이라 사진이 늦게 와도 아래가 밀리지 않는다 */
+.cover { display: block; width: 100%; height: auto; aspect-ratio: 2 / 1; object-fit: cover; border-radius: var(--radius); background: var(--surface-2); }
+
+/* 달력: 숙소 앱과 같은 꼴. 토 파랑, 일 빨강, 출발·도착 동그라미, 사이는 띠, 오늘은 점 */
+.cal { padding: 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.cal-nav { width: var(--tap); height: var(--tap); border: 0; border-radius: var(--radius-sm); background: none; color: var(--ink); font-size: var(--fs-xl); }
+.cal-nav:disabled { color: var(--line-strong); cursor: default; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 4px; text-align: center; }
+.cal-week { padding: 4px 0 8px; font-size: var(--fs-xs); color: var(--muted); }
+.cal-week:first-child { color: var(--error); }
+.cal-week:last-child { color: #2f6fdc; }
+.cal-day { position: relative; height: var(--tap); border: 0; background: none; color: var(--ink); font: inherit; font-variant-numeric: tabular-nums; }
+.cal-day.sat { color: #2f6fdc; }
+.cal-day.sun { color: var(--error); }
+.cal-day:disabled { color: var(--line-strong); cursor: default; }
+.cal-day.today::after { content: ""; position: absolute; left: 50%; bottom: 4px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--accent); }
+.cal-day.between { background: var(--accent-soft); }
+.cal-day.band-right { background: linear-gradient(90deg, transparent 50%, var(--accent-soft) 50%); }
+.cal-day.band-left { background: linear-gradient(90deg, var(--accent-soft) 50%, transparent 50%); }
+.cal-day.start, .cal-day.end { color: var(--accent-ink); font-weight: 700; }
+.cal-day.start::before, .cal-day.end::before { content: ""; position: absolute; inset: 2px 50%; margin-inline: -20px; border-radius: 50%; background: var(--accent); z-index: -1; }
+.cal-day.start, .cal-day.end { z-index: 0; isolation: isolate; }
+@media (hover: hover) { .cal-day:not(:disabled):not(.start):not(.end):hover { background-color: var(--surface-2); border-radius: var(--radius-sm); } }
+@media (prefers-color-scheme: dark) { .cal-day.sat, .cal-week:last-child { color: #7aa7ff; } }
+.period { font-weight: 600; color: var(--muted); }
+.period.set { color: var(--accent); font-size: var(--fs-lg); }
+.cover.thin { aspect-ratio: 4 / 1; }
+.cal .cal-day:disabled { color: var(--line-strong); } /* 지난 토·일도 회색(다크 모드 파랑보다 뒤에 둬야 이긴다) */

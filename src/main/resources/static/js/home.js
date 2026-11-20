@@ -185,7 +185,7 @@ function revealOnScroll() {
 
 // 이렇게 굴러가요: 화면 가운데를 지나는 단락의 실제 화면을 오른쪽 휴대폰에 띄우고, 누르는 곳에 동그라미를 옮긴다(PC 만, 휴대폰은 단락마다 그림이 있다)
 function tourScroll() {
-  var stage = document.querySelector('.tour-stage .phone-screen');
+  var stage = document.querySelector('.tour-stage .device-view');
   if (!stage || !('IntersectionObserver' in window)) return;
   var ring = stage.querySelector('.tap-ring');
   var steps = document.querySelectorAll('.tour-step');

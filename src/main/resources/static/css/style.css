@@ -827,9 +827,6 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
 .tour-step { display: grid; gap: 8px; }
 .tour-step h3 { font-size: var(--fs-lg); }
 .tour-no { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line); font-weight: 600; }
-.tour-inline { position: relative; justify-self: center; width: min(250px, 72%); margin-top: 8px; border-radius: 28px; overflow: hidden;
-  border: 8px solid #0d0f12; box-shadow: 0 20px 40px rgb(16 24 40 / 0.18); }
-.tour-inline img { display: block; width: 100%; height: auto; }
 .tour-stage { display: none; }
 .tour-cta { margin-top: 40px; text-align: center; }
 /* 누르는 곳: 퍼지는 동그라미. 자리는 장면마다 --x --y(그림 위 %) */
@@ -844,11 +841,6 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
   .tour-step h3 { font-size: var(--fs-xl); }
   .tour-inline { display: none; }
   .tour-stage { display: block; }
-  /* 낮은 창(노트북 768px 높이)에서도 휴대폰이 다 보이게 높이에 맞춰 폭을 줄인다. 화면 비율 390:844 + 틀 20px */
-  .tour-phone { position: sticky; top: max(76px, calc(50vh - 360px)); width: min(340px, calc((100vh - 112px) * 390 / 844 + 20px)); justify-self: end; }
-  .tour-phone .phone-screen { height: auto; aspect-ratio: 390 / 844; }
-  .tour-shot { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.35s var(--ease); }
-  .tour-shot.on { opacity: 1; }
 }
 
 /* 차 나누기: 차마다 얇은 상자, 내가 탄 차는 테두리로 */
@@ -883,14 +875,86 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
 .cta-actions { margin-top: 8px; }
 .cta .btn.ghost { background: rgb(255 255 255 / 0.12); color: #fff; border-color: rgb(255 255 255 / 0.4); }
 .devices { position: relative; justify-self: center; width: min(560px, 100%); padding-bottom: 24px; }
-.laptop-screen { border: 10px solid #111418; border-bottom-width: 14px; border-radius: 14px 14px 0 0; background: #111418; overflow: hidden; aspect-ratio: 16 / 10; box-shadow: 0 30px 60px rgb(0 0 0 / 0.45); }
-.laptop-screen img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
-.laptop-base { height: 14px; margin: 0 -6%; border-radius: 0 0 14px 14px; background: linear-gradient(#cfd4da, #8b939c); }
-.devices .mini-device { position: absolute; right: -4%; bottom: 0; width: 30%; padding: 6px; border-radius: 26px; }
-.devices .mini-device .phone-screen { height: auto; aspect-ratio: 390 / 844; border-radius: 20px; }
-.devices .mini-device img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
 @media (min-width: 960px) {
   .cta-inner { grid-template-columns: 1fr 1.1fr; align-items: center; column-gap: 64px; }
   .cta::before { content: ""; position: absolute; inset: -6%; z-index: 0; background: inherit; animation: hero-drift 40s ease-in-out infinite alternate; }
   .cta > * { position: relative; z-index: 1; }
 }
+
+/* 기기 틀(소개 페이지). 실제 기기처럼: 휴대폰은 옆 단추·카메라 구멍(다이내믹 아일랜드)·상태 표시줄, 노트북은 카메라·얇은 테두리·알루미늄 받침과 여는 홈.
+   크기는 틀 폭을 따라(cqw) 커지고 작아져서 250px 그림이든 170px 그림이든 같은 비율로 보인다 */
+.device-phone { position: relative; container-type: inline-size; padding: 3.4%; border-radius: 15% / 7.2%;
+  background: linear-gradient(150deg, #3a3f47 0%, #15181c 22%, #0b0d10 60%, #23272d 100%);
+  box-shadow: inset 0 0 0 1.5px #4a5059, inset 0 0 0 4px #0b0d10, 0 28px 56px rgb(16 24 40 / 0.28), 0 6px 14px rgb(16 24 40 / 0.18); }
+/* 왼쪽 소리 단추 둘, 오른쪽 전원 단추 */
+.device-phone::before { content: ""; position: absolute; left: -2px; top: 19%; width: 3px; height: 7%; border-radius: 2px 0 0 2px; background: #2b2f36;
+  box-shadow: 0 calc(7% + 40px) 0 #2b2f36; }
+.device-phone::after { content: ""; position: absolute; right: -2px; top: 25%; width: 3px; height: 11%; border-radius: 0 2px 2px 0; background: #2b2f36; }
+.device-screen { position: relative; overflow: hidden; border-radius: 12% / 5.6%; background: #fff; }
+/* 다이내믹 아일랜드 */
+.device-screen::before { content: ""; position: absolute; z-index: 3; top: 2.4cqw; left: 50%; width: 30%; height: 7.6cqw; transform: translateX(-50%); border-radius: 99px; background: #050506; }
+.device-status { display: flex; justify-content: space-between; align-items: center; height: 11.5cqw; padding: 1.2cqw 7.5cqw 0 9cqw; background: #fff; color: #111; font-size: 3.9cqw; }
+.device-status b { font-weight: 600; letter-spacing: -0.01em; }
+/* 신호·와이파이·배터리 */
+.device-status i { width: 17cqw; height: 3.6cqw; background: no-repeat right center / contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 68 12'%3E%3Cg fill='%23111'%3E%3Crect x='0' y='8' width='3' height='4' rx='1'/%3E%3Crect x='4.5' y='6' width='3' height='6' rx='1'/%3E%3Crect x='9' y='3.5' width='3' height='8.5' rx='1'/%3E%3Crect x='13.5' y='1' width='3' height='11' rx='1'/%3E%3Cpath d='M28 3.2a9 9 0 0 1 12 0l-1.4 1.5a7 7 0 0 0-9.2 0zm2.3 2.6a5.6 5.6 0 0 1 7.4 0l-1.4 1.5a3.6 3.6 0 0 0-4.6 0zM34 11l-2-2a2.8 2.8 0 0 1 4 0z'/%3E%3Crect x='46' y='1.5' width='19' height='9' rx='2.6' fill='none' stroke='%23111' stroke-opacity='.4'/%3E%3Crect x='47.6' y='3.1' width='14' height='5.8' rx='1.4'/%3E%3Crect x='65.8' y='4.3' width='1.6' height='3.4' rx='.8' fill-opacity='.4'/%3E%3C/g%3E%3C/svg%3E"); }
+.device-view { position: relative; aspect-ratio: 390 / 844; overflow: hidden; }
+.device-view img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.tour-inline { justify-self: center; width: min(250px, 72%); margin-top: 8px; }
+
+/* 노트북: 덮개(카메라·테두리)와 받침(가운데 여는 홈, 아래 그림자) */
+.device-laptop { position: relative; container-type: inline-size; }
+.laptop-lid { position: relative; padding: 2.4% 2.4% 3%; border-radius: 3.2% 3.2% 0 0 / 5% 5% 0 0; background: #0d0f12;
+  box-shadow: inset 0 0 0 1.5px #3a3f47, 0 30px 60px rgb(0 0 0 / 0.45); }
+.laptop-lid::before { content: ""; position: absolute; top: 0.95%; left: 50%; width: 0.9%; aspect-ratio: 1; transform: translateX(-50%); border-radius: 50%; background: #2a3038; box-shadow: inset 0 0 0 1px #3d4652; }
+.laptop-screen { aspect-ratio: 16 / 10; overflow: hidden; border-radius: 0.6cqw; background: #fff; }
+.laptop-screen img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.laptop-base { position: relative; height: 3.4cqw; margin: 0 -7%; border-radius: 0 0 1.6cqw 1.6cqw / 0 0 2.8cqw 2.8cqw;
+  background: linear-gradient(to bottom, #e9ecef 0%, #cfd4da 35%, #9aa2ab 100%); box-shadow: inset 0 1px 0 #f8f9fa; }
+.laptop-base::before { content: ""; position: absolute; top: 0; left: 50%; width: 15%; height: 42%; transform: translateX(-50%); border-radius: 0 0 1.2cqw 1.2cqw; background: linear-gradient(#a9b0b8, #cdd2d8); }
+.laptop-base::after { content: ""; position: absolute; left: 6%; right: 6%; bottom: -2.4cqw; height: 2.4cqw; border-radius: 50%; background: rgb(0 0 0 / 0.45); filter: blur(1.4cqw); z-index: -1; }
+.devices .device-laptop { width: 86%; }
+/* 휴대폰이 작으면 안 글씨가 깨알이라 노트북 대비 크게(1.35배로 찍은 그림과 같이) */
+.devices .mini-device { position: absolute; right: -3%; bottom: -4%; width: 35%; }
+@media (min-width: 960px) {
+  /* 낮은 창(노트북 768px 높이)에서도 휴대폰이 다 보이게 높이에 맞춰 폭을 줄인다. 그림 390:844 + 상태줄·틀 */
+  .tour-phone { position: sticky; top: max(76px, calc(50vh - 380px)); width: min(340px, calc((100vh - 120px) * 0.42)); justify-self: end; }
+  .tour-shot { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; opacity: 0; transition: opacity 0.35s var(--ease); }
+  .tour-shot.on { opacity: 1; }
+}
+
+/* 첫 화면 휴대폰(대화 장면)도 같은 기기 부품: 옆 단추, 카메라 구멍 */
+.phone-wrap > .phone { position: relative; }
+.phone-wrap > .phone::before { content: ""; position: absolute; left: -2px; top: 19%; width: 3px; height: 7%; border-radius: 2px 0 0 2px; background: #2b2f36; box-shadow: 0 calc(7% + 40px) 0 #2b2f36; }
+.phone-wrap > .phone::after { content: ""; position: absolute; right: -2px; top: 25%; width: 3px; height: 11%; border-radius: 0 2px 2px 0; background: #2b2f36; }
+.phone-wrap .phone-screen::before { content: ""; position: absolute; z-index: 5; top: 9px; left: 50%; width: 30%; height: 24px; transform: translateX(-50%); border-radius: 99px; background: #050506; }
+
+/* 스크롤에 붙는 움직임(라이브러리 없이 브라우저 기본 scroll-driven animation). 스레드에서 자주 본 "스크롤하면 자연스럽게 넘어가는" 꼴:
+   첫 화면이 위로 빠지며 살짝 작아지고 흐려지고, 휴대폰은 글보다 느리게 올라가(깊이감), 사진 띠는 안에서 천천히 움직인다.
+   지원하는 브라우저(크롬·엣지·사파리 26~)에서만, 움직임 줄이기면 끈다. 못 쓰는 브라우저는 지금처럼 그냥 보인다 */
+.scroll-progress { display: none; }
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    /* 맨 위 얇은 진행 막대: 어디쯤 읽었나 */
+    .scroll-progress { display: block; position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 60; transform-origin: 0 50%;
+      background: var(--accent); animation: grow-x linear both; animation-timeline: scroll(root); }
+    @keyframes grow-x { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+    @media (min-width: 960px) {
+      .hero > .stack { animation: hero-leave linear both; animation-timeline: view(); animation-range: exit 0% exit 100%; }
+      .hero .phone-wrap { animation: hero-lift linear both; animation-timeline: view(); animation-range: exit 0% exit 100%; }
+      @keyframes hero-leave { to { opacity: 0.15; transform: translateY(-40px) scale(0.96); } }
+      @keyframes hero-lift { to { opacity: 0.4; transform: translateY(80px) scale(0.97); } }
+      .photo-band img { animation: band-pan linear both; animation-timeline: view(); }
+      @keyframes band-pan { from { transform: scale(1.12) translateY(-4%); } to { transform: scale(1.12) translateY(4%); } }
+      /* 흐름 절 제목·각 절 제목이 들어올 때 아래에서 살짝 */
+      .section > h2 { animation: rise-in linear both; animation-timeline: view(); animation-range: entry 0% entry 60%; }
+      @keyframes rise-in { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+      /* 끝 절 기기: 노트북은 아래에서, 휴대폰은 조금 늦게 옆에서 */
+      .devices .device-laptop { animation: rise-in linear both; animation-timeline: view(); animation-range: entry 10% cover 40%; }
+      .devices .mini-device { animation: slide-in linear both; animation-timeline: view(); animation-range: entry 20% cover 45%; }
+      @keyframes slide-in { from { opacity: 0; transform: translate(40px, 20px); } to { opacity: 1; transform: none; } }
+    }
+  }
+}
+
+/* 한 줄에 놓인 글자 단추("고치기", "되돌리기")는 글씨를 크게 키운 휴대폰에서 두 줄로 꺾였다(소개 화면을 1.35배로 찍다 찾음) */
+.between > .link, .between > button.link { white-space: nowrap; flex-shrink: 0; }

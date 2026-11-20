@@ -45,6 +45,7 @@ DEV_LOGIN=true ./gradlew bootRun
 | 설문 보기 | GET | `/api/trips/{id}/members/{memberId}/survey` | 200 설문(본인·방장이 아니면 `mobilityLimited` 칸이 빠진다) | 설문 전이면 404 | 문지훈 |
 | 역할 보드 | GET | `/api/trips/{id}/roles` | 200 `{"roles": [...], "assignments": [{"roleId": 4, "memberId": 2, "reasons": ["차 있음 +4"], "version": 0}]}` | | 문지훈 |
 | 역할 추천 | POST | `/api/trips/{id}/roles/recommend` | 200 새 보드(손으로 옮긴 것도 다시 짠다) | 방장이 아니면 403 | 문지훈 |
+| 이동·회비 근거 | GET | `/api/trips/{id}/roles/travel` | 200 `{"legs": [{"name": "재현", "driver": true, "km": 62, "minutes": 70, "toll": 3200, "fuel": 8800}], "perPerson": 6000, ...}` | 키가 없으면 200 + `message` 안내 | 문지훈 |
 | 역할 카드 옮기기 | PATCH | `/api/trips/{id}/roles/assignments/{memberId}` | 200 보드<br>요청 `{"roleId": 4, "version": 0}` (roleId null = 미배정) | 그 사이 누가 옮겼으면(version 다름) 409 | 문지훈 |
 | 숙소 목록·그룹 취향 | GET | `/api/trips/{id}/stays` | 200 `{"amenities": [...], "preferences": {"DETACHED": {"avg": 4.5, "min": 3}}, "surveyed": 3, "stays": [...]}` | | 김현수 |
 | 숙소 올리기 | POST | `/api/trips/{id}/stays` | 201 숙소<br>요청 `{"url": "https://...", "title": "숲속 독채", "amenities": ["DETACHED"]}` | url 이 `http(s)://` 가 아니면 400 | 김현수 |
@@ -90,7 +91,7 @@ docs/          설계 문서, 각자 발표 정리(parts/)
 
 | 문서 | 들어 있는 것 |
 |---|---|
-| [1. 주제와 요구사항](docs/01-주제와-요구사항.md) | 주제를 고른 까닭, REQ-01~17, 담당 |
+| [1. 주제와 요구사항](docs/01-주제와-요구사항.md) | 주제를 고른 까닭, REQ-01~18, 담당 |
 | [2. 화면 설계](docs/02-화면설계.md) | 화면 목록 SCR-01~08, **와이어프레임**, 화면 흐름 |
 | [3. DB 설계](docs/03-DB설계.md) | ERD, 표마다 정한 것과 까닭, 정규화 확인 |
 | [4. URL 설계](docs/04-URL설계.md) | API 표(코드 위치까지) |
@@ -148,6 +149,13 @@ API 와 화면 테스트 56개. PR 을 올리기 전에 통과해야 한다.
    ```
 
 2. 서버를 다시 켜면 로그인 화면에 카카오 버튼이 나온다
+
+역할 보드의 이동·회비 근거도 같은 `KAKAO_CLIENT_ID`(REST API 키)로 카카오 지도·길찾기를 부른다. 콘솔에서 카카오맵을 켜야 한다.
+기름값은 오피넷 키가 있으면 그날 전국 평균, 없으면 어림값(1,700원/L)이다.
+
+```properties
+OPINET_KEY=오피넷 오픈 API 키
+```
 
 카카오 개발자 콘솔의 Redirect URI 는 `http://localhost:8080/login/oauth2/code/kakao` 다.
 배포할 때는 `{배포 주소}/login/oauth2/code/kakao` 를 하나 더 넣고, `DEV_LOGIN` 은 켜지 않는다.

@@ -13,10 +13,12 @@ public class RoleController {
 
     private final TripAccess tripAccess;
     private final RoleService roleService;
+    private final TravelService travelService;
 
-    public RoleController(TripAccess tripAccess, RoleService roleService) {
+    public RoleController(TripAccess tripAccess, RoleService roleService, TravelService travelService) {
         this.tripAccess = tripAccess;
         this.roleService = roleService;
+        this.travelService = travelService;
     }
 
     // GET: /api/trips/1/roles
@@ -40,6 +42,14 @@ public class RoleController {
     public ResponseEntity<RoleDto.Board> recommend(@PathVariable Long tripId) {
         tripAccess.host(tripId);
         return ResponseEntity.ok(roleService.recommend(tripId));
+    }
+
+    // GET: /api/trips/1/roles/travel   차마다 거리·시간·통행료·기름값과 운전하는 차로 센 1인 교통비
+    // 카카오를 부르므로 보드를 읽을 때마다가 아니라 화면에서 "계산하기"를 누를 때만 부른다
+    @GetMapping("/travel")
+    public ResponseEntity<TravelDto.Summary> travel(@PathVariable Long tripId) {
+        tripAccess.me(tripId);
+        return ResponseEntity.ok(travelService.estimate(roleService.travelPlan(tripId)));
     }
 
     // version 비교와 저장 사이에 다른 요청이 끼어들면 DB 단계에서 걸린다. 둘 다 "누가 먼저 옮김"이다

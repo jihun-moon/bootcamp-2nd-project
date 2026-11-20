@@ -8,6 +8,7 @@ var board = { roles: [], assignments: [] };
 var dragging = null;
 var picking = null; // 역할 고르기 창을 연 사람
 var justMoved = null;
+var travel = null; // 마지막으로 센 이동·회비 근거. 역할이 바뀌면 운전하는 차가 달라지니 비운다
 
 // 미배정까지 넣은 칸 목록. 칸마다 그 칸에 있는 카드를 같이 담는다
 function columns() {
@@ -164,6 +165,51 @@ function recommend() {
     .always(function () { $('#btn-recommend').prop('disabled', false); });
 }
 
+// GET: /api/trips/1/roles/travel
+// -> { "message": null, "legs": [{ "name", "driver", "km", "minutes", "toll", "fuel", "note" }], "perPerson": 6000,
+//      "fuelPrice": 1700, "fuelSource": "어림값", "kmPerLiter": 12, "tips": [] }
+function loadTravel() {
+  $('#btn-travel').prop('disabled', true).text('계산 중…');
+  api('GET', '/api/trips/' + tripId + '/roles/travel')
+    .done(function (res) {
+      travel = res;
+      renderTravel();
+    })
+    .always(function () { $('#btn-travel').prop('disabled', false).text('다시 계산'); });
+}
+
+function renderTravel() {
+  var box = $('#travel').empty();
+  if (!travel) return;
+  if (travel.message) {
+    box.append($('<p class="hint">').text(travel.message));
+    return;
+  }
+  var list = $('<ul class="stack">').appendTo(box);
+  travel.legs.forEach(function (l) {
+    var name = $('<div class="strong">').text(l.name);
+    if (l.driver) name.append($('<span class="tag">').text('운전'));
+    var detail = (l.km === null)
+      ? l.note
+      : '편도 ' + l.km + 'km · ' + minutesText(l.minutes) + ' · 기름 ' + won(l.fuel) + ' · 통행료 ' + won(l.toll);
+    list.append($('<li class="card">').append(name, $('<div class="muted small">').text(detail)));
+  });
+  if (travel.perPerson !== null) {
+    box.append($('<p class="strong">').text('1인 교통비 약 ' + won(travel.perPerson) + ' (운전하는 차 왕복, ' + trip.members.length + '명)'));
+  }
+  travel.tips.forEach(function (t) { box.append($('<p class="notice">').text(t)); });
+  box.append($('<p class="muted small">').text('길·통행료: 카카오모빌리티 · 휘발유 ' + won(travel.fuelPrice) + '/L(' + travel.fuelSource + ') · 연비 ' + travel.kmPerLiter + 'km/L로 셈'));
+}
+
+function minutesText(minutes) {
+  var h = Math.floor(minutes / 60);
+  return (h ? h + '시간 ' : '') + (minutes % 60) + '분';
+}
+
+function won(n) {
+  return n.toLocaleString('ko-KR') + '원';
+}
+
 // 단톡방에 붙여 넣을 글. 링크는 방 주소 대신 초대 링크라 아직 안 들어온 사람도 눌러서 들어온다
 function resultText() {
   var lines = ['[' + trip.title + '] 역할'];
@@ -174,6 +220,7 @@ function resultText() {
   });
   var notYet = trip.members.filter(function (m) { return !m.surveyDone; }).map(function (m) { return m.name; });
   if (notYet.length) lines.push('설문 아직: ' + notYet.join(', '));
+  if (travel && travel.perPerson !== null) lines.push('1인 교통비 약 ' + won(travel.perPerson) + ' (기름값·통행료 왕복)');
   lines.push('TripMate 에서 정했어요 ' + location.origin + '/join/' + trip.inviteCode);
   return lines.join('\n');
 }
@@ -199,6 +246,7 @@ function copyResult() {
 $(function () {
   $('#btn-recommend').click(recommend);
   $('#btn-copy').click(copyResult);
+  $('#btn-travel').click(loadTravel);
   $('#btn-picker-close').click(closePicker);
   // 창 바깥(어두운 곳)을 누르면 닫는다. 창 안을 누르면 target 이 안쪽 요소라 닫히지 않는다
   $('#role-picker').on('click', function (e) { if (e.target === this) closePicker(); })
@@ -213,6 +261,10 @@ $(function () {
         loadTrip(tripId).done(function (t) { trip = t; loadBoard(); });
       } else if (what === 'roles') {
         loadBoard();
+        if (travel) {
+          travel = null;
+          $('#travel').empty().append($('<p class="hint">').text('역할이 바뀌었어요. 다시 계산해 주세요.'));
+        }
       }
     });
   });

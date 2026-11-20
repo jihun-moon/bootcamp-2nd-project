@@ -30,13 +30,19 @@ public class SurveyService {
 
     // 처음이면 새로 만들고, 다시 하면 그 한 장을 고쳐 쓴다
     @Transactional
-    public SurveyDto.Response save(Long tripId, Member member, SurveyDto.Request req) {
+    public SurveyDto.Response save(Long tripId, Member me, SurveyDto.Request req) {
+        // 컨트롤러가 준 me 는 이 트랜잭션 밖에서 읽은 것이라 고쳐도 저장되지 않는다("설문 완료"가 안 켜졌다). 여기서 다시 읽는다
+        var member = memberRepository.findByIdAndTripId(me.getId(), tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         var survey = surveyAnswerRepository.findByMemberId(member.getId())
                 .orElseGet(() -> surveyAnswerRepository.save(new SurveyAnswer(member)));
         var avoid = (req.avoid() == null) ? Set.<Chore>of() : req.avoid();
         var preferences = (req.preferences() == null) ? Map.<Amenity, Integer>of() : req.preferences();
+        // 차가 없으면 출발 동네는 길찾기에 안 쓰니 남기지 않는다
+        var departure = (req.hasCar() && req.departure() != null && !req.departure().isBlank())
+                ? req.departure().strip() : null;
         survey.update(req.activity(), req.planning(), req.hasCar(), req.separateDeparture(),
-                req.mobilityLimited(), avoid, preferences);
+                departure, req.mobilityLimited(), avoid, preferences);
         // 방 개요의 "설문 완료"가 바뀌니 같은 방 화면들에 알린다
         events.publishEvent(new TripChanged(tripId, "members"));
         return SurveyDto.Response.of(survey, true);

@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -71,6 +72,28 @@ public class RoleService {
         assignmentRepository.flush();
         events.publishEvent(new TripChanged(tripId, "roles"));
         return board(tripId);
+    }
+
+    // 이동·회비 근거에 쓸 값만 꺼낸다. 길찾기는 몇 초 걸리니 그동안 DB 연결을 붙잡지 않게 여기서 트랜잭션을 끝낸다
+    // 차를 가져가는 사람과 운전 칸에 들어간 사람을 같이 담는다(손으로 옮겨 차 없는 사람이 운전 칸에 있을 수도 있다)
+    @Transactional(readOnly = true)
+    public TravelDto.Plan travelPlan(Long tripId) {
+        var trip = tripRepository.findWithMembersById(tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Set<Long> drivers = assignmentRepository.findByRoleTripIdOrderById(tripId).stream()
+                .filter(a -> a.getRole().getKind() == RoleKind.DRIVER)
+                .map(a -> a.getMember().getId())
+                .collect(Collectors.toSet());
+        Map<Long, SurveyAnswer> surveys = surveyAnswerRepository.findByMemberTripId(tripId).stream()
+                .collect(Collectors.toMap(s -> s.getMember().getId(), Function.identity()));
+
+        var cars = trip.getMembers().stream()
+                .filter(m -> drivers.contains(m.getId()) || (surveys.containsKey(m.getId()) && surveys.get(m.getId()).isHasCar()))
+                .map(m -> new TravelDto.Car(m.getId(), m.getName(),
+                        surveys.containsKey(m.getId()) ? surveys.get(m.getId()).getDeparture() : null,
+                        drivers.contains(m.getId())))
+                .toList();
+        return new TravelDto.Plan(trip.getDestination(), trip.getMembers().size(), cars);
     }
 
     // 손으로 옮긴 배정까지 지우고 설문으로 처음부터 다시 짠다. 점수 규칙은 RoleScorer, 배정은 HungarianAssigner

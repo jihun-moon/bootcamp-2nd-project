@@ -34,6 +34,7 @@
 | REQ-09 | 역할 보드 | GET | `/api/trips/{id}/roles` | | 200 `{roles, assignments}` | `RoleController`, `RoleService` |
 | REQ-09 | 역할 추천(방장) | POST | `/api/trips/{id}/roles/recommend` | | 200 보드 | `RoleController`, `RoleService.recommend`, `RoleScorer`, `HungarianAssigner` |
 | REQ-10 | 카드 옮기기 | PATCH | `/api/trips/{id}/roles/assignments/{memberId}` | `{"roleId": 4, "version": 0}` | 200 보드 / 409 | `RoleController`, `RoleService.move` |
+| REQ-18 | 이동·회비 근거 | GET | `/api/trips/{id}/roles/travel` | | 200 `{message, legs, perPerson, fuelPrice, fuelSource, kmPerLiter, tips}` | `RoleController`, `RoleService.travelPlan`, `TravelService`, `KakaoMapClient`, `FuelPriceClient` |
 | REQ-12 | 역할 더하기·고치기·지우기 *(남은 일)* | POST / PATCH / DELETE | `/api/trips/{id}/roles`, `/api/trips/{id}/roles/{roleId}` | | 201 / 200 / 204 | |
 
 ## 숙소·투표 (김현수)

@@ -1,6 +1,7 @@
 package com.tripmate.role;
 
 import com.tripmate.trip.TripAccess;
+import jakarta.validation.Valid;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +36,30 @@ public class RoleController {
                                               @RequestBody RoleDto.MoveRequest req) {
         tripAccess.me(tripId);
         return ResponseEntity.ok(roleService.move(tripId, memberId, req));
+    }
+
+    // POST: /api/trips/1/roles  body = { "title": "설거지", "required": false, "capacity": 2, "tasks": ["저녁 설거지"] }
+    // 역할을 더하고 고치고 지우는 건 모두의 보드를 바꾸니 방장만
+    @PostMapping
+    public ResponseEntity<RoleDto.Board> addRole(@PathVariable Long tripId, @Valid @RequestBody RoleDto.SaveRequest req) {
+        tripAccess.host(tripId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(roleService.addRole(tripId, req));
+    }
+
+    // PATCH: /api/trips/1/roles/4  body = POST 와 같다(칸을 다 보낸다)
+    @PatchMapping("/{roleId}")
+    public ResponseEntity<RoleDto.Board> updateRole(@PathVariable Long tripId, @PathVariable Long roleId,
+                                                    @Valid @RequestBody RoleDto.SaveRequest req) {
+        tripAccess.host(tripId);
+        return ResponseEntity.ok(roleService.updateRole(tripId, roleId, req));
+    }
+
+    // DELETE: /api/trips/1/roles/4   그 역할에 있던 사람은 미배정으로
+    @DeleteMapping("/{roleId}")
+    public ResponseEntity<Void> deleteRole(@PathVariable Long tripId, @PathVariable Long roleId) {
+        tripAccess.host(tripId);
+        roleService.deleteRole(tripId, roleId);
+        return ResponseEntity.noContent().build();
     }
 
     // POST: /api/trips/1/roles/recommend   모두의 배정을 갈아엎으니 방장만

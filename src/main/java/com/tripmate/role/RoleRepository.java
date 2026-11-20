@@ -10,4 +10,6 @@ public interface RoleRepository extends JpaRepository<Role, Long> {
     List<Role> findByTripIdOrderById(Long tripId);
 
     Optional<Role> findByIdAndTripId(Long id, Long tripId);
+
+    long countByTripId(Long tripId);
 }

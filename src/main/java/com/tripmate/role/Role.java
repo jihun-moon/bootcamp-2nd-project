@@ -45,6 +45,20 @@ public class Role {
         this.tasks.addAll(kind.tasks);
     }
 
+    // 방장이 더한 역할. 점수 규칙이 없어(kind null) 추천에서는 0점으로 들어간다
+    public Role(Trip trip, String title, boolean required, int capacity, List<String> tasks) {
+        this.trip = trip;
+        update(title, required, capacity, tasks);
+    }
+
+    public void update(String title, boolean required, int capacity, List<String> tasks) {
+        this.title = title;
+        this.required = required;
+        this.capacity = capacity;
+        this.tasks.clear();
+        this.tasks.addAll(tasks);
+    }
+
     public static List<Role> defaultsFor(Trip trip) {
         return Arrays.stream(RoleKind.values()).map(k -> new Role(trip, k)).toList();
     }

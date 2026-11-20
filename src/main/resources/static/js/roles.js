@@ -8,6 +8,7 @@ var board = { roles: [], assignments: [] };
 var dragging = null;
 var picking = null; // 역할 고르기 창을 연 사람
 var justMoved = null;
+var editing = null; // 고치는 중인 역할. null 이면 새로 더하기
 var travel = null; // 마지막으로 센 이동·회비 근거. 역할이 바뀌면 운전하는 차가 달라지니 비운다
 
 // 미배정까지 넣은 칸 목록. 칸마다 그 칸에 있는 카드를 같이 담는다
@@ -26,12 +27,16 @@ function columns() {
 
 function render() {
   var box = $('#board').empty();
+  var isHost = memberById(trip.meId).host;
 
   columns().forEach(function (col) {
     var role = col.role;
     var title = $('<h3>').text(role.title);
     if (role.required) title.append($('<span class="tag">').text('필수'));
     if (role.capacity > 0) title.append($('<span class="tag">').text(col.cards.length + '/' + role.capacity));
+    if (isHost && role.id !== UNASSIGNED) {
+      title.append($('<button type="button" class="link tag">').text('고치기').on('click', function () { openEditor(role); }));
+    }
 
     var section = $('<section class="column">')
       .toggleClass('empty-required', role.required && col.cards.length === 0)
@@ -53,7 +58,7 @@ function render() {
     box.append(section);
   });
 
-  var isHost = memberById(trip.meId).host;
+  $('#btn-add-role').prop('hidden', !isHost);
   $('#btn-recommend').prop('hidden', !isHost).text(board.assignments.length ? '다시 추천받기' : '설문으로 추천받기');
 }
 
@@ -110,6 +115,61 @@ function openPicker(memberId) {
 function closePicker() {
   picking = null;
   $('#role-picker')[0].close();
+}
+
+// 역할 편집 창. role 이 없으면 새로 더하기
+function openEditor(role) {
+  editing = role;
+  $('#editor-title').text(role ? '역할 고치기' : '역할 더하기');
+  $('#role-title').val(role ? role.title : '');
+  $('#role-capacity').val(role ? role.capacity : 1);
+  $('#role-required').prop('checked', role ? role.required : false);
+  $('#role-tasks').val(role ? role.tasks.join(', ') : '');
+  $('#btn-role-delete').prop('hidden', !role);
+  $('#role-error').prop('hidden', true);
+  $('#role-editor')[0].showModal();
+}
+
+// POST: /api/trips/1/roles     { "title": "설거지", "required": false, "capacity": 2, "tasks": ["저녁 설거지"] }
+// PATCH: /api/trips/1/roles/7  같은 칸
+function saveRole(e) {
+  e.preventDefault();
+  var tasks = $('#role-tasks').val().split(',').map(function (t) { return t.trim(); }).filter(Boolean);
+  if (tasks.length > 5) {
+    $('#role-error').text('할 일은 5개까지 적을 수 있어요.').prop('hidden', false);
+    return;
+  }
+  var body = {
+    title: $('#role-title').val().trim(),
+    required: $('#role-required').prop('checked'),
+    capacity: Number($('#role-capacity').val()),
+    tasks: tasks
+  };
+  var request = editing
+    ? api('PATCH', '/api/trips/' + tripId + '/roles/' + editing.id, body)
+    : api('POST', '/api/trips/' + tripId + '/roles', body);
+  $('#btn-role-save').prop('disabled', true);
+  request.done(function (res) {
+    board = res;
+    render();
+    $('#role-editor')[0].close();
+  }).fail(function (xhr) {
+    if (xhr.status === 401) return;
+    $('#role-error').text(xhr.status === 400
+      ? '이름(30자), 정원(1~8명), 할 일(20자씩 5개)을 확인해 주세요. 역할은 12개까지예요.'
+      : '저장하지 못했어요. 다시 눌러 주세요.').prop('hidden', false);
+  }).always(function () { $('#btn-role-save').prop('disabled', false); });
+}
+
+// DELETE: /api/trips/1/roles/7  -> 204. 그 역할에 있던 사람은 미배정으로
+function deleteRole() {
+  if (!confirm("'" + editing.title + "' 역할을 지울까요? 이 역할에 있던 사람은 미배정으로 가요.")) return;
+  api('DELETE', '/api/trips/' + tripId + '/roles/' + editing.id).done(function () {
+    $('#role-editor')[0].close();
+    loadBoard();
+  }).fail(function (xhr) {
+    if (xhr.status !== 401) $('#role-error').text('지우지 못했어요. 다시 눌러 주세요.').prop('hidden', false);
+  });
 }
 
 // GET: /api/trips/1/roles  -> { "roles": [...], "assignments": [{ "roleId", "memberId", "reasons", "version" }] }
@@ -247,6 +307,10 @@ $(function () {
   $('#btn-recommend').click(recommend);
   $('#btn-copy').click(copyResult);
   $('#btn-travel').click(loadTravel);
+  $('#btn-add-role').click(function () { openEditor(null); });
+  $('#role-form').on('submit', saveRole);
+  $('#btn-role-delete').click(deleteRole);
+  $('#btn-role-cancel').click(function () { $('#role-editor')[0].close(); });
   $('#btn-picker-close').click(closePicker);
   // 창 바깥(어두운 곳)을 누르면 닫는다. 창 안을 누르면 target 이 안쪽 요소라 닫히지 않는다
   $('#role-picker').on('click', function (e) { if (e.target === this) closePicker(); })

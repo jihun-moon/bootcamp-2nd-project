@@ -24,6 +24,8 @@ public class RoleService {
 
     // 필수 역할의 첫 칸에만 얹는다. 설문 점수(한 자리)보다 훨씬 커서 사람이 모자라도 필수 역할이 먼저 찬다
     private static final int REQUIRED_BONUS = 100;
+    // 기본 6개 + 방장이 더한 것. 추천은 (사람 + 정원 칸)^3 이라 끝없이 늘지 않게 막는다
+    private static final int MAX_ROLES = 12;
 
     private final TripRepository tripRepository;
     private final MemberRepository memberRepository;
@@ -47,6 +49,43 @@ public class RoleService {
     public RoleDto.Board board(Long tripId) {
         return RoleDto.Board.of(roleRepository.findByTripIdOrderById(tripId),
                 assignmentRepository.findByRoleTripIdOrderById(tripId));
+    }
+
+    // POST 역할 더하기. 방장만(컨트롤러에서 막는다)
+    @Transactional
+    public RoleDto.Board addRole(Long tripId, RoleDto.SaveRequest req) {
+        var trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (roleRepository.countByTripId(tripId) >= MAX_ROLES) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "역할은 " + MAX_ROLES + "개까지 둘 수 있어요");
+        }
+        roleRepository.save(new Role(trip, req.title().strip(), req.required(), req.capacity(), strip(req.tasks())));
+        events.publishEvent(new TripChanged(tripId, "roles"));
+        return board(tripId);
+    }
+
+    // 정원을 지금 인원보다 줄여도 배정은 그대로 둔다. 손으로 옮길 때처럼 "3/2"로 보이고 사람이 고른다
+    @Transactional
+    public RoleDto.Board updateRole(Long tripId, Long roleId, RoleDto.SaveRequest req) {
+        var role = roleRepository.findByIdAndTripId(roleId, tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        role.update(req.title().strip(), req.required(), req.capacity(), strip(req.tasks()));
+        events.publishEvent(new TripChanged(tripId, "roles"));
+        return board(tripId);
+    }
+
+    // 그 역할에 있던 사람은 미배정으로 돌아간다
+    @Transactional
+    public void deleteRole(Long tripId, Long roleId) {
+        var role = roleRepository.findByIdAndTripId(roleId, tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        assignmentRepository.deleteByRoleId(role.getId());
+        roleRepository.delete(role);
+        events.publishEvent(new TripChanged(tripId, "roles"));
+    }
+
+    private static List<String> strip(List<String> tasks) {
+        return tasks.stream().map(String::strip).toList();
     }
 
     // 화면이 본 version 과 지금 version 이 다르면 그 사이 누가 옮긴 것이라 409 로 막는다

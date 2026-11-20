@@ -1,5 +1,7 @@
 package com.tripmate.survey;
 
+import org.springframework.context.event.EventListener;
+import com.tripmate.trip.MemberLeaving;
 import com.tripmate.role.Chore;
 import com.tripmate.role.RoleService;
 import com.tripmate.stay.Amenity;
@@ -61,5 +63,11 @@ public class SurveyService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         var showPrivate = viewer.getId().equals(memberId) || viewer.isHost();
         return SurveyDto.Response.of(survey, showPrivate);
+    }
+
+    // 방을 나간 사람의 설문. 숙소 취향 평균과 역할 점수에서 빠진다
+    @EventListener
+    public void onMemberLeaving(MemberLeaving e) {
+        surveyAnswerRepository.findByMemberId(e.memberId()).ifPresent(surveyAnswerRepository::delete);
     }
 }

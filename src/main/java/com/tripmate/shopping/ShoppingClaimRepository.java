@@ -13,4 +13,6 @@ public interface ShoppingClaimRepository extends JpaRepository<ShoppingClaim, Lo
     List<ShoppingClaim> findByTripId(Long tripId);
 
     Optional<ShoppingClaim> findByTripIdAndItem(Long tripId, ShoppingItem item);
+
+    void deleteByMemberId(Long memberId);
 }

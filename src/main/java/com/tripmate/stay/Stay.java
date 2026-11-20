@@ -42,6 +42,11 @@ public class Stay {
     protected Stay() {
     }
 
+    // 올린 사람이 방을 나가면 숙소는 남기고 올린 사람만 비운다(그 숙소에 다른 사람 표가 있을 수 있다)
+    void forgetAddedBy() {
+        addedBy = null;
+    }
+
     public Stay(Trip trip, Member addedBy, String title, String url, String imageUrl, Integer price, Set<Amenity> amenities) {
         this.trip = trip;
         this.addedBy = addedBy;

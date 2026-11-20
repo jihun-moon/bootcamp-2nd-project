@@ -49,6 +49,10 @@ public class Member {
 
     public Set<LocalDate> getAvailableDates() { return availableDates; }
 
+    void makeHost() {
+        host = true;
+    }
+
     public void finishSurvey() {
         surveyDone = true;
     }

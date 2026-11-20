@@ -23,9 +23,16 @@ function render(t) {
     if (m.id === trip.meId) name.append($('<span class="tag me">').text('나'));
     var info = $('<div>').append(name,
       $('<span class="chip">').toggleClass('on', m.surveyDone).text(m.surveyDone ? '설문 완료' : '설문 전'));
-    $('<li class="row">').append(avatar(m.name, m.imageUrl), info).appendTo(list);
+    var row = $('<li class="row">').append(avatar(m.name, m.imageUrl), info).appendTo(list);
+    // 방장은 못 오게 된 사람을 뺄 수 있다(빠진 사람이 남아 있으면 1인 금액이 다 틀린다)
+    if (me.host && m.id !== me.id) {
+      row.append($('<button type="button" class="link small member-out">').text('빼기')
+        .attr('aria-label', m.name + ' 님 빼기').click(function () { leaveTrip(m, false); }));
+    }
   });
   // 여행 전에도 "이 멤버로 또" 를 열 수 있게 사람 상자 끝에 한 줄. 두 명 이상일 때만(혼자면 같은 멤버가 없다)
+  // 혼자 남은 방은 나갈 수 없다(서버도 막는다)
+  $('#leave-trip').prop('hidden', trip.members.length < 2).off('click').click(function () { leaveTrip(me, true); });
   var again = $('#next-trip').empty().prop('hidden', trip.members.length < 2);
   if (trip.nextTripId) again.append($('<a>').attr('href', '/trips/' + trip.nextTripId).text('2탄 방 보기 →'));
   else again.append($('<button type="button" class="link">').text('이 멤버 그대로 다음 여행 열기 →')
@@ -206,6 +213,23 @@ function sendInvite() {
   shareText('[' + trip.title + '] 여행방 만들었어! ' + ask + '. 운전·총무랑 숙소 같이 정하자\n'
     + (rules ? '규칙: ' + rules + '\n' : '') + $('#invite-link').val(),
     '초대 글을 복사했어요. 단톡방에 붙여 넣어 주세요.');
+}
+
+// DELETE: /api/trips/1/members/7   나가기(본인) 또는 빼기(방장). 설문·숙소 표·장보기 맡은 것도 같이 빠진다
+function leaveTrip(m, self) {
+  var ask = self
+    ? '이 방에서 나갈까요? 내 설문·숙소 표·장보기 맡은 것이 같이 빠지고, 1인 금액은 남은 사람끼리 다시 나눠요.'
+    : m.name + ' 님을 방에서 뺄까요? 설문·숙소 표·장보기 맡은 것이 같이 빠지고, 1인 금액은 남은 사람끼리 다시 나눠요.';
+  if (!window.confirm(ask)) return;
+  api('DELETE', '/api/trips/' + tripId + '/members/' + m.id).done(function () {
+    if (self) {
+      try { sessionStorage.setItem('tripmate.toast', '방에서 나왔어요.'); } catch (e) { /* 알림만 못 띄운다 */ }
+      location.href = '/';
+    } else {
+      showToast(m.name + ' 님을 뺐어요. 1인 금액을 다시 나눴어요.');
+      loadTrip(tripId).done(render);
+    }
+  }).fail(function (xhr) { if (xhr.status === 400) showNotice('혼자 남은 방은 나갈 수 없어요.'); });
 }
 
 function sendReminder() {

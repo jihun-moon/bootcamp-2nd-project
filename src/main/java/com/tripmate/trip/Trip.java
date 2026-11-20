@@ -71,6 +71,12 @@ public class Trip {
         return member;
     }
 
+    // 방장이 나가면 그다음에 들어온 사람이 방장(방이 주인 없이 남지 않게)
+    void removeMember(Member member) {
+        members.remove(member);
+        if (member.isHost() && !members.isEmpty()) members.get(0).makeHost();
+    }
+
     public void updatePeriod(LocalDate startDate, LocalDate endDate) {
         this.startDate = startDate;
         this.endDate = endDate;

@@ -737,3 +737,6 @@ button.link::after { content: ""; position: absolute; inset: -12px -8px; } /* �
   .quiz-photo img { position: absolute; inset: 0; height: 100%; aspect-ratio: auto; } /* 사진이 글 칸 높이만큼만(세로 사진이 카드를 590px 로 늘였다) */
   .quiz-body { align-content: center; padding: 28px; }
 }
+
+/* 사람 줄 끝의 "빼기": 이름 줄을 밀지 않게 오른쪽 끝에 작게 */
+#members .member-out { margin-left: auto; color: var(--muted); }

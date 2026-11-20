@@ -139,6 +139,25 @@ public class TripService {
         return TripDto.Response.of(trip, host);
     }
 
+    // 나가기(본인)·빼기(방장). 그 사람의 설문·역할·숙소 표·장보기 맡은 것은 각 기능이 지우고(MemberLeaving), 올린 숙소는 남긴다.
+    // 그래야 숙소·교통비·장보기 1인 금액이 남은 사람 수로 다시 나뉜다(전에는 한 명이 빠져도 그대로 7로 나눴다).
+    // 혼자 남은 방은 나갈 수 없다
+    @Transactional
+    public void leave(Long tripId, Long memberId) {
+        var trip = tripRepository.findWithMembersById(tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        var member = trip.getMembers().stream().filter(m -> m.getId().equals(memberId)).findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (trip.getMembers().size() == 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "혼자 남은 방은 나갈 수 없어요");
+        }
+        events.publishEvent(new MemberLeaving(tripId, memberId));
+        // 참여자 삭제(orphanRemoval)가 다른 표 삭제보다 먼저 나가면 외래 키에 걸린다. 지운 것을 먼저 내보낸다
+        memberRepository.flush();
+        trip.removeMember(member);
+        events.publishEvent(new TripChanged(tripId, "members"));
+    }
+
     // 초대 링크를 두 번 눌러도 참여자는 한 번만 들어간다
     @Transactional
     public TripDto.Joined join(AppUser user, String inviteCode) {

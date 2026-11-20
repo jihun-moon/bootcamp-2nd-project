@@ -1,5 +1,6 @@
 package com.tripmate.trip;
 
+import org.springframework.web.server.ResponseStatusException;
 import com.tripmate.user.CurrentUser;
 import jakarta.validation.Valid;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -56,6 +57,15 @@ public class TripController {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<String> conflict() {
         return ResponseEntity.status(HttpStatus.CONFLICT).body("방금 다른 사람이 만들었어요. 다시 눌러 주세요.");
+    }
+
+    // DELETE: /api/trips/1/members/7   본인이면 나가기, 방장이면 남을 빼기. 그 밖은 403. -> 204
+    @DeleteMapping("/trips/{tripId}/members/{memberId}")
+    public ResponseEntity<Void> leave(@PathVariable Long tripId, @PathVariable Long memberId) {
+        var me = tripAccess.me(tripId);
+        if (!me.getId().equals(memberId) && !me.isHost()) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        tripService.leave(tripId, memberId);
+        return ResponseEntity.noContent().build();
     }
 
     // GET: /api/trips/1/dates   날짜 맞추기 판(참여자 누구나)

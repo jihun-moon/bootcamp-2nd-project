@@ -1,5 +1,7 @@
 package com.tripmate.shopping;
 
+import org.springframework.context.event.EventListener;
+import com.tripmate.trip.MemberLeaving;
 import com.tripmate.trip.Member;
 import com.tripmate.trip.TripChanged;
 import com.tripmate.trip.TripRepository;
@@ -90,5 +92,11 @@ public class ShoppingService {
         claimRepository.delete(claim);
         events.publishEvent(new TripChanged(tripId, "shopping"));
         return board(tripId);
+    }
+
+    // 방을 나간 사람이 "내가 살게" 한 줄은 다시 빈 줄로(누가 사기로 했는지 남아 있으면 아무도 안 산다)
+    @EventListener
+    public void onMemberLeaving(MemberLeaving e) {
+        claimRepository.deleteByMemberId(e.memberId());
     }
 }

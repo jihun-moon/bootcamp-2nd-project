@@ -57,10 +57,15 @@ function availabilityCalendar(el, opts) {
 
 // 좋은 날짜 후보: 2박 3일·1박 2일·당일 창을 모두 보고, 그 날들에 다 되는 사람이 많은 순(같으면 긴 여행, 이른 날).
 // 사람 8명 × 날 60개라 그냥 다 센다
-function bestWindows(board, members, wanted) {
+// nights 는 원하는 박 수(0 = 당일, 기본 2). 그 길이까지의 창만 보고, 되는 사람이 같으면 원하는 길이에 가까운 것부터.
+// 전에는 2박까지만 봐서 6일 내내 되는 무리도 3·4박 후보를 못 받았다
+function bestWindows(board, members, wanted, nights) {
+  var target = nights === undefined || nights === null ? 2 : nights;
   var days = Object.keys(board.available).sort();
   var found = [];
-  [3, 2, 1].forEach(function (len) {
+  var lengths = [];
+  for (var l = target + 1; l >= 1; l--) lengths.push(l);
+  lengths.forEach(function (len) {
     days.forEach(function (start) {
       var ok = members.filter(function (m) {
         for (var i = 0; i < len; i++) {
@@ -72,7 +77,9 @@ function bestWindows(board, members, wanted) {
         missing: members.filter(function (m) { return ok.indexOf(m) < 0; }) });
     });
   });
-  found.sort(function (a, b) { return b.ok.length - a.ok.length || b.nights - a.nights || (a.start < b.start ? -1 : 1); });
+  found.sort(function (a, b) {
+    return b.ok.length - a.ok.length || Math.abs(a.nights - target) - Math.abs(b.nights - target) || (a.start < b.start ? -1 : 1);
+  });
   // 같은 시작일의 짧은 창은 긴 창에 묻히니 시작일이 겹치지 않게 고른다
   var picked = [];
   found.forEach(function (w) {

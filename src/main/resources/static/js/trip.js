@@ -158,9 +158,23 @@ function drawDates(me, board) {
 }
 
 // "1월 15일(금) ~ 17일(일) · 2박 3일 · 8명 중 7명 (하준 안 됨)". 방장은 옆 단추로 바로 정한다
+// 몇 박으로 갈지: 방 이름에 "3박"이 있으면 그것, 없으면 2박. 누르면 그 길이로 후보를 다시 센다
+var datesNights = null;
+var NIGHT_CHOICES = [[0, '당일'], [1, '1박'], [2, '2박'], [3, '3박'], [4, '4박']];
 function drawBest(me, board) {
+  if (datesNights === null) {
+    var m = /(\d)\s*박/.exec(trip.title || '');
+    datesNights = m ? Math.min(4, Number(m[1])) : 2;
+  }
+  var lengths = $('#dates-length').empty();
+  NIGHT_CHOICES.forEach(function (c) {
+    $('<button type="button" class="toggle">').text(c[1]).attr('aria-pressed', c[0] === datesNights).click(function () {
+      datesNights = c[0];
+      drawBest(me, board);
+    }).appendTo(lengths);
+  });
   var list = $('#dates-best').empty();
-  var best = bestWindows(board, trip.members, 3);
+  var best = bestWindows(board, trip.members, 3, datesNights);
   if (!best.length) {
     list.append($('<li class="hint">').text('겹치는 날이 생기면 여기 좋은 날짜가 떠요.'));
     return;

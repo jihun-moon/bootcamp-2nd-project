@@ -41,14 +41,15 @@ public enum ShoppingItem {
 
     // 사는 양을 사람이 읽는 글로. 고기는 100g 단위로 올려 kg, 나머지는 개수
     String quantity(int people, int drinkers, int nights, int meatGrams) {
-        var bbq = nights;
+        // 바베큐 저녁·술은 박 수만큼, 당일치기(0박)면 한 번. 아침(햇반·라면)은 당일이면 needed() 가 뺀다
+        var bbq = Math.max(1, nights);
         return switch (this) {
             case PORK_BELLY -> kg(people * meatGrams * 0.7 * bbq);
             case PORK_NECK -> kg(people * meatGrams * 0.3 * bbq);
             case LETTUCE -> ceil(people / 4.0) * bbq + "봉";
             case SSAMJANG -> ceil(people / 8.0) + "통";
-            case SOJU -> ceil(drinkers * 0.7 * nights) + "병";
-            case BEER -> drinkers * 2 * nights + "캔";
+            case SOJU -> ceil(drinkers * 0.7 * bbq) + "병";
+            case BEER -> drinkers * 2 * bbq + "캔";
             case CHARCOAL -> ceil(people / 4.0) * bbq + "봉";
             case RICE, RAMEN -> people * nights + "개";
             case WATER -> ceil(people / 2.0) * (nights + 1) + "병";
@@ -57,9 +58,10 @@ public enum ShoppingItem {
         };
     }
 
-    // 술 마시는 사람이 없으면 술 줄은 뺀다
-    boolean needed(int drinkers) {
-        return !(this == SOJU || this == BEER) || drinkers > 0;
+    // 술 마시는 사람이 없으면 술 줄을, 당일치기면 아침(햇반·라면) 줄을 뺀다
+    boolean needed(int drinkers, int nights) {
+        if ((this == SOJU || this == BEER) && drinkers == 0) return false;
+        return !((this == RICE || this == RAMEN) && nights == 0);
     }
 
     private static int ceil(double v) {

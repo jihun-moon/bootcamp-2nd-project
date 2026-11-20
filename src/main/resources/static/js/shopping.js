@@ -8,7 +8,7 @@ function won(n) { return n.toLocaleString('ko-KR') + '원'; }
 function me() { return trip.members.find(function (m) { return m.id === trip.meId; }); }
 
 function render() {
-  $('#shop-basis').text(board.people + '명 · ' + board.nights + '박 기준');
+  $('#shop-basis').text(board.people + '명 · ' + (board.nights ? board.nights + '박' : '당일') + ' 기준');
   renderPlan();
   var list = $('#shop-list').empty();
   var lastGroup = null;
@@ -92,7 +92,7 @@ function claimPart(item) {
 
 // 카톡 글: 줄마다 양과 맡은 사람. 안 맡은 줄은 "누가?"로 남겨 단톡방에서 손 들게
 function shareList() {
-  var lines = ['[' + trip.title + '] 장보기 (' + board.people + '명 · ' + board.nights + '박)'];
+  var lines = ['[' + trip.title + '] 장보기 (' + board.people + '명 · ' + (board.nights ? board.nights + '박' : '당일') + ')'];
   board.items.forEach(function (i) { lines.push('· ' + i.label + ' ' + i.quantity + ' — ' + (i.buyerName || '누가?')); });
   lines.push('맡을 사람은 여기서 "내가 살게"·"내가 챙길게" ' + location.origin + '/join/' + trip.inviteCode);
   shareText(lines.join('\n'), '장보기 목록을 복사했어요. 단톡방에 붙여 넣어 주세요.');

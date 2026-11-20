@@ -38,9 +38,9 @@ public class ShoppingService {
         var trip = tripRepository.findWithMembersById(tripId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         var people = trip.getMembers().size();
-        // 날짜가 아직이면 1박으로 센다
+        // 날짜가 아직이면 1박으로 센다. 당일치기는 0박(전에는 1박으로 세서 아침 햇반·라면까지 나왔다)
         var nights = (trip.getStartDate() == null || trip.getEndDate() == null) ? 1
-                : (int) Math.max(1, ChronoUnit.DAYS.between(trip.getStartDate(), trip.getEndDate()));
+                : (int) Math.max(0, ChronoUnit.DAYS.between(trip.getStartDate(), trip.getEndDate()));
         var plan = planRepository.findByTripId(tripId);
         // 방장이 따로 정하지 않았으면 각자 고른 "술 마셔요"로 센다(전에는 모두 마신다고 보고 방장이 손으로 줄였다)
         var drinking = (int) trip.getMembers().stream().filter(Member::drinks).count();
@@ -49,7 +49,7 @@ public class ShoppingService {
 
         var claims = claimRepository.findByTripId(tripId).stream()
                 .collect(Collectors.toMap(ShoppingClaim::getItem, Function.identity()));
-        var items = Arrays.stream(ShoppingItem.values()).filter(i -> i.needed(drinkers)).map(i -> {
+        var items = Arrays.stream(ShoppingItem.values()).filter(i -> i.needed(drinkers, nights)).map(i -> {
             var c = claims.get(i);
             return new ShoppingDto.Item(i, i.getLabel(), i.getGroup(), i.quantity(people, drinkers, nights, meatGrams),
                     c == null ? null : c.getMember().getId(), c == null ? null : c.getMember().getName(),

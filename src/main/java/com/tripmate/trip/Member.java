@@ -74,9 +74,11 @@ public class Member {
     // 이름만 쓰고 들어온 손님. 방장이 될 수 없다
     public boolean isGuest() { return user != null && user.isGuest(); }
 
+    // 설문 답은 SurveyService 가 지운다. 표시도 같이 내려야 다시 들어왔을 때 설문을 다시 받는다
     void depart() {
         departed = true;
         host = false;
+        surveyDone = false;
     }
 
     void rejoin() {

@@ -94,10 +94,15 @@ class LeaveTripTest {
     void 나갔다가_초대_링크로_다시_오면_돌아온다() throws Exception {
         var code = JSON.readTree(mvc.perform(get("/api/trips/1").session(TestLogin.as(mvc, "민지")))
                 .andReturn().getResponse().getContentAsString()).get("inviteCode").asString();
+        send(TestLogin.as(mvc, "민지"), "PUT", "/api/trips/1/members/2/survey", """
+                { "activity": "BOTH", "planning": "OUTLINE", "hasCar": false, "separateDeparture": false,
+                  "departure": null, "mobilityLimited": false, "avoid": [] }""").andExpect(status().is2xxSuccessful());
         leave("민지", 2).andExpect(status().isNoContent());
         mvc.perform(post("/api/invites/" + code).session(TestLogin.as(mvc, "민지"))).andExpect(status().isOk());
+        // 나갈 때 설문 답이 지워졌으니 "설문 끝남"도 아니다(다시 받는다)
         mvc.perform(get("/api/trips/1").session(TestLogin.as(mvc, "민지")))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.members", hasSize(8)));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.members", hasSize(8)))
+                .andExpect(jsonPath("$.members[?(@.id == 2)].surveyDone").value(org.hamcrest.Matchers.contains(false)));
     }
 
     @Test

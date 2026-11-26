@@ -136,27 +136,6 @@ async function readOneByOne(el, steps) {
   }
 }
 
-// 공감 숫자(76·74·82%)는 화면에 들어올 때 0부터 0.9초 동안 올라간다. 한 번만
-function countStats() {
-  var nums = document.querySelectorAll('[data-count-to]');
-  var observer = new IntersectionObserver(function (entries) {
-    entries.forEach(function (e) {
-      if (!e.isIntersecting) return;
-      observer.unobserve(e.target);
-      var el = e.target, to = Number(el.dataset.countTo), start = performance.now();
-      var step = function (now) {
-        var t = Math.min(1, (now - start) / 900);
-        el.textContent = Math.round(to * (1 - Math.pow(1 - t, 3)));
-        if (t < 1) requestAnimationFrame(step);
-      };
-      requestAnimationFrame(step);
-      // 뒤쪽 탭처럼 그리기가 멈춘 곳에서도 0 으로 남지 않게 끝 값을 박아 둔다
-      setTimeout(function () { el.textContent = to; }, 1000);
-    });
-  }, { threshold: 0.6 });
-  nums.forEach(function (el) { el.textContent = '0'; observer.observe(el); });
-}
-
 // 첫 화면 영수증: 화면에 반쯤 들어오면 그때 프린터에서 뽑힌다(미리 뽑혀 있으면 연출을 못 본다). 한 번만
 function printOnScroll() {
   var r = document.getElementById('home-receipt');
@@ -186,25 +165,37 @@ function revealOnScroll() {
   });
 }
 
-// 이렇게 굴러가요: 화면 가운데를 지나는 단락의 실제 화면을 오른쪽 휴대폰에 띄우고, 누르는 곳에 동그라미를 옮긴다(PC 만, 휴대폰은 단락마다 그림이 있다)
-function tourScroll() {
+// PC 둘러보기: 왼쪽 단계를 누르면 오른쪽 휴대폰 화면이 바뀌고, 누르는 곳에 동그라미를 옮긴다.
+// 화면에 보이는 동안은 5초마다 다음 단계로 넘어가고, 한 번이라도 누르면 멈춘다(읽는 중에 바뀌지 않게)
+var TOUR_AUTO_MS = 5000;
+function tourPicker() {
   var stage = document.querySelector('.tour-stage .device-view');
-  if (!stage || !('IntersectionObserver' in window)) return;
+  if (!stage) return;
   var ring = stage.querySelector('.tap-ring');
-  var steps = document.querySelectorAll('.tour-step');
-  var show = function (step) {
-    steps.forEach(function (s) { s.classList.toggle('on', s === step); });
+  var steps = Array.from(document.querySelectorAll('.tour-step'));
+  var current = 0, picked = false, visible = false;
+  var show = function (i) {
+    current = i;
+    var step = steps[i];
+    steps.forEach(function (s) { s.classList.toggle('on', s === step); s.setAttribute('aria-current', s === step ? 'step' : 'false'); });
     stage.querySelectorAll('.tour-shot').forEach(function (img) { img.classList.toggle('on', img.dataset.shot === step.dataset.shot); });
     ring.style.setProperty('--x', step.style.getPropertyValue('--x'));
     ring.style.setProperty('--y', step.style.getPropertyValue('--y'));
     // 새 장면마다 동그라미를 처음부터 다시 퍼지게
     ring.style.animation = 'none'; void ring.offsetWidth; ring.style.animation = '';
   };
-  var observer = new IntersectionObserver(function (entries) {
-    entries.forEach(function (e) { if (e.isIntersecting) show(e.target); });
-  }, { rootMargin: '-45% 0px -45% 0px' });
-  steps.forEach(function (s) { observer.observe(s); });
-  show(steps[0]);
+  steps.forEach(function (s, i) {
+    s.tabIndex = 0;
+    s.addEventListener('click', function () { picked = true; show(i); });
+    s.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); picked = true; show(i); } });
+  });
+  show(0);
+  if (REDUCE_MOTION || !('IntersectionObserver' in window)) return;
+  new IntersectionObserver(function (entries) { visible = entries[0].isIntersecting; }, { threshold: 0.5 }).observe(stage);
+  setInterval(function () {
+    if (picked || !visible || window.innerWidth < 960) return;
+    show((current + 1) % steps.length);
+  }, TOUR_AUTO_MS);
 }
 
 // 휴대폰 둘러보기: 옆으로 넘기는 카드 열 장. 몇 번째인지 세고, ‹ › 단추로도 한 장씩(넘기기를 모르는 사람, 마우스)
@@ -290,9 +281,12 @@ function stickyAfterHero() {
   // 첫 화면 단추나 마지막 권유 단추가 보이는 동안은 숨는다. 같은 단추가 한 화면에 두 개 보이지 않게
   var showing = new Set();
   sticky.classList.add('waiting');
+  document.body.classList.add('cta-in-view');
   var observer = new IntersectionObserver(function (entries) {
     entries.forEach(function (e) { if (e.isIntersecting) showing.add(e.target); else showing.delete(e.target); });
     sticky.classList.toggle('waiting', showing.size > 0);
+    // PC 는 아래 붙는 단추 대신 머리 단추를 쓰니 같은 규칙으로 머리 단추를 숨긴다(style.css 의 cta-in-view)
+    document.body.classList.toggle('cta-in-view', showing.size > 0);
   });
   observer.observe(heroCta);
   var endCta = document.querySelector('.cta .btn.primary');
@@ -406,7 +400,7 @@ $(function () {
   stickyAfterHero();
   rotateHero();
   lazyVideos();
-  tourScroll(); // 움직임 줄이기여도 화면은 바뀌어야 한다(바꾸는 것은 내용, 움직임은 CSS 가 끈다)
+  tourPicker();
   tourSwipe();
   if (REDUCE_MOTION || !('IntersectionObserver' in window)) return;
   var phone = document.querySelector('.phone');
@@ -415,6 +409,5 @@ $(function () {
     tiltPhone(phone);
   }
   revealOnScroll();
-  countStats();
   printOnScroll();
 });

@@ -388,11 +388,6 @@ tr:last-child td { border-bottom: 0; }
 .bubble .who { display: block; font-size: var(--fs-xs); color: var(--muted); }
 
 
-/* 핵심 둘은 크게(설명 + 실제 화면 조각), 나머지는 한 줄 목록. 같은 크기 카드를 늘어놓으면 모두 같은 무게로 읽힌다 */
-.core { display: grid; gap: 16px; }
-.core .box { display: grid; gap: 16px; }
-.more { display: grid; gap: 0 32px; margin-top: 24px; }
-.more > li { padding: 12px 0; border-top: 1px solid var(--line); }
 
 
 .faq details { border-bottom: 1px solid var(--line); }
@@ -401,6 +396,10 @@ tr:last-child td { border-bottom: 0; }
 .faq summary::after { content: "+"; font-size: var(--fs-lg); font-weight: 400; color: var(--muted); transition: transform var(--dur) var(--ease); }
 .faq details[open] summary::after { transform: rotate(45deg); }
 .faq details p { margin-top: 8px; padding-bottom: 16px; color: var(--muted); }
+/* 자주 묻는 것 안 "다른 앱이랑 뭐가 달라요?": 좁은 칸이라 비교 줄을 한 줄씩 */
+.faq .compare .vs { grid-template-columns: 1fr; margin-top: 8px; }
+.faq .compare .vs p { margin-top: 4px; padding-bottom: 0; }
+.faq .compare .vs.lose { margin-bottom: 16px; }
 
 .cta p { margin-inline: auto; } /* 본문 줄 길이 제한(68ch) 때문에 왼쪽으로 붙지 않게 */
 .site-footer { border-top: 1px solid var(--line); margin-top: 48px; padding: 24px 0; color: var(--muted); font-size: var(--fs-xs); }
@@ -436,13 +435,11 @@ body:has(.sticky-cta) .site-header .btn { display: none; } /* 아래 붙은 버�
   .hero { grid-template-columns: 1.1fr 1fr; align-items: center; padding: 56px 0 24px; }
   h1 { font-size: var(--fs-2xl); }
   .hero h1 { font-size: 2.75rem; }
-  .core { grid-template-columns: 1fr 1fr; }
-  .core .box { padding: 24px; } /* 넓은 화면에서 16 은 판에 비해 빽빽하다 */
-  .more { grid-template-columns: 1fr 1fr; }
   .tabs { margin: 12px 0; padding: 0; }
   .sticky-cta { display: none; }
   body:has(.sticky-cta) .site-footer { padding-bottom: 24px; }
-  body:has(.sticky-cta) .site-header .btn { display: inline-flex; }
+  body:has(.sticky-cta) .site-header .btn { display: inline-flex; transition: opacity var(--dur) var(--ease); }
+  body.cta-in-view .site-header .btn { opacity: 0; visibility: hidden; } /* 본문의 같은 단추가 보이는 동안(home.js) */
 }
 
 /* 휴대폰: 창은 엄지가 닿게 화면 아래에 붙인다 */
@@ -544,12 +541,6 @@ body:has(.cta) .site-footer { margin-top: 0; }
 @media (min-width: 720px) { .vs:not(.lose) { grid-template-columns: 1fr 1fr; column-gap: 48px; } }
 
 /* 공감 숫자: 큰 숫자 셋. 숫자만 브랜드 색 */
-.stats ul { display: grid; gap: 24px; margin-top: 24px; }
-.stats li { display: grid; grid-template-columns: auto 1fr; align-items: baseline; column-gap: 4px; }
-.stats b { font-size: 3rem; line-height: 1; font-weight: 800; letter-spacing: -0.03em; color: var(--accent); font-variant-numeric: tabular-nums; }
-.stats li > span { font-size: var(--fs-xl); font-weight: 700; color: var(--accent); }
-.stats li p { grid-column: 1 / -1; margin-top: 4px; color: var(--muted); }
-@media (min-width: 720px) { .stats ul { grid-template-columns: repeat(3, 1fr); gap: 48px; } }
 
 /* 날짜 맞추기 달력: 내가 고른 날은 청록 테, 많이 겹친 날일수록 진한 바탕(4단계), 아래 작은 숫자는 되는 사람 수 */
 .cal-day.avail { display: grid; place-content: center; height: 52px; border-radius: var(--radius-sm); line-height: 1.1; }
@@ -641,16 +632,6 @@ button.link { position: relative; }
 button.link::after { content: ""; position: absolute; inset: -12px -8px; } /* 투명한 누르는 영역만. 배지(.tag) 모양도 자리도 안 바뀐다 */
 
 /* 우리 자리 세 줄: 남들은 회색, 우리만 청록 테와 굵게. 휴대폰은 위아래, 넓은 화면은 가로 세 칸 */
-.position { margin-top: 48px; }
-.position ul { display: grid; gap: 8px; }
-.position li { display: grid; gap: 2px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); color: var(--muted); }
-.position li span { font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.02em; }
-.position li b { font-weight: 600; }
-.position li.us { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); }
-.position li.us span { color: var(--accent); }
-.position li.us b { font-weight: 800; font-size: var(--fs-lg); }
-.position > p { margin-top: 12px; text-align: center; max-width: none; }
-@media (min-width: 720px) { .position ul { grid-template-columns: 1fr 1fr 1.4fr; align-items: stretch; } }
 
 /* 개요: 휴대폰은 위아래 한 줄. 넓은 화면은 왼쪽 "지금 할 일"(다음 할 일·준비 체크·날짜), 오른쪽 "사람과 규칙" 두 기둥.
    기둥은 서로 높이를 안 맞추니 달력이 길어도 오른쪽에 빈자리가 안 생긴다. 오른쪽은 사람이 먼저(초대가 급하다) */
@@ -797,7 +778,7 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
 .ov-dues select, .ov-dues input[type=number] { width: 100%; min-height: var(--tap); padding: 8px 12px; border: 1px solid var(--line);
   border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); font: inherit; margin-top: 4px; }
 
-/* 이렇게 굴러가요(실제 화면). 휴대폰: 단락마다 그 화면 한 장. PC(960~): 오른쪽 휴대폰이 붙어 있고 글이 지나가면 화면이 바뀐다 */
+/* 이렇게 굴러가요(실제 화면). 휴대폰: 카드를 옆으로 넘긴다. PC(960~): 왼쪽 단계를 누르면 오른쪽 휴대폰 화면이 바뀐다 */
 .tour-steps { display: grid; gap: 56px; }
 .tour-step { display: grid; gap: 8px; }
 .tour-step h3 { font-size: var(--fs-lg); }
@@ -809,11 +790,15 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
   border: 3px solid rgb(14 124 114 / 0.95); background: rgb(14 124 114 / 0.16); pointer-events: none; animation: tap-pulse 1.8s var(--ease) infinite; }
 @keyframes tap-pulse { 0% { transform: scale(0.55); opacity: 0; } 25% { opacity: 1; } 100% { transform: scale(1.35); opacity: 0; } }
 @media (min-width: 960px) {
-  .tour-grid { display: grid; grid-template-columns: 1fr 340px; column-gap: 64px; }
-  .tour-steps { gap: 0; }
-  .tour-step { min-height: 62vh; align-content: center; max-width: 440px; opacity: 0.35; transition: opacity var(--dur) var(--ease); }
-  .tour-step.on { opacity: 1; }
-  .tour-step h3 { font-size: var(--fs-xl); }
+  .tour-grid { display: grid; grid-template-columns: 1fr 340px; column-gap: 64px; align-items: center; margin-top: 32px; }
+  .tour-steps { gap: 4px; max-width: 520px; }
+  .tour-step { grid-template-columns: 32px 1fr; column-gap: 16px; row-gap: 4px; align-items: center; padding: 8px 16px;
+    border-radius: var(--radius); cursor: pointer; }
+  .tour-step > p { grid-column: 2; display: none; }
+  .tour-step.on { background: var(--surface); }
+  .tour-step.on > p { display: block; }
+  .tour-step h3 { font-size: var(--fs-md); }
+  .tour-step.on .tour-no { border-color: var(--accent); color: var(--accent); }
   .tour-inline { display: none; }
   .tour-stage { display: block; }
   .tour-nav { display: none; }
@@ -842,22 +827,6 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
 .ov-cars .car.mine { border-color: var(--accent); }
 .ov-cars input[type=text] { margin-top: 4px; }
 
-/* 히어로 뒤 배경(PC): 사진 셋이 18초마다 번갈아 옅게, 천천히 다가오며. 휴대폰은 숨긴다(데이터·배터리) */
-.hero-bg { display: none; }
-@media (min-width: 960px) {
-  /* 히어로 안에서 화면 끝까지 넓힌다. isolation 으로 히어로 안에서만 뒤에 깔려 아래 절을 덮지 않는다 */
-  .hero { position: relative; isolation: isolate; }
-  .hero-bg { display: block; position: absolute; top: -96px; bottom: -32px; left: calc(50% - 50vw); width: 100vw; overflow: hidden; z-index: -1; pointer-events: none; }
-  .hero-bg::after { content: ""; position: absolute; inset: 0;
-    background: linear-gradient(to bottom, color-mix(in srgb, var(--bg) 70%, transparent), color-mix(in srgb, var(--bg) 82%, transparent) 60%, var(--bg)); }
-  .hero-bg span { position: absolute; inset: -4%; background: center / cover no-repeat; opacity: 0; filter: saturate(0.9) blur(1px);
-    animation: hero-fade 54s linear infinite, hero-drift 54s ease-in-out infinite; }
-  .hero-bg span:nth-child(2) { animation-delay: -36s, -36s; }
-  .hero-bg span:nth-child(3) { animation-delay: -18s, -18s; }
-}
-@keyframes hero-fade { 0% { opacity: 0; } 6% { opacity: 0.55; } 30% { opacity: 0.55; } 37% { opacity: 0; } 100% { opacity: 0; } }
-@keyframes hero-drift { from { transform: scale(1) translate(0, 0); } to { transform: scale(1.12) translate(-2%, -1%); } }
-@media (prefers-reduced-motion: reduce) { .hero-bg span:first-child { opacity: 0.4; } }
 
 /* 마지막 권유: 휴대폰은 가운데 한 줄, PC 는 왼쪽 말 · 오른쪽 노트북+휴대폰으로 양쪽을 맞춘다 */
 /* 가운데 정렬은 그대로 두고(체험 방 끝 절 등), 첫 화면의 두 칸짜리 끝 절만 왼쪽 정렬. .cta 에 left 를 걸었더니 체험 방 끝 절 제목·단추만 왼쪽으로 가고 설명은 가운데에 남았다 */
@@ -866,16 +835,16 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
 .cta-inner { position: relative; max-width: 1040px; margin: 0 auto; display: grid; gap: 40px; }
 .cta-copy { justify-items: start; }
 .cta-copy p { margin-inline: 0; }
-.cta-points { display: grid; gap: 8px; padding: 0; list-style: none; font-size: var(--fs-md); }
-.cta-points li::before { content: "✓"; margin-right: 8px; color: #6ee7d8; font-weight: 700; }
 .cta-actions { margin-top: 8px; }
 .cta .btn.ghost { background: rgb(255 255 255 / 0.12); color: #fff; border-color: rgb(255 255 255 / 0.4); }
 .devices { position: relative; justify-self: center; width: min(560px, 100%); padding-bottom: 24px; }
 @media (min-width: 960px) {
   .cta-inner { grid-template-columns: 1fr 1.1fr; align-items: center; column-gap: 64px; }
-  .cta::before { content: ""; position: absolute; inset: -6%; z-index: 0; background: inherit; animation: hero-drift 40s ease-in-out infinite alternate; }
+  .cta::before { content: ""; position: absolute; inset: -6%; z-index: 0; background: inherit; animation: slow-drift 40s ease-in-out infinite alternate; }
   .cta > * { position: relative; z-index: 1; }
 }
+/* 마지막 권유 뒤 사진이 천천히 다가와 영상처럼(움직임 줄이기면 전역 규칙이 끈다) */
+@keyframes slow-drift { from { transform: scale(1) translate(0, 0); } to { transform: scale(1.12) translate(-2%, -1%); } }
 
 /* 기기 틀(소개 페이지). 실제 기기처럼: 휴대폰은 옆 단추·카메라 구멍(다이내믹 아일랜드)·상태 표시줄, 노트북은 카메라·얇은 테두리·알루미늄 받침과 여는 홈.
    크기는 틀 폭을 따라(cqw) 커지고 작아져서 250px 그림이든 170px 그림이든 같은 비율로 보인다 */
@@ -913,7 +882,7 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
 .devices .mini-device { position: absolute; right: -3%; bottom: -4%; width: 35%; }
 @media (min-width: 960px) {
   /* 낮은 창(노트북 768px 높이)에서도 휴대폰이 다 보이게 높이에 맞춰 폭을 줄인다. 그림 390:844 + 상태줄·틀 */
-  .tour-phone { position: sticky; top: max(76px, calc(50vh - 380px)); width: min(340px, calc((100vh - 120px) * 0.42)); justify-self: end; }
+  .tour-phone { width: min(340px, calc((100vh - 120px) * 0.42)); justify-self: end; }
   .tour-shot { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; opacity: 0; transition: opacity 0.35s var(--ease); }
   .tour-shot.on { opacity: 1; }
 }
@@ -1034,18 +1003,6 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
   .duel-card { padding: 28px; }
 }
 
-/* 큰 세 가지 */
-.big3 { display: grid; gap: 12px; margin-bottom: 20px; }
-.big3 li { display: grid; gap: 6px; padding: 20px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); }
-.big3 b { font-size: var(--fs-lg); }
-.big3 p { color: var(--muted); font-size: var(--fs-sm); }
-.big3-no { font-size: var(--fs-sm); font-weight: 800; color: var(--accent); letter-spacing: 0.06em; }
-@media (min-width: 960px) { .big3 { grid-template-columns: repeat(3, 1fr); gap: 16px; } .big3 li { padding: 24px; } }
-.compare-more > summary { cursor: pointer; list-style: none; display: inline-flex; align-items: center; gap: 8px; min-height: var(--tap); font-weight: 600; color: var(--accent); }
-.compare-more > summary::-webkit-details-marker { display: none; }
-.compare-more > summary::after { content: "+"; font-size: var(--fs-lg); transition: transform var(--dur) var(--ease); }
-.compare-more[open] > summary::after { transform: rotate(45deg); }
-.compare-more[open] > summary { margin-bottom: 12px; }
 
 /* 체험 방: 탭 칸이 grid(.ov-grid)여도 숨김(hidden)이 이기게 */
 [data-panel][hidden] { display: none !important; }
@@ -1062,8 +1019,7 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
 /* 첫 화면 단톡방: 욕은 글자 대신 "#@%!"를 흐리게(실제 욕은 코드에도 없다) */
 .censor { display: inline-block; padding: 0 4px; border-radius: 4px; background: #191919; color: #fff; filter: blur(0.6px); font-weight: 700; letter-spacing: 0.04em; }
 
-/* 내 여행방(로그인한 첫 화면): 소개 페이지 방 머리처럼 사진 + D-day 알약 카드.
-   PC 는 히어로 배경 사진(.hero-bg, 위로 96px 넘친다)보다 위에 떠야 글이 안 바랜다 */
+/* 내 여행방(로그인한 첫 화면): 소개 페이지 방 머리처럼 사진 + D-day 알약 카드 */
 #my-trips { position: relative; z-index: 1; box-shadow: 0 12px 32px -18px rgb(0 0 0 / 0.25); }
 .todo-pill { margin-left: 6px; padding: 2px 10px; border-radius: 99px; background: var(--accent); color: var(--accent-ink); font-size: var(--fs-xs); font-weight: 700; vertical-align: middle; }
 .trip-list { display: grid; gap: 12px; }
@@ -1092,7 +1048,3 @@ textarea.paste-box { resize: none; font: inherit; line-height: 1.45; min-height:
   .trip-dday { left: 6px; bottom: 6px; padding: 2px 8px; font-size: var(--fs-xs); }
 }
 .trip-more { grid-column: 1 / -1; }
-/* 내 여행방이 보이면(PC) 히어로 배경 사진이 박스 아래에서 딱 끊기지 않고 서서히 나타나게 */
-@media (min-width: 960px) {
-  body:has(#my-trips:not([hidden])) .hero-bg { top: 0; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 220px); mask-image: linear-gradient(to bottom, transparent, #000 220px); }
-}

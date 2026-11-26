@@ -1,7 +1,7 @@
 package com.tripmate;
 
-import com.tripmate.user.AppUser;
-import com.tripmate.user.AppUserRepository;
+import com.tripmate.entity.user.AppUser;
+import com.tripmate.repository.user.AppUserRepository;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;

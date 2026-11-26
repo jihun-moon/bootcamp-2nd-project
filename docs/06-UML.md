@@ -146,7 +146,9 @@ classDiagram
     Assignment --> Role
 ```
 
-| 패키지 | 화면 컨트롤러 | API 컨트롤러 | 서비스 | 엔티티 |
+기능 폴더는 층마다 같은 이름이다(예: `controller/role`, `service/role`, `entity/role`).
+
+| 기능 폴더 | 화면 컨트롤러 | API 컨트롤러 | 서비스 | 엔티티 |
 |---|---|---|---|---|
 | `user` | `LoginPageController` | `AuthController` | `KakaoUserService`, `GuestService` | `AppUser`, `PersistentLogin` |
 | `trip` | `TripPageController` | `TripController` | `TripService` | `Trip`, `Member` |

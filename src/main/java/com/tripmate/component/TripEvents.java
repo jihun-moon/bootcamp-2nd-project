@@ -1,0 +1,76 @@
+package com.tripmate.component;
+
+import com.tripmate.service.trip.MemberLeaving;
+import com.tripmate.service.trip.TripChanged;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import java.io.IOException;
+import java.time.Duration;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
+
+// 방마다 열린 SSE 연결을 들고 있다가 바뀌면 "다시 읽어라"만 보낸다. 데이터는 화면이 기존 API 로 읽는다.
+// shortcut: 연결 목록이 서버 메모리에 있어 서버 한 대에서만 맞다. 여러 대로 늘리면 Redis pub/sub 같은 것으로 바꾼다
+@Component
+public class TripEvents {
+
+    // 끊긴 연결이 계속 남지 않게 시간을 둔다. 브라우저 EventSource 는 끊기면 알아서 다시 붙는다
+    private static final long TIMEOUT = Duration.ofMinutes(30).toMillis();
+    // 8명 방이면 사람마다 탭 몇 개라도 이 안이다. 새로고침을 반복해 연결을 쌓아도 가장 오래된 것부터 닫는다
+    private static final int MAX_PER_TRIP = 40;
+
+    private final Map<Long, Set<SseEmitter>> emitters = new ConcurrentHashMap<>();
+    // 연결마다 누구 것인지. 방을 나간(뺀) 사람의 연결을 바로 닫으려고(전에는 30분까지 열려 이벤트 이름이 갔다, 리뷰 #10)
+    private final Map<SseEmitter, Long> owners = new ConcurrentHashMap<>();
+
+    public SseEmitter subscribe(Long tripId, Long memberId) throws IOException {
+        var emitter = new SseEmitter(TIMEOUT);
+        var set = emitters.computeIfAbsent(tripId, id -> new CopyOnWriteArraySet<>());
+        if (set.size() >= MAX_PER_TRIP) set.iterator().next().complete();
+        set.add(emitter);
+        owners.put(emitter, memberId);
+        emitter.onCompletion(() -> { set.remove(emitter); owners.remove(emitter); });
+        emitter.onTimeout(emitter::complete);
+        emitter.onError(e -> { set.remove(emitter); owners.remove(emitter); });
+        // 첫 바이트를 바로 보내야 프록시가 응답 머리를 붙잡지 않고 넘긴다
+        emitter.send(SseEmitter.event().comment("connected"));
+        return emitter;
+    }
+
+    // 커밋 뒤에 보낸다. 먼저 보내면 화면이 커밋 전 옛 값을 다시 읽어 간다.
+    // 숙소 추가처럼 트랜잭션 밖에서 저장을 마친 경우는 바로 보낸다(fallbackExecution)
+    @TransactionalEventListener(fallbackExecution = true)
+    void send(TripChanged event) {
+        sendAll(emitters.getOrDefault(event.tripId(), Set.of()), "change", event.what());
+    }
+
+    // 나가기·빼기가 커밋된 뒤 그 사람의 연결을 닫는다. 브라우저가 다시 붙으려 하면 404 라 더 못 듣는다
+    @TransactionalEventListener(fallbackExecution = true)
+    void close(MemberLeaving event) {
+        emitters.getOrDefault(event.tripId(), Set.of()).stream()
+                .filter(emitter -> event.memberId().equals(owners.get(emitter)))
+                .forEach(SseEmitter::complete);
+    }
+
+    // 서버가 꺼져도 중간 프록시가 브라우저 쪽 연결을 열어 두면 브라우저는 끊긴 줄 모른다.
+    // 주기적으로 ping 을 보내 두면 화면이 "한동안 조용하다"로 끊김을 알아채고 다시 붙는다(static/js/common.js 의 listen)
+    @Scheduled(fixedRate = 15_000)
+    public void ping() {
+        emitters.values().forEach(set -> sendAll(set, "ping", ""));
+    }
+
+    private void sendAll(Set<SseEmitter> set, String name, String data) {
+        for (var emitter : set) {
+            try {
+                emitter.send(SseEmitter.event().name(name).data(data));
+            } catch (IOException | IllegalStateException e) {
+                emitter.completeWithError(e);
+            }
+        }
+    }
+}

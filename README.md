@@ -110,14 +110,14 @@ JDK 17 이상만 있으면 된다. DB 는 메모리 H2 라 설치할 것이 없�
 
 ```
 src/main/java/com/tripmate/
-  user/      로그인·손님 참여·로그인 기억하기      박재현
-  trip/      여행방·초대·날짜·규칙·2탄·뽑기·SSE  박재현
-  survey/    설문                                  문지훈
-  role/      역할 추천·보드·교통비                 문지훈
-  stay/      숙소·투표                             김현수
-  shopping/  장보기·챙겨 갈 것                     문지훈
-  settle/    다녀와서 정산                         문지훈
-  GlobalExceptionHandler.java  동시에 바꾸면 409(한 곳에서)
+  controller/  service/  repository/  entity/   안은 기능 폴더로 한 번 더
+      user/  trip/        박재현   로그인·손님 참여, 여행방·초대·날짜·규칙·2탄·SSE
+      survey/  role/      문지훈   설문, 역할 추천·보드·차·교통비
+      shopping/  settle/  문지훈   장보기, 다녀와서 정산
+      stay/               김현수   숙소·투표
+  dto/         기능마다 XxxDto 하나(record)
+  component/   바깥 부르기·권한 확인·SSE 부품
+  config/      보안·RestTemplate·409 처리(GlobalExceptionHandler)
 src/main/resources/
   application.yaml  설정(비밀값은 secrets.properties·환경변수)
   templates/   화면. 기능별 폴더 + fragments/common.html(공통 머리·탭)

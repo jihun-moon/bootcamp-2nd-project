@@ -1,14 +1,15 @@
 package com.tripmate.settle;
 
-import org.springframework.context.event.EventListener;
-import com.tripmate.trip.TripDeleting;
-import com.tripmate.shopping.ShoppingClaimRepository;
 import com.tripmate.role.CarService;
+import com.tripmate.shopping.ShoppingClaimRepository;
 import com.tripmate.trip.Member;
 import com.tripmate.trip.MemberLeaving;
+import com.tripmate.trip.Trip;
 import com.tripmate.trip.TripChanged;
+import com.tripmate.trip.TripDeleting;
 import com.tripmate.trip.TripRepository;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +33,8 @@ import java.util.stream.Stream;
 public class SettleService {
 
     private static final int UNIT = 100;
+    // 소수 셈 오차(34.000000001)로 100원이 한 번 더 붙지 않게 올리기 전에 아주 작은 값을 뺀다
+    private static final double ROUNDING_SLACK = 1e-9;
 
     private final TripRepository tripRepository;
     private final ExpenseRepository expenseRepository;
@@ -79,29 +82,15 @@ public class SettleService {
         var trip = tripRepository.findWithMembersById(tripId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         var members = trip.getMembers();
-        // 나간 사람: 먼저 낸 돈·보낸 돈은 남고(돌려받거나 마저 보낼 사람), 규칙 "전날 빠지면 예약금 안 돌려줘요"면 숙소 몫도 진다(리뷰 #10)
         var departed = trip.getEveryone().stream().filter(Member::isDeparted).toList();
-        var stayKeepsDeparted = Boolean.FALSE.equals(trip.getRefundNoShow());
-        var staySharers = new ArrayList<>(members);
-        if (stayKeepsDeparted) staySharers.addAll(departed);
         var expenses = expenseRepository.findByTripIdOrderById(tripId);
         var claims = claimRepository.findByTripId(tripId).stream()
                 .filter(c -> c.getAmount() != null && c.getAmount() > 0).toList();
-
-        // 기름값을 낸 사람 = 운전한 사람. 규칙이 "운전자는 안 냄"이면 기름값 몫에서 뺀다(다 빠지면 모두가 낸다).
-        // 차 나누기(CarService)가 있으면 그 운전자 차에 탄 사람끼리만 나눈다. 차가 두 대면 A차 기름값을 B차 사람이 내지 않고,
-        // 기차로 따로 간 사람은 기름값을 내지 않는다. 운전 칸이 비어 차가 없으면 예전처럼 모두(운전자 빼고)
-        var driverIds = expenses.stream().filter(e -> e.getKind() == ExpenseKind.FUEL)
-                .map(e -> e.getPayer().getId()).collect(Collectors.toSet());
-        var driversExempt = Boolean.FALSE.equals(trip.getDriverPaysFuel());
         var seating = carService.seating(tripId);
-        var fuelSharers = members.stream().filter(m -> !seating.separate().contains(m.getId()))
-                .filter(m -> !driversExempt || !driverIds.contains(m.getId())).toList();
-        if (fuelSharers.isEmpty()) fuelSharers = members;
-        // 술: 규칙을 켰을 때만 마시는 사람끼리(아무도 안 마시면 모두). 전에는 규칙을 켜도 결과가 같아 오해를 샀다(docs/17 8절)
-        var drinksOnly = Boolean.TRUE.equals(trip.getDrinksSeparate());
-        var drinkers = members.stream().filter(m -> !drinksOnly || m.drinks()).toList();
-        if (drinkers.isEmpty()) drinkers = members;
+        var driversExempt = Boolean.FALSE.equals(trip.getDriverPaysFuel());
+        var fuelSharers = fuelSharers(members, expenses, seating, driversExempt);
+        var drinkers = drinkers(trip);
+        var staySharers = staySharers(trip, departed);
 
         var paid = new HashMap<Long, Double>();
         var owed = new HashMap<Long, Double>();
@@ -127,22 +116,7 @@ public class SettleService {
             lines.add(new SettleDto.Line(null, c.getMember().getId(), nameOf(c.getMember()), "SHOPPING",
                     "장보기 · " + c.getItem().getLabel(), c.getAmount(), true, null));
         }
-
-        // 보냈어요/받았어요: 보낸 사람이 받은 사람 몫을 낸 것으로 셈한다. 그러면 남은 보낼 줄에서 저절로 빠진다
-        var paidRows = new ArrayList<SettleDto.Paid>();
-        for (var p : paymentRepository.findByTripIdOrderById(tripId)) {
-            paid.merge(p.getSender().getId(), (double) p.getAmount(), Double::sum);
-            owed.merge(p.getReceiver().getId(), (double) p.getAmount(), Double::sum);
-            paidRows.add(new SettleDto.Paid(p.getId(), p.getSender().getId(), nameOf(p.getSender()), p.getReceiver().getId(),
-                    nameOf(p.getReceiver()), p.getAmount(), p.getMarkedBy().getId(), nameOf(p.getMarkedBy()), p.isDues()));
-        }
-        var dues = duesRepository.findByTripId(tripId).map(d -> {
-            var duesPaid = paidRows.stream().filter(p -> p.dues() && p.toId().equals(d.getCollector().getId())).toList();
-            var end = trip.getEndDate();
-            return new SettleDto.Dues(d.getAmount(), d.getCollector().getId(), nameOf(d.getCollector()),
-                    duesPaid.stream().map(SettleDto.Paid::fromId).toList(), duesPaid.stream().mapToInt(SettleDto.Paid::amount).sum(),
-                    end == null || end.isAfter(LocalDate.now()));
-        }).orElse(null);
+        var payments = addPayments(tripId, paid, owed);
 
         // 정산에 나오는 사람: 지금 있는 사람 + 돈이 걸린 나간 사람
         var parties = new ArrayList<>(members);
@@ -153,8 +127,58 @@ public class SettleService {
             return new SettleDto.Balance(m.getId(), nameOf(m), (int) Math.round(p), (int) Math.round(o), (int) Math.round(p - o));
         }).toList();
         var total = lines.stream().mapToInt(SettleDto.Line::amount).sum();
-        return new SettleDto.Board(total, lines, balances, transfers(parties, paid, owed, carOf(seating)), paidRows, trip.getDriverPaysFuel(),
-                trip.getDrinksSeparate(), trip.getRefundNoShow(), dues);
+        return new SettleDto.Board(total, lines, balances, transfers(parties, paid, owed, carOf(seating)), payments,
+                trip.getDriverPaysFuel(), trip.getDrinksSeparate(), trip.getRefundNoShow(), dues(trip, payments));
+    }
+
+    // 기름값을 낸 사람 = 운전한 사람. 규칙이 "운전자는 안 냄"이면 기름값 몫에서 뺀다(다 빠지면 모두가 낸다).
+    // 차 나누기(CarService)가 있으면 기름값은 그 차에 탄 사람끼리(carSharers) 나누고, 이 목록은 차가 없을 때 쓴다.
+    // 기차로 따로 간 사람은 기름값을 내지 않는다
+    private static List<Member> fuelSharers(List<Member> members, List<Expense> expenses, CarService.Seating seating,
+                                            boolean driversExempt) {
+        var driverIds = expenses.stream().filter(e -> e.getKind() == ExpenseKind.FUEL)
+                .map(e -> e.getPayer().getId()).collect(Collectors.toSet());
+        var sharers = members.stream().filter(m -> !seating.separate().contains(m.getId()))
+                .filter(m -> !driversExempt || !driverIds.contains(m.getId())).toList();
+        return sharers.isEmpty() ? members : sharers;
+    }
+
+    // 술: 규칙을 켰을 때만 마시는 사람끼리(아무도 안 마시면 모두). 전에는 규칙을 켜도 결과가 같아 오해를 샀다(docs/17 8절)
+    private static List<Member> drinkers(Trip trip) {
+        var members = trip.getMembers();
+        var drinksOnly = Boolean.TRUE.equals(trip.getDrinksSeparate());
+        var drinkers = members.stream().filter(m -> !drinksOnly || m.drinks()).toList();
+        return drinkers.isEmpty() ? members : drinkers;
+    }
+
+    // 숙소: 나간 사람도 먼저 낸 돈·보낸 돈은 남는다. 규칙이 "전날 빠지면 예약금 안 돌려줘요"면 숙소 몫도 그대로 진다
+    private static List<Member> staySharers(Trip trip, List<Member> departed) {
+        var sharers = new ArrayList<>(trip.getMembers());
+        if (Boolean.FALSE.equals(trip.getRefundNoShow())) sharers.addAll(departed);
+        return sharers;
+    }
+
+    // 보냈어요/받았어요: 보낸 사람이 받은 사람 몫을 낸 것으로 셈한다. 그러면 남은 보낼 줄에서 저절로 빠진다
+    private List<SettleDto.Paid> addPayments(Long tripId, Map<Long, Double> paid, Map<Long, Double> owed) {
+        var rows = new ArrayList<SettleDto.Paid>();
+        for (var p : paymentRepository.findByTripIdOrderById(tripId)) {
+            paid.merge(p.getSender().getId(), (double) p.getAmount(), Double::sum);
+            owed.merge(p.getReceiver().getId(), (double) p.getAmount(), Double::sum);
+            rows.add(new SettleDto.Paid(p.getId(), p.getSender().getId(), nameOf(p.getSender()), p.getReceiver().getId(),
+                    nameOf(p.getReceiver()), p.getAmount(), p.getMarkedBy().getId(), nameOf(p.getMarkedBy()), p.isDues()));
+        }
+        return rows;
+    }
+
+    // 회비 판. 여행이 끝나기 전(pending)에는 보낼 줄 대신 "다녀와서 남은 회비를 나눠요"로 보인다. 회비가 없으면 null
+    private SettleDto.Dues dues(Trip trip, List<SettleDto.Paid> payments) {
+        return duesRepository.findByTripId(trip.getId()).map(d -> {
+            var duesPaid = payments.stream().filter(p -> p.dues() && p.toId().equals(d.getCollector().getId())).toList();
+            var end = trip.getEndDate();
+            return new SettleDto.Dues(d.getAmount(), d.getCollector().getId(), nameOf(d.getCollector()),
+                    duesPaid.stream().map(SettleDto.Paid::fromId).toList(), duesPaid.stream().mapToInt(SettleDto.Paid::amount).sum(),
+                    end == null || end.isAfter(LocalDate.now()));
+        }).orElse(null);
     }
 
     // 그 차에 탄 사람(운전자 빼기 규칙이면 운전자 빼고). 혼자 탄 차면 운전자 혼자
@@ -180,51 +204,59 @@ public class SettleService {
         sharers.forEach(m -> owed.merge(m.getId(), each, Double::sum));
     }
 
+    // 아직 받을(보낼) 돈이 남은 사람. 짝지어 보낼 때마다 left 가 준다
+    private static class Remaining {
+        final Member member;
+        double left;
+
+        Remaining(Member member, double left) {
+            this.member = member;
+            this.left = left;
+        }
+    }
+
     // 받을 사람과 보낼 사람을 큰 금액부터 짝짓는다. 8명이면 보내는 줄이 많아야 7줄.
     // 차를 나눴으면 먼저 탄 사람이 자기 차 운전자에게 보낸다. 큰 금액끼리만 짝지으면 재현 차에 탄 도윤이 민지에게
     // 보내는 줄이 나와 "왜 내가 민지한테?"가 됐다(합은 맞았다). carOf = 탄 사람 id -> 그 차 운전자 id
     // shortcut: 줄마다 100원 단위로 올려서 받는 사람이 몇십 원 더 받는다(10,000 ÷ 3 → 3,400 × 2 = 6,800). 회비를 100원 단위로
     //   걷는 관습을 따른 것이고, 남는 자투리는 100원 아래라 끝난 것으로 본다. 원 단위가 필요해지면 마지막 줄에서 차액을 빼서 맞춘다
-    private record Side(Member member, double[] left) {
-    }
-
     private static List<SettleDto.Transfer> transfers(List<Member> members, Map<Long, Double> paid, Map<Long, Double> owed,
                                                       Map<Long, Long> carOf) {
-        var creditors = new ArrayList<Side>();
-        var debtors = new ArrayList<Side>();
+        var creditors = new ArrayList<Remaining>();
+        var debtors = new ArrayList<Remaining>();
         for (var m : members) {
             var diff = paid.getOrDefault(m.getId(), 0.0) - owed.getOrDefault(m.getId(), 0.0);
             // 보낼 줄을 100원 단위로 올려 보내면 몇십 원씩 남는다. 100원 아래는 끝난 것으로 본다
-            if (diff >= UNIT) creditors.add(new Side(m, new double[]{diff}));
-            else if (diff <= -UNIT) debtors.add(new Side(m, new double[]{-diff}));
+            if (diff >= UNIT) creditors.add(new Remaining(m, diff));
+            else if (diff <= -UNIT) debtors.add(new Remaining(m, -diff));
         }
         var out = new ArrayList<SettleDto.Transfer>();
         // 1. 같은 차: 탄 사람 -> 그 차 운전자(운전자가 받을 사람일 때만)
         for (var from : debtors) {
-            var driverId = carOf.get(from.member().getId());
+            var driverId = carOf.get(from.member.getId());
             if (driverId == null) continue;
-            creditors.stream().filter(to -> to.member().getId().equals(driverId)).findFirst().ifPresent(to -> send(from, to, out));
+            creditors.stream().filter(to -> to.member.getId().equals(driverId)).findFirst().ifPresent(to -> send(from, to, out));
         }
         // 2. 남은 것은 큰 금액끼리
-        Comparator<Side> big = Comparator.comparingDouble((Side s) -> s.left()[0]).reversed();
-        var restTo = creditors.stream().filter(x -> x.left()[0] >= UNIT).sorted(big).toList();
-        var restFrom = debtors.stream().filter(x -> x.left()[0] >= UNIT).sorted(big).toList();
+        Comparator<Remaining> biggestFirst = Comparator.comparingDouble((Remaining r) -> r.left).reversed();
+        var restTo = creditors.stream().filter(r -> r.left >= UNIT).sorted(biggestFirst).toList();
+        var restFrom = debtors.stream().filter(r -> r.left >= UNIT).sorted(biggestFirst).toList();
         int c = 0, d = 0;
         while (c < restTo.size() && d < restFrom.size()) {
             send(restFrom.get(d), restTo.get(c), out);
-            if (restTo.get(c).left()[0] < UNIT) c++;
-            if (restFrom.get(d).left()[0] < UNIT) d++;
+            if (restTo.get(c).left < UNIT) c++;
+            if (restFrom.get(d).left < UNIT) d++;
         }
         return out;
     }
 
-    private static void send(Side from, Side to, List<SettleDto.Transfer> out) {
-        var x = Math.min(to.left()[0], from.left()[0]);
-        var won = (int) (Math.ceil(x / UNIT - 1e-9) * UNIT);
-        if (won > 0) out.add(new SettleDto.Transfer(from.member().getId(), nameOf(from.member()),
-                to.member().getId(), nameOf(to.member()), won));
-        to.left()[0] -= x;
-        from.left()[0] -= x;
+    private static void send(Remaining from, Remaining to, List<SettleDto.Transfer> out) {
+        var x = Math.min(to.left, from.left);
+        var won = (int) (Math.ceil(x / UNIT - ROUNDING_SLACK) * UNIT);
+        if (won > 0) out.add(new SettleDto.Transfer(from.member.getId(), nameOf(from.member),
+                to.member.getId(), nameOf(to.member), won));
+        to.left -= x;
+        from.left -= x;
     }
 
     @Transactional
@@ -289,12 +321,13 @@ public class SettleService {
         var dues = duesRepository.findByTripId(tripId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         var collector = dues.getCollector();
-        checkDuesHand(me, memberId, collector);
+        checkCanMarkDues(me, memberId, collector);
         var payer = trip.getMembers().stream().filter(m -> m.getId().equals(memberId)).findFirst()
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "이 방 사람만 돼요"));
-        if (payer == collector) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "총무 몫은 이미 총무에게 있어요");
+        if (payer.getId().equals(collector.getId())) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "총무 몫은 이미 총무에게 있어요");
         var already = paymentRepository.findByTripIdOrderById(tripId).stream()
-                .anyMatch(p -> p.isDues() && p.getSender() == payer && p.getReceiver() == collector);
+                .anyMatch(p -> p.isDues() && p.getSender().getId().equals(payer.getId())
+                        && p.getReceiver().getId().equals(collector.getId()));
         if (!already) {
             var marker = trip.getMembers().stream().filter(m -> m.getId().equals(me.getId())).findFirst().orElseThrow();
             paymentRepository.save(Payment.dues(trip, payer, collector, marker, dues.getAmount()));
@@ -308,7 +341,7 @@ public class SettleService {
     public SettleDto.Board unmarkDues(Long tripId, Member me, Long memberId) {
         var dues = duesRepository.findByTripId(tripId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        checkDuesHand(me, memberId, dues.getCollector());
+        checkCanMarkDues(me, memberId, dues.getCollector());
         paymentRepository.findByTripIdOrderById(tripId).stream()
                 .filter(p -> p.isDues() && p.getSender().getId().equals(memberId)
                         && p.getReceiver().getId().equals(dues.getCollector().getId()))
@@ -317,7 +350,7 @@ public class SettleService {
         return board(tripId);
     }
 
-    private static void checkDuesHand(Member me, Long memberId, Member collector) {
+    private static void checkCanMarkDues(Member me, Long memberId, Member collector) {
         if (!me.isHost() && !me.getId().equals(memberId) && !me.getId().equals(collector.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
@@ -360,6 +393,4 @@ public class SettleService {
         events.publishEvent(new TripChanged(tripId, "settle"));
         return board(tripId);
     }
-
-
 }

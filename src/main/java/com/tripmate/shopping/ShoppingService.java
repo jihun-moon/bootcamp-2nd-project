@@ -1,12 +1,12 @@
 package com.tripmate.shopping;
 
-import com.tripmate.trip.TripDeleting;
-import org.springframework.context.event.EventListener;
-import com.tripmate.trip.MemberLeaving;
 import com.tripmate.trip.Member;
+import com.tripmate.trip.MemberLeaving;
 import com.tripmate.trip.TripChanged;
+import com.tripmate.trip.TripDeleting;
 import com.tripmate.trip.TripRepository;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +19,9 @@ import java.util.stream.Collectors;
 
 @Service
 public class ShoppingService {
+
+    // 1인 몫은 100원 단위로 올린다(회비 걷을 때 그대로 쓰게)
+    private static final int WON_UNIT = 100;
 
     private final TripRepository tripRepository;
     private final ShoppingPlanRepository planRepository;
@@ -45,7 +48,7 @@ public class ShoppingService {
         var plan = planRepository.findByTripId(tripId);
         // 방장이 따로 정하지 않았으면 각자 고른 "술 마셔요"로 센다(전에는 모두 마신다고 보고 방장이 손으로 줄였다)
         var drinking = (int) trip.getMembers().stream().filter(Member::drinks).count();
-        var drinkers = Math.min(people, plan.map(ShoppingPlan::getDrinkers).filter(d -> d != null).orElse(drinking));
+        var drinkers = Math.min(people, plan.map(ShoppingPlan::getDrinkers).orElse(drinking));
         var meatGrams = plan.map(ShoppingPlan::getMeatGrams).orElse(ShoppingPlan.DEFAULT_MEAT_GRAMS);
 
         var claims = claimRepository.findByTripId(tripId).stream()
@@ -57,8 +60,7 @@ public class ShoppingService {
                     c == null ? null : c.getAmount(), i.isBring());
         }).toList();
         var spent = claims.values().stream().mapToInt(c -> c.getAmount() == null ? 0 : c.getAmount()).sum();
-        // 1인 몫은 100원 단위로 올린다(회비 걷을 때 그대로 쓰게)
-        var perPerson = people == 0 ? 0 : (int) (Math.ceil(spent / (double) people / 100) * 100);
+        var perPerson = people == 0 ? 0 : (int) (Math.ceil(spent / (double) people / WON_UNIT) * WON_UNIT);
         return new ShoppingDto.Board(people, nights, drinkers, meatGrams, items, spent, perPerson);
     }
 

@@ -117,7 +117,9 @@ src/main/java/com/tripmate/
   stay/      숙소·투표                             김현수
   shopping/  장보기·챙겨 갈 것                     문지훈
   settle/    다녀와서 정산                         문지훈
+  GlobalExceptionHandler.java  동시에 바꾸면 409(한 곳에서)
 src/main/resources/
+  application.yaml  설정(비밀값은 secrets.properties·환경변수)
   templates/   화면. 기능별 폴더 + fragments/common.html(공통 머리·탭)
   static/      js/(화면마다 하나 + common.js), css/style.css
 docs/          설계 문서, 각자 발표 정리(parts/)

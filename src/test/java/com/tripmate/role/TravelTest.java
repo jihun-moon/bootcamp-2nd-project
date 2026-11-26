@@ -26,7 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 // 예시 방(id 1, 8명). 카카오·오피넷은 가짜로 바꿔 인터넷 없이 돈다.
-// 가짜 길: 편도 100km, 2시간 10분, 통행료 5,000원. 휘발유 1,700원/L, 연비 12km/L(application.properties)
+// 가짜 길: 편도 100km, 2시간 10분, 통행료 5,000원. 휘발유 1,700원/L, 연비 12km/L(application.yaml)
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional

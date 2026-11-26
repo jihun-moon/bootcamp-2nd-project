@@ -28,7 +28,7 @@ function availabilityCalendar(el, opts) {
       $('<button type="button" class="cal-nav" aria-label="다음 달">›</button>')
         .click(function () { shown = new Date(y, m + 1, 1); draw(); }));
     var grid = $('<div class="cal-grid">').appendTo(el);
-    ['일', '월', '화', '수', '목', '금', '토'].forEach(function (w) { $('<span class="cal-week">').text(w).appendTo(grid); });
+    WEEKDAYS.forEach(function (w) { $('<span class="cal-week">').text(w).appendTo(grid); });
     for (var i = 0; i < new Date(y, m, 1).getDay(); i++) $('<span>').appendTo(grid);
     for (var d = 1; d <= new Date(y, m + 1, 0).getDate(); d++) {
       var date = new Date(y, m, d), key = isoDate(date);
@@ -58,7 +58,7 @@ function availabilityCalendar(el, opts) {
 // 좋은 날짜 후보: 2박 3일·1박 2일·당일 창을 모두 보고, 그 날들에 다 되는 사람이 많은 순(같으면 긴 여행, 이른 날).
 // 사람 8명 × 날 60개라 그냥 다 센다
 // nights 는 원하는 박 수(0 = 당일, 기본 2). 그 길이까지의 창만 보고, 되는 사람이 같으면 원하는 길이에 가까운 것부터.
-// 전에는 2박까지만 봐서 6일 내내 되는 무리도 3·4박 후보를 못 받았다
+// 길이를 2박으로 묶지 않는 것은 6일 내내 되는 무리도 3·4박 후보를 받게 하려는 것이다
 function bestWindows(board, members, wanted, nights) {
   var target = nights === undefined || nights === null ? 2 : nights;
   var days = Object.keys(board.available).sort();
@@ -86,7 +86,7 @@ function bestWindows(board, members, wanted, nights) {
     if (picked.length < (wanted || 3) && !picked.some(function (p) { return w.start <= p.end && w.end >= p.start; })) picked.push(w);
   });
   // 고른 박 수 창은 사람이 조금 적어도 꼭 하나 보인다. 사람 수로만 고르면 "2박"을 눌렀는데 1박 후보만 떠서
-  // 겹치는 2박 창이 통째로 빠졌다(소개 화면을 찍다 찾음)
+  // 겹치는 2박 창이 통째로 빠진다
   if (!picked.some(function (w) { return w.nights === target; })) {
     var sameLength = found.find(function (w) { return w.nights === target; });
     if (sameLength) {

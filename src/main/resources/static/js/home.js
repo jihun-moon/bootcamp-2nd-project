@@ -1,12 +1,8 @@
 // 첫 화면: 로그인했으면 "내 여행방", 첫 화면 휴대폰 장면 재생, 스크롤 등장
-var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 var wait = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
 
-// GET: /api/me/trips  -> [{ "id": 1, "title": "겨울 펜션 2박 3일", "destination": "가평", "startDate": "2027-01-15",
-//                           "memberCount": 8, "surveyDone": 3, "host": true }]
-// api() 는 401 이면 로그인 화면으로 보낸다. 첫 화면은 로그인 안 한 사람이 보는 게 정상이라 $.ajax 를 직접 쓴다
 // 로그인하고 첫 화면에 오면 방마다 "내가 아직 안 한 일"을 먼저 보여 주고, 누르면 그 일로 바로 간다.
-// 알림을 보내는 대신 들어온 김에 하게(지훈: "알림보다 로그인하면 하라고 안내")
+// 알림을 보내는 대신 들어온 김에 하게 한다
 var MY_TODO = {
   invite: { label: '친구 부르기', path: '' },
   survey: { label: '내 설문 (1분)', path: '/survey' },
@@ -26,6 +22,9 @@ function shortDday(startDate, endDate) {
 
 // 방 카드: 소개 페이지의 방 머리처럼 지역 사진 + D-day 알약, 아래 이름·지역·설문, 할 일 한 줄, 오른쪽 단추 하나.
 // 할 일 있는 방을 앞에 둔다(들어온 김에 바로 하게)
+// GET: /api/me/trips  -> [{ "id": 1, "title": "겨울 펜션 2박 3일", "destination": "가평", "startDate": "2027-01-15",
+//                           "memberCount": 8, "surveyDone": 3, "host": true }]
+// api() 는 401 이면 로그인 화면으로 보낸다. 첫 화면은 로그인 안 한 사람이 보는 게 정상이라 $.ajax 를 직접 쓴다
 function loadMyTrips() {
   $.ajax({ url: '/api/me/trips', type: 'GET' }).done(function (trips) {
     if (!trips.length) return;
@@ -235,7 +234,7 @@ function tourSwipe() {
     requestAnimationFrame(function () { ticking = false; update(); });
   }, { passive: true });
   $(nav).on('click', '[data-tour-go]', function () {
-    list.scrollBy({ left: Number(this.dataset.tourGo) * step(), behavior: reduceMotion ? 'auto' : 'smooth' });
+    list.scrollBy({ left: Number(this.dataset.tourGo) * step(), behavior: REDUCE_MOTION ? 'auto' : 'smooth' });
   });
   window.addEventListener('resize', update);
   update();
@@ -246,10 +245,10 @@ function tourSwipe() {
 function lazyVideos() {
   var videos = document.querySelectorAll('video[data-src]');
   if (!videos.length) return;
-  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var load = function (v) { if (!v.src) { v.src = v.dataset.src; v.load(); } };
-  if (reduce || !('IntersectionObserver' in window)) {
-    videos.forEach(function (v) { v.controls = true; v.addEventListener('play', function () { load(v); }, { once: true }); v.preload = 'none'; v.src = v.dataset.src; });
+  if (REDUCE_MOTION || !('IntersectionObserver' in window)) {
+    // preload none 이라 주소를 넣어 둬도 재생을 누르기 전에는 받지 않는다
+    videos.forEach(function (v) { v.controls = true; v.preload = 'none'; v.src = v.dataset.src; });
     return;
   }
   var observer = new IntersectionObserver(function (entries) {
@@ -409,7 +408,7 @@ $(function () {
   lazyVideos();
   tourScroll(); // 움직임 줄이기여도 화면은 바뀌어야 한다(바꾸는 것은 내용, 움직임은 CSS 가 끈다)
   tourSwipe();
-  if (reduceMotion || !('IntersectionObserver' in window)) return;
+  if (REDUCE_MOTION || !('IntersectionObserver' in window)) return;
   var phone = document.querySelector('.phone');
   if (phone) {
     playPhone(phone);

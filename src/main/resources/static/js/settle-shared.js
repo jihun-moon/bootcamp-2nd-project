@@ -5,15 +5,16 @@ var WHO_KEY = 'tripmate.settle.who.' + location.pathname;
 function markMine(name) {
   $('.settle-row').each(function () {
     var row = $(this);
-    row.toggleClass('mine', !!name && (row.data('from') === name || row.data('to') === name));
+    row.toggleClass('mine', !!name && (row.attr('data-from') === name || row.attr('data-to') === name));
   });
   $('#who button').each(function () { $(this).attr('aria-pressed', $(this).text() === name); });
 }
 
 $(function () {
   var names = [];
+  // .data() 는 "123"·"true" 같은 이름을 숫자·참거짓으로 바꿔 버려 버튼 글자와 안 맞는다. 글자 그대로 읽는다
   $('.settle-row').each(function () {
-    [$(this).data('from'), $(this).data('to')].forEach(function (n) { if (names.indexOf(n) < 0) names.push(n); });
+    [$(this).attr('data-from'), $(this).attr('data-to')].forEach(function (n) { if (names.indexOf(n) < 0) names.push(n); });
   });
   if (names.length < 2) return;
   var who = $('#who').prop('hidden', false).append($('<span class="muted small">').text('나는'));

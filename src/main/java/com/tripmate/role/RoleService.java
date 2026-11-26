@@ -1,16 +1,16 @@
 package com.tripmate.role;
 
-import com.tripmate.trip.TripDeleting;
-import org.springframework.context.event.EventListener;
-import com.tripmate.trip.MemberLeaving;
-import com.tripmate.trip.MemberLeft;
 import com.tripmate.survey.SurveyAnswer;
 import com.tripmate.survey.SurveyAnswerRepository;
 import com.tripmate.trip.Member;
+import com.tripmate.trip.MemberLeaving;
+import com.tripmate.trip.MemberLeft;
 import com.tripmate.trip.MemberRepository;
 import com.tripmate.trip.TripChanged;
+import com.tripmate.trip.TripDeleting;
 import com.tripmate.trip.TripRepository;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

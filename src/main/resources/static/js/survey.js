@@ -34,7 +34,6 @@ var AMENITIES = [
 // 1~5 점은 서버 그대로 두고, 사람에게는 말 세 개만 보인다. 숫자 다섯 개보다 고르기 쉽고 "의견 갈림"(1점)과 "꼭"(5점)은 그대로 남는다
 var LEVELS = [{ label: '없어도 돼', value: 1 }, { label: '상관없어', value: 3 }, { label: '꼭 있어야 해', value: 5 }];
 
-var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 var me = null;
 var trip = null;
 var board = null;   // 날짜 맞추기 판
@@ -100,7 +99,7 @@ function renderChoices(q, box) {
       answers[q.key] = o.value;
       box.addClass('picking');
       $(this).addClass('on').siblings().removeClass('on');
-      setTimeout(function () { box.removeClass('picking'); go(step + 1); }, reduceMotion ? 0 : 180);
+      setTimeout(function () { box.removeClass('picking'); go(step + 1); }, REDUCE_MOTION ? 0 : 180);
     }).appendTo(box);
   });
 }
@@ -126,6 +125,7 @@ function renderDeparture(box) {
 }
 
 // 되는 날 달력. 다음을 누르면 바로 저장한다(설문 저장과 따로라 중간에 나가도 날짜는 남는다)
+// PUT: /api/trips/1/members/2/dates  { "dates": ["2027-01-15", "2027-01-16"] }
 function renderDates(box) {
   var cal = $('<div>');
   var next = $('<button type="button" class="btn primary block">');
@@ -174,7 +174,7 @@ function renderAvoid(box) {
 
 // 다음 장은 오른쪽에서, 이전 장은 왼쪽에서 살짝 들어온다. 어느 쪽으로 움직였는지 손이 안다
 function slideIn(selector, forward) {
-  if (reduceMotion) return;
+  if (REDUCE_MOTION) return;
   var el = $(selector).removeClass('slide-next slide-back');
   void el[0].offsetWidth;
   el.addClass(forward ? 'slide-next' : 'slide-back');
@@ -232,8 +232,6 @@ function showSaved() {
 
 $(function () {
   AMENITIES.forEach(function (a) { preferences[a.key] = 3; });
-  $('#go-roles').attr('href', '/trips/' + tripId + '/roles');
-  $('#go-stays').attr('href', '/trips/' + tripId + '/stays');
 
   loadTrip(tripId).done(function (t) {
     trip = t;
@@ -244,6 +242,7 @@ $(function () {
     };
     if (trip.startDate) { start(); return; }
     // 날짜가 없으면 지금까지 모인 되는 날을 먼저 읽어 둔다(내가 고른 날도 칠해 두려고)
+    // GET: /api/trips/1/dates
     api('GET', '/api/trips/' + tripId + '/dates').done(function (b) {
       board = b;
       Object.keys(b.available).forEach(function (k) { if (b.available[k].indexOf(me.id) >= 0) myDates.add(k); });

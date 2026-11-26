@@ -2,7 +2,6 @@ package com.tripmate.settle;
 
 import com.tripmate.trip.TripAccess;
 import jakarta.validation.Valid;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +26,8 @@ public class SettleController {
     }
 
     // PUT: /api/trips/1/settlement/link   방 사람 누구나. 정산 받는 링크 코드(없으면 만들고, 있으면 그대로)
-    // 정산 글을 보낼 때 끝에 /s/{code} 를 붙인다. 카톡 안 브라우저처럼 로그인이 안 이어진 곳에서도 금액을 본다
+    // 정산 글을 보낼 때 끝에 /s/{code} 를 붙인다. 카톡 안 브라우저처럼 로그인이 안 이어진 곳에서도 금액을 본다.
+    // 둘이 동시에 처음 만들면 방마다 하나(unique)에 걸려 늦은 쪽은 409(GlobalExceptionHandler), 화면이 한 번 더 부른다
     @PutMapping("/settlement/link")
     public ResponseEntity<SettleDto.Link> link(@PathVariable Long tripId) {
         tripAccess.me(tripId);
@@ -81,11 +81,5 @@ public class SettleController {
     public ResponseEntity<SettleDto.Board> remove(@PathVariable Long tripId, @PathVariable Long expenseId) {
         var me = tripAccess.me(tripId);
         return ResponseEntity.ok(settleService.remove(tripId, expenseId, me));
-    }
-
-    // 같은 방에서 둘이 동시에 처음 정산 링크를 만들면 방마다 하나(unique)에 걸린다. 한쪽만 들어갔으니 409, 화면이 한 번 더 부른다
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<Void> conflict() {
-        return ResponseEntity.status(HttpStatus.CONFLICT).build();
     }
 }

@@ -9,7 +9,7 @@ var dragging = null;
 var picking = null; // 역할 고르기 창을 연 사람
 var justMoved = null;
 var editing = null; // 고치는 중인 역할. null 이면 새로 더하기
-var travel = null; // 마지막으로 센 이동·회비 근거. 역할이 바뀌면 운전하는 차가 달라지니 비운다
+var travel = null; // 마지막으로 센 이동·회비 근거. 역할이 바뀌면 운전하는 차가 달라지니 "다시 계산"으로 새로 센다
 
 // 미배정까지 넣은 칸 목록. 칸마다 그 칸에 있는 카드를 같이 담는다
 function columns() {
@@ -176,7 +176,6 @@ function deleteRole() {
   });
 }
 
-// GET: /api/trips/1/roles  -> { "roles": [...], "assignments": [{ "roleId", "memberId", "reasons", "version" }] }
 // 역할이 정해진 걸 이 방에서 처음 볼 때 보드에 "확정" 도장이 쾅. 같은 휴대폰에서 다시 열면 안 찍는다
 function stampOnce() {
   var key = 'tripmate.stamped.' + tripId;
@@ -188,6 +187,7 @@ function stampOnce() {
   setTimeout(function () { stamp.remove(); }, 2200);
 }
 
+// GET: /api/trips/1/roles  -> { "roles": [...], "assignments": [{ "roleId", "memberId", "reasons", "version" }] }
 function loadBoard() {
   return api('GET', '/api/trips/' + tripId + '/roles').done(function (res) {
     board = res;
@@ -231,24 +231,30 @@ function moveTo(memberId, roleId) {
 }
 
 var MAX_ROLES = 12; // 서버 RoleService.MAX_ROLES 와 같다
+var MAX_CAPACITY = 8; // 서버 RoleDto.SaveRequest @Max(8) 과 같다
+
+// 역할 자리(정원 합)보다 남는 사람 수. 0 아래면 자리가 넉넉하다
+function shortCount() {
+  var slots = board.roles.reduce(function (sum, r) { return sum + r.capacity; }, 0);
+  return trip.members.length - slots;
+}
 
 // 역할 자리(정원 합)보다 사람이 많으면 남는 사람이 생긴다. 방장에게만 한 번에 채우는 단추를 보인다
 function renderShortage(isHost) {
-  var slots = board.roles.reduce(function (sum, r) { return sum + r.capacity; }, 0);
-  var short = trip.members.length - slots;
+  var short = shortCount();
   var show = isHost && short > 0 && board.roles.length + 2 <= MAX_ROLES;
   $('#roles-short').prop('hidden', !show);
   if (show) $('#roles-short-text').text(short + '명 자리가 모자라요. 역할을 두 개 더하면 모두에게 역할이 생겨요.');
 }
 
 // 남는 사람 수만큼 '설거지'와 '방 정리'를 반씩 나눠 더하고(정원은 칸마다 8명까지) 다시 추천받는다. 이미 있는 이름은 뒤에 번호
+// POST: /api/trips/1/roles  { "title": "설거지", "required": false, "capacity": 2, "tasks": [] }  뒤 POST: /api/trips/1/roles/recommend
 function fillShortage() {
-  var slots = board.roles.reduce(function (sum, r) { return sum + r.capacity; }, 0);
-  var short = trip.members.length - slots;
+  var short = shortCount();
   if (short <= 0) return;
   var names = board.roles.map(function (r) { return r.title; });
   var unique = function (t) { var n = t, i = 2; while (names.indexOf(n) >= 0) n = t + ' ' + i++; names.push(n); return n; };
-  var first = Math.min(8, Math.ceil(short / 2)), second = Math.min(8, short - first);
+  var first = Math.min(MAX_CAPACITY, Math.ceil(short / 2)), second = Math.min(MAX_CAPACITY, short - first);
   var add = [{ title: unique('설거지'), capacity: first }];
   if (second > 0) add.push({ title: unique('방 정리'), capacity: second });
   $('#btn-roles-fill').prop('disabled', true).text('나누는 중…');

@@ -34,8 +34,8 @@
       <h2 id="saved-title"></h2>
       <p class="muted">답은 언제든 다시 고칠 수 있어요. 방장이 추천을 다시 받으면 바뀐 답이 들어가요.</p>
       <div class="row wrap">
-        <a id="go-roles" class="btn primary">역할 보드 보기</a>
-        <a id="go-stays" class="btn">숙소 투표하기</a>
+        <a th:href="@{/trips/{id}/roles(id=${tripId})}" class="btn primary">역할 보드 보기</a>
+        <a th:href="@{/trips/{id}/stays(id=${tripId})}" class="btn">숙소 투표하기</a>
         <button type="button" id="btn-restart" class="btn plain">답 고치기</button>
       </div>
     </section>

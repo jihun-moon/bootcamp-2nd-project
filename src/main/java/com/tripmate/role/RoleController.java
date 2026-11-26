@@ -2,10 +2,8 @@ package com.tripmate.role;
 
 import com.tripmate.trip.TripAccess;
 import jakarta.validation.Valid;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -30,7 +28,8 @@ public class RoleController {
     }
 
     // PATCH: /api/trips/1/roles/assignments/2  body = { "roleId": 4, "version": 0 }
-    // 보드는 같이 쓰는 것이라 방 참여자면 누구 카드든 옮길 수 있다
+    // 보드는 같이 쓰는 것이라 방 참여자면 누구 카드든 옮길 수 있다. 그 사이 누가 먼저 옮겼으면 409
+    // (version 이 다르면 RoleService 가, 저장하는 순간에 겹치면 GlobalExceptionHandler 가)
     @PatchMapping("/assignments/{memberId}")
     public ResponseEntity<RoleDto.Board> move(@PathVariable Long tripId, @PathVariable Long memberId,
                                               @RequestBody RoleDto.MoveRequest req) {
@@ -75,11 +74,5 @@ public class RoleController {
     public ResponseEntity<TravelDto.Summary> travel(@PathVariable Long tripId) {
         tripAccess.me(tripId);
         return ResponseEntity.ok(travelService.estimate(roleService.travelPlan(tripId)));
-    }
-
-    // version 비교와 저장 사이에 다른 요청이 끼어들면 DB 단계에서 걸린다. 둘 다 "누가 먼저 옮김"이다
-    @ExceptionHandler({ObjectOptimisticLockingFailureException.class, DataIntegrityViolationException.class})
-    public ResponseEntity<Void> conflict() {
-        return ResponseEntity.status(HttpStatus.CONFLICT).build();
     }
 }

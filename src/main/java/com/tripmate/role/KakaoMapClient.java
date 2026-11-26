@@ -10,11 +10,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 // 카카오 로컬(동네 이름 → 좌표)과 카카오모빌리티 길찾기(좌표 → 거리·시간·통행료).
 // 둘 다 로그인에 쓰는 같은 REST API 키로 부른다. 콘솔에서 카카오맵·길찾기를 켜 둬야 한다.
@@ -28,6 +27,7 @@ public class KakaoMapClient {
     private static final String DIRECTIONS_URL =
             "https://apis-navi.kakaomobility.com/v1/directions?origin={origin}&destination={destination}&summary=true";
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record Point(double x, double y) {
         String param() { return x + "," + y; }
     }
@@ -36,12 +36,9 @@ public class KakaoMapClient {
     }
 
     // { "documents": [ { "address_name": "경기 가평군", "x": "127.5096", "y": "37.8315" } ] }
+    // 좌표가 글자("127.5096")로 와도 Jackson 이 double 로 바꿔 담는다
     @JsonIgnoreProperties(ignoreUnknown = true)
-    record Places(List<Place> documents) {
-    }
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    record Place(String x, String y) {
+    record Places(List<Point> documents) {
     }
 
     // { "routes": [ { "result_code": 0, "summary": { "distance": 62310, "duration": 4210, "fare": { "toll": 3200 } } } ] }
@@ -61,15 +58,10 @@ public class KakaoMapClient {
     record Fare(int toll) {
     }
 
-    // "가평", "서울 마포구" 같은 이름의 좌표는 바뀌지 않는다. 계산하기를 누를 때마다 다시 부르면 쿼터만 줄어서
-    // 최근 것만 기억한다. 가장 오래 안 쓴 것부터 버려(access order) 메모리는 항목 수만큼만 든다
+    // "가평", "서울 마포구" 같은 이름의 좌표는 바뀌지 않는다. 계산하기를 누를 때마다 다시 부르면 쿼터만 줄어서 기억해 둔다.
+    // 500개가 차면 통째로 비우고 다시 모은다. 방마다 쓰는 동네 이름은 몇 개 안 돼 금방 다시 찬다
     private static final int CACHE_SIZE = 500;
-    private final Map<String, Point> places = Collections.synchronizedMap(new LinkedHashMap<>(16, 0.75f, true) {
-        @Override
-        protected boolean removeEldestEntry(Map.Entry<String, Point> eldest) {
-            return size() > CACHE_SIZE;
-        }
-    });
+    private final Map<String, Point> places = new ConcurrentHashMap<>();
 
     private final RestTemplate restTemplate;
     private final String restKey;
@@ -92,8 +84,8 @@ public class KakaoMapClient {
         for (var url : List.of(ADDRESS_URL, KEYWORD_URL)) {
             var found = get(url, Places.class, key);
             if (found.isPresent() && found.get().documents() != null && !found.get().documents().isEmpty()) {
-                var first = found.get().documents().get(0);
-                var point = new Point(Double.parseDouble(first.x()), Double.parseDouble(first.y()));
+                var point = found.get().documents().get(0);
+                if (places.size() >= CACHE_SIZE) places.clear();
                 places.put(key, point);
                 return Optional.of(point);
             }
@@ -115,7 +107,7 @@ public class KakaoMapClient {
         headers.set(HttpHeaders.AUTHORIZATION, "KakaoAK " + restKey);
         try {
             return Optional.ofNullable(restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers), type, params).getBody());
-        } catch (RestClientException | NumberFormatException e) {
+        } catch (RestClientException e) {
             return Optional.empty();
         }
     }

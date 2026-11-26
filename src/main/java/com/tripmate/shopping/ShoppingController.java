@@ -2,8 +2,6 @@ package com.tripmate.shopping;
 
 import com.tripmate.trip.TripAccess;
 import jakarta.validation.Valid;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,17 +32,12 @@ public class ShoppingController {
     }
 
     // PUT: /api/trips/1/shopping/items/PORK_BELLY  body = { "amount": null }   "내가 살게"(산 뒤엔 amount 를 적어 다시)
+    // 둘이 같은 줄을 거의 동시에 누르면 (trip, item) 유일 제약에 걸려 늦은 쪽은 409(GlobalExceptionHandler)
     @PutMapping("/items/{item}")
     public ResponseEntity<ShoppingDto.Board> claim(@PathVariable Long tripId, @PathVariable ShoppingItem item,
                                                    @Valid @RequestBody ShoppingDto.ClaimRequest req) {
         var me = tripAccess.me(tripId);
         return ResponseEntity.ok(shoppingService.claim(tripId, item, me, req));
-    }
-
-    // 둘이 같은 줄을 거의 동시에 누르면 (trip, item) 유일 제약에 걸린다. 늦은 쪽은 409, 화면이 다시 읽어 누가 맡았는지 보인다
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<Void> taken() {
-        return ResponseEntity.status(HttpStatus.CONFLICT).build();
     }
 
     // DELETE: /api/trips/1/shopping/items/PORK_BELLY   맡은 사람이나 방장이 내려놓기

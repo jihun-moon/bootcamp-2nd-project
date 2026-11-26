@@ -24,7 +24,11 @@ function render() {
     + (claimed < board.items.length ? ' · 안 맡은 줄은 "내가 살게"를 눌러 주세요' : ' · 다 맡았어요'));
 }
 
+// 1인 고기 범위는 서버 검사(ShoppingDto.PlanRequest @Min(100) @Max(600))와 같다
+var MEAT_MIN = 100, MEAT_MAX = 600, MEAT_STEP = 50;
+
 // 방장은 −/+ 로 바꾸고, 참여자는 읽기만
+// PUT: /api/trips/1/shopping/plan  { "drinkers": 6, "meatGrams": 300 }
 function renderPlan() {
   var host = me().host;
   var box = $('#shop-plan').empty();
@@ -44,10 +48,12 @@ function renderPlan() {
       $('<button type="button" class="btn">').text('+').attr('aria-label', label + ' 늘리기').click(function () { change(step); })));
   };
   box.append(stepper('술 마시는 사람', board.drinkers, '명', 1, 0, board.people, 'drinkers'),
-    stepper('1인 고기', board.meatGrams, 'g', 50, 100, 600, 'meatGrams'));
+    stepper('1인 고기', board.meatGrams, 'g', MEAT_STEP, MEAT_MIN, MEAT_MAX, 'meatGrams'));
 }
 
 // 줄 오른쪽: 아무도 안 맡았으면 "내가 살게"(챙겨 갈 것은 "내가 챙길게"), 내가 맡았으면 쓴 돈 칸과 내려놓기, 남이 맡았으면 이름
+// PUT:    /api/trips/1/shopping/items/PORK_BELLY  { "amount": null }   맡기(산 뒤엔 amount 를 적어 다시). 남이 먼저 맡았으면 409
+// DELETE: /api/trips/1/shopping/items/PORK_BELLY   내려놓기(맡은 사람이나 방장)
 function claimPart(item) {
   var url = '/api/trips/' + tripId + '/shopping/items/' + item.key;
   if (!item.buyerId) {
@@ -92,11 +98,12 @@ function claimPart(item) {
 // 카톡 글: 줄마다 양과 맡은 사람. 안 맡은 줄은 "누가?"로 남겨 단톡방에서 손 들게
 function shareList() {
   var lines = ['[' + trip.title + '] 장보기 (' + board.people + '명 · ' + (board.nights ? board.nights + '박' : '당일') + ')'];
-  board.items.forEach(function (i) { lines.push('· ' + i.label + ' ' + i.quantity + ' — ' + (i.buyerName || '누가?')); });
+  board.items.forEach(function (i) { lines.push('· ' + i.label + ' ' + i.quantity + ' · ' + (i.buyerName || '누가?')); });
   lines.push('맡을 사람은 여기서 "내가 살게"·"내가 챙길게" ' + location.origin + '/join/' + trip.inviteCode);
   shareText(lines.join('\n'), '장보기 목록을 복사했어요. 단톡방에 붙여 넣어 주세요.');
 }
 
+// GET: /api/trips/1/shopping
 function load() {
   return api('GET', '/api/trips/' + tripId + '/shopping').done(function (b) { board = b; render(); });
 }

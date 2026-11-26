@@ -64,6 +64,7 @@ public enum ShoppingItem {
         return !((this == RICE || this == RAMEN) && nights == 0);
     }
 
+    // 소수 셈 오차(0.7 × 10 = 7.000000001)로 한 병 더 사라고 나오지 않게 아주 작은 값을 빼고 올린다
     private static int ceil(double v) {
         return (int) Math.ceil(v - 1e-9);
     }

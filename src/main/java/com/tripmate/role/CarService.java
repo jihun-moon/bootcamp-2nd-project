@@ -26,6 +26,9 @@ import java.util.stream.Collectors;
 @Service
 public class CarService {
 
+    // 승용차 한 대 5명(운전자 포함). 큰 차일 수도 있어 막지는 않고, 안 고른 사람을 넣을 때만 꽉 찬 차를 건너뛴다
+    static final int SEATS = 5;
+
     // 정산이 쓰는 꼴: 운전자 id -> 그 차에 탄 사람(운전자 포함), 따로 가는 사람
     public record Seating(Map<Long, Set<Long>> cars, Set<Long> separate) {
     }
@@ -129,9 +132,6 @@ public class CarService {
                 .filter(active::contains)
                 .collect(Collectors.toSet());
     }
-
-    // 승용차 한 대 5명(운전자 포함). 큰 차일 수도 있어 막지는 않고, 안 고른 사람을 넣을 때만 꽉 찬 차를 건너뛴다
-    static final int SEATS = 5;
 
     // 차례인 차가 꽉 찼으면 자리 남은 다음 차로. 다 찼으면 차례 그대로(화면이 "5인승이면 넘어요"로 알린다)
     private static Set<Long> seatDefault(Map<Long, Set<Long>> cars, Long turn) {

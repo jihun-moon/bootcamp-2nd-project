@@ -10,10 +10,28 @@ var SETTLE_KINDS = [['STAY', '숙소'], ['FUEL', '주유·톨비'], ['FOOD', '�
 
 function renderSettle(board, trip) {
   settle = board;
-  $('#settle-total').text(board.total ? '모두 ' + won(board.total) : '');
-  var list = $('#settle-transfers').empty();
+  var me = trip.members.find(function (m) { return m.id === trip.meId; });
   // 회비를 걷는 중(여행 전·중)이면 "총무가 돌려줄 줄"이 미리 뜨지 않게 안내만
   var duesPending = board.dues && board.dues.pending;
+  $('#settle-total').text(board.total ? '모두 ' + won(board.total) : '');
+  renderTransfers(board, trip, me, duesPending);
+  renderPaid(board, trip, me);
+  // 회비를 걷는 중에는 보낼 글도 숨긴다(돌려줄 줄이 미리 나가지 않게)
+  $('#btn-settle-share').prop('hidden', duesPending || !board.transfers.length);
+  renderLines(board, trip, me);
+
+  var rules = [];
+  if (board.driverPaysFuel === false) rules.push('기름값·톨비는 운전한 사람 빼고');
+  if (board.drinksSeparate === true) rules.push('술은 마신 사람끼리');
+  if (board.refundNoShow === false) rules.push('숙소는 빠진 사람 몫까지');
+  $('#settle-rule').text(rules.length ? '우리 규칙: ' + rules.join(', ') + ' 나눠요.' : '');
+  renderDrinkers(board, trip);
+}
+
+// 아직 남은 보낼 줄. 한 번만 누르면 된다: 보내는 사람은 "보냈어요", 받는 사람은 "받았어요". 방장은 대신 눌러 줄 수 있다
+// POST: /api/trips/1/payments  { "fromId": 2, "toId": 1, "amount": 20000 }
+function renderTransfers(board, trip, me, duesPending) {
+  var list = $('#settle-transfers').empty();
   if (duesPending) {
     list.append($('<li class="muted">').text('회비 ' + won(board.dues.collected + board.dues.amount) + ' 모이는 중. 다녀오면 남은 회비를 돌려주거나 모자란 만큼 더 걷는 줄이 여기 나와요. 회비로 쓴 돈은 '
       + withSubject(board.dues.collectorName) + ' 아래에 적어요.'));
@@ -24,11 +42,12 @@ function renderSettle(board, trip) {
       ? '다 보냈어요. 이번 여행 정산 끝!' : '모두 딱 맞게 냈어요. 보낼 돈이 없어요.')));
   }
   settledStamp(board.lines.length > 0 && !board.transfers.length);
-  var me = trip.members.find(function (m) { return m.id === trip.meId; });
   (duesPending ? [] : board.transfers).forEach(function (t) {
     var mine = t.fromId === trip.meId || t.toId === trip.meId;
-    // 한 번만 누르면 된다: 보내는 사람은 "보냈어요", 받는 사람은 "받았어요". 방장은 대신 눌러 줄 수 있다
-    var label = t.fromId === trip.meId ? '보냈어요' : t.toId === trip.meId ? '받았어요' : me && me.host ? '받음 표시' : null;
+    var label = null;
+    if (t.fromId === trip.meId) label = '보냈어요';
+    else if (t.toId === trip.meId) label = '받았어요';
+    else if (me && me.host) label = '받음 표시';
     var right = $('<span class="settle-right">').append($('<b class="settle-amount">').text(won(t.amount)));
     if (label) {
       right.append($('<button type="button" class="btn small settle-done">').text(label).click(function () {
@@ -42,13 +61,17 @@ function renderSettle(board, trip) {
       $('<span>').append($('<b>').text(t.fromName), $('<span class="arrow" aria-hidden="true">').text(' → '), $('<b>').text(t.toName)),
       right).appendTo(list);
   });
+}
 
-  // 끝난 송금: 누가 눌렀는지와 되돌리기(누른 사람, 보낸·받은 사람, 방장)
+// 끝난 송금: 누가 눌렀는지와 되돌리기(누른 사람, 보낸·받은 사람, 방장)
+// DELETE: /api/trips/1/payments/4
+function renderPaid(board, trip, me) {
   var paid = $('#settle-paid').empty().prop('hidden', !board.payments.length);
   if (board.payments.length) paid.append($('<li class="muted">').text('끝난 송금'));
   board.payments.forEach(function (p) {
-    var row = $('<li class="between">').append($('<span>').text('✓ ' + (p.dues ? '회비 ' : '') + p.fromName + ' → ' + p.toName + ' ' + won(p.amount)
-      + ' · ' + withSubject(p.markedByName) + (p.markedById === p.toId ? ' 받았어요' : p.markedById === p.fromId ? ' 보냈어요' : ' 표시했어요')));
+    var how = p.markedById === p.toId ? ' 받았어요' : p.markedById === p.fromId ? ' 보냈어요' : ' 표시했어요';
+    var row = $('<li class="between">').append($('<span>').text('✓ ' + (p.dues ? '회비 ' : '') + p.fromName + ' → ' + p.toName + ' '
+      + won(p.amount) + ' · ' + withSubject(p.markedByName) + how));
     var can = [p.fromId, p.toId, p.markedById].indexOf(trip.meId) >= 0 || (me && me.host);
     if (can) {
       row.append($('<button type="button" class="link small">').text('되돌리기').click(function () {
@@ -57,33 +80,27 @@ function renderSettle(board, trip) {
     }
     paid.append(row);
   });
-  // 회비를 걷는 중에는 보낼 글도 숨긴다(돌려줄 줄이 미리 나가지 않게)
-  $('#btn-settle-share').prop('hidden', duesPending || !board.transfers.length);
+}
 
+// 먼저 낸 돈. 장보기 줄은 장보기 화면에서 고친다. 내가 적은 줄과 방장은 지울 수 있다
+// DELETE: /api/trips/1/expenses/3
+function renderLines(board, trip, me) {
   var lines = $('#settle-lines').empty();
   board.lines.forEach(function (l) {
     var row = $('<li class="between">').append($('<span>').text(l.payerName + ' · ' + l.label + (l.sharedBy ? ' · ' + l.sharedBy + '명만' : '')),
       $('<span>').text(won(l.amount)));
-    // 장보기 줄은 장보기 화면에서 고친다. 내가 적은 줄과 방장은 지울 수 있다
-    var me = trip.members.find(function (m) { return m.id === trip.meId; });
-    if (!l.shopping && (l.payerId === trip.meId || me.host)) {
+    if (!l.shopping && (l.payerId === trip.meId || (me && me.host))) {
       row.append($('<button type="button" class="link small">').text('지우기').attr('aria-label', l.label + ' 지우기').click(function () {
         api('DELETE', '/api/trips/' + tripId + '/expenses/' + l.id).done(function (b) { renderSettle(b, trip); });
       }));
     }
     lines.append(row);
   });
-  var rules = [];
-  if (board.driverPaysFuel === false) rules.push('기름값·톨비는 운전한 사람 빼고');
-  if (board.drinksSeparate === true) rules.push('술은 마신 사람끼리');
-  if (board.refundNoShow === false) rules.push('숙소는 빠진 사람 몫까지');
-  $('#settle-rule').text(rules.length ? '우리 규칙: ' + rules.join(', ') + ' 나눠요.' : '');
-  renderDrinkers(board, trip);
 }
 
 // 규칙 "술값은 마신 사람만"일 때만 보인다. 누를 때마다 바로 저장하고 보낼 줄을 다시 센다.
 // 내 것은 내가, 남의 것은 방장이(못 온 사람 대신) 바꾼다
-// PUT /api/trips/1/members/2/drinks  { "drinks": false }
+// PUT: /api/trips/1/members/2/drinks  { "drinks": false }
 function renderDrinkers(board, trip) {
   var box = $('#settle-drinkers').prop('hidden', board.drinksSeparate !== true);
   if (board.drinksSeparate !== true) return;
@@ -131,14 +148,15 @@ function loadSettleCode(retry) {
     .fail(function (xhr) { if (xhr.status === 409 && !retry) loadSettleCode(true); });
 }
 
-// 술 표시처럼 내가 방을 바꿨을 때: 바뀐 방으로 다시 센다(SSE 로도 오지만 내 화면은 바로)
-var settleTripChanged = function (t) { loadSettle(t); };
+// 술 표시처럼 내가 방을 바꿨을 때 바뀐 방으로 다시 센다(SSE 로도 오지만 내 화면은 바로). initSettle 이 채운다
+var settleTripChanged = null;
 
+// GET: /api/trips/1/settlement
 function loadSettle(trip) {
   return api('GET', '/api/trips/' + tripId + '/settlement').done(function (b) { renderSettle(b, trip); });
 }
 
-function initSettle(trip) {
+function drawSettleKinds() {
   var kinds = $('#settle-kind').empty();
   SETTLE_KINDS.forEach(function (k) {
     $('<button type="button">').text(k[1]).attr('aria-pressed', k[0] === settleKind).click(function () {
@@ -147,6 +165,11 @@ function initSettle(trip) {
       $(this).attr('aria-pressed', true);
     }).appendTo(kinds);
   });
+}
+
+// POST: /api/trips/1/expenses  { "kind": "STAY", "memo": "숙소 잔금", "amount": 476000, "sharerIds": null }
+function initSettle(trip) {
+  drawSettleKinds();
   // 나눌 사람: null 이면 모두(규칙대로). 펼치면 모두 눌린 채로 시작하고, 뺄 사람만 누른다
   var sharers = null;
   var whoLabel = function () {

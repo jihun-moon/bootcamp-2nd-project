@@ -1,11 +1,13 @@
 // 우리 여행 영수증. 방·역할·숙소·교통비를 한 번에 읽어 영수증 한 장으로 그리고, 같은 내용을 그림(PNG)으로 만들어 보낸다
-// GET /api/trips/1, /api/trips/1/roles, /api/trips/1/stays, /api/trips/1/roles/travel
+// GET /api/trips/1, /api/trips/1/roles, /api/trips/1/stays, /api/trips/1/roles/travel, /api/trips/1/shopping
 var tripId = $('body').data('trip-id');
 var lines = null; // 화면과 그림이 같이 쓰는 줄: { kind: 'title'|'meta'|'cut'|'row'|'total'|'note', left, right }
 
+var DAY_MS = 24 * 60 * 60 * 1000;
+
 function nightsOf(trip) {
   if (!trip.startDate || !trip.endDate) return null;
-  return Math.max(0, Math.round((new Date(trip.endDate) - new Date(trip.startDate)) / 86400000));
+  return Math.max(0, Math.round((new Date(trip.endDate) - new Date(trip.startDate)) / DAY_MS));
 }
 
 // 숙소는 표를 가장 많이 받은 곳(같으면 먼저 올린 곳). 가격이 있으면 1인 숙소비 = 1박 × 박 수 ÷ 인원
@@ -15,56 +17,15 @@ function pickStay(stays) {
 
 function buildLines(trip, board, stays, travel, shopping) {
   var people = trip.members.length;
-  var nights = nightsOf(trip);
   var out = [];
   out.push({ kind: 'title', left: 'TripMate 여행 영수증' });
   out.push({ kind: 'meta', left: trip.title });
   out.push({ kind: 'meta', left: [trip.destination || '지역 미정', formatPeriod(trip.startDate, trip.endDate), people + '명'].join(' · ') });
   out.push({ kind: 'cut' });
-
-  // 역할: 칸마다 사람 이름과 첫 근거 하나
-  board.roles.forEach(function (role) {
-    var picked = board.assignments.filter(function (a) { return a.roleId === role.id; });
-    if (!picked.length) return;
-    var names = picked.map(function (a) {
-      var m = trip.members.find(function (x) { return x.id === a.memberId; });
-      return m ? m.name : '';
-    }).join('·');
-    var reason = (picked[0].reasons || [])[0];
-    out.push({ kind: 'row', left: role.title + '  ' + names, right: reason || '' });
-  });
-  if (!board.assignments.length) out.push({ kind: 'note', left: '역할은 설문이 다 모이면 정해져요' });
+  addRoleLines(out, trip, board);
   out.push({ kind: 'cut' });
 
-  var total = 0;
-  var stay = pickStay(stays);
-  if (stay) {
-    var stayPart = (stay.price && nights !== null) ? Math.round(stay.price * Math.max(1, nights) / people / 100) * 100 : null;
-    // 날짜가 아직이면 1인 몫을 못 세니 아는 만큼(1박 가격)만
-    var stayRight = stayPart !== null ? won(stayPart) : (stay.price ? '1박 ' + won(stay.price) : '가격 미정');
-    out.push({ kind: 'row', left: '숙소  ' + stay.title, right: stayRight });
-    if (stayPart !== null) total += stayPart;
-  }
-  // 교통: 차를 나눴으면 내가 탄 차 값, 따로 가면 빠진다. 안 나눴으면 모두 나눈 값
-  var carLegs = travel ? travel.legs.filter(function (l) { return l.perRider !== null; }) : [];
-  var myCar = carLegs.find(function (l) { return l.memberId === trip.meId || l.riderIds.indexOf(trip.meId) >= 0; });
-  if (carLegs.length) {
-    // 영수증은 단톡방에 그대로 올라가는 한 장이라 운전자 본인 몫(0원)이 아니라 차마다 "탄 사람 1인"을 줄로 적는다.
-    // 1인 합계에는 내가 탄 차 값(운전자 빼기 규칙이면 운전자는 0, 따로 가면 0)을 더한다
-    var exemptRule = trip.rules.driverPaysFuel === false;
-    carLegs.forEach(function (l) {
-      var each = exemptRule && l.perPassenger !== null ? l.perPassenger : l.perRider;
-      out.push({ kind: 'row', left: '교통  ' + l.name + ' 차 ' + (l.riderIds.length + 1) + '명' + (exemptRule ? '(운전자 빼고)' : ''), right: won(each) });
-    });
-    var mine = 0;
-    if (myCar) mine = exemptRule && myCar.perPassenger !== null ? (myCar.memberId === trip.meId ? 0 : myCar.perPassenger) : myCar.perRider;
-    total += mine;
-  } else if (travel && travel.perPerson !== null) {
-    var exempt = trip.rules.driverPaysFuel === false && travel.perPassenger !== null;
-    var move = exempt ? travel.perPassenger : travel.perPerson;
-    out.push({ kind: 'row', left: '교통  기름값·통행료' + (exempt ? '(운전자 빼고)' : ''), right: won(move) });
-    total += move;
-  }
+  var total = addStayLine(out, trip, stays) + addTravelLines(out, trip, travel);
   // 장보기: 산 사람들이 적은 쓴 돈 합 ÷ 인원(서버가 100원 단위로 올림)
   if (shopping && shopping.spent) {
     out.push({ kind: 'row', left: '장보기  ' + shopping.items.filter(function (i) { return i.buyerId; }).length + '줄', right: won(shopping.perPerson) });
@@ -80,6 +41,55 @@ function buildLines(trip, board, stays, travel, shopping) {
   // 그림이 단톡방·스토리로 퍼질 때 이 줄이 광고가 된다(그림 바닥 주소)
   out.push({ kind: 'note', left: '발행 ' + new Date().toLocaleDateString('ko-KR') + ' · 우리 방도 1분 → ' + location.host });
   return out;
+}
+
+// 역할: 칸마다 사람 이름과 첫 근거 하나
+function addRoleLines(out, trip, board) {
+  board.roles.forEach(function (role) {
+    var picked = board.assignments.filter(function (a) { return a.roleId === role.id; });
+    if (!picked.length) return;
+    var names = picked.map(function (a) {
+      var m = trip.members.find(function (x) { return x.id === a.memberId; });
+      return m ? m.name : '';
+    }).join('·');
+    var reason = (picked[0].reasons || [])[0];
+    out.push({ kind: 'row', left: role.title + '  ' + names, right: reason || '' });
+  });
+  if (!board.assignments.length) out.push({ kind: 'note', left: '역할은 설문이 다 모이면 정해져요' });
+}
+
+// 숙소 줄을 더하고 1인 숙소비를 돌려준다. 날짜가 아직이면 1인 몫을 못 세니 아는 만큼(1박 가격)만 적고 0
+function addStayLine(out, trip, stays) {
+  var stay = pickStay(stays);
+  if (!stay) return 0;
+  var nights = nightsOf(trip);
+  var part = (stay.price && nights !== null) ? Math.round(stay.price * Math.max(1, nights) / trip.members.length / 100) * 100 : null;
+  var right = part !== null ? won(part) : (stay.price ? '1박 ' + won(stay.price) : '가격 미정');
+  out.push({ kind: 'row', left: '숙소  ' + stay.title, right: right });
+  return part || 0;
+}
+
+// 교통 줄을 더하고 내 1인 교통비를 돌려준다. 차를 나눴으면 내가 탄 차 값, 따로 가면 0. 안 나눴으면 모두 나눈 값
+function addTravelLines(out, trip, travel) {
+  var exemptRule = trip.rules.driverPaysFuel === false;
+  var carLegs = travel ? travel.legs.filter(function (l) { return l.perRider !== null; }) : [];
+  if (carLegs.length) {
+    // 영수증은 단톡방에 그대로 올라가는 한 장이라 운전자 본인 몫(0원)이 아니라 차마다 "탄 사람 1인"을 줄로 적는다
+    carLegs.forEach(function (l) {
+      var each = exemptRule && l.perPassenger !== null ? l.perPassenger : l.perRider;
+      out.push({ kind: 'row', left: '교통  ' + l.name + ' 차 ' + (l.riderIds.length + 1) + '명' + (exemptRule ? '(운전자 빼고)' : ''), right: won(each) });
+    });
+    var myCar = carLegs.find(function (l) { return l.memberId === trip.meId || l.riderIds.indexOf(trip.meId) >= 0; });
+    if (!myCar) return 0;
+    if (!exemptRule || myCar.perPassenger === null) return myCar.perRider;
+    // 운전자 빼기 규칙: 운전자 본인은 0, 탄 사람은 운전자 뺀 몫
+    return myCar.memberId === trip.meId ? 0 : myCar.perPassenger;
+  }
+  if (!travel || travel.perPerson === null) return 0;
+  var exempt = exemptRule && travel.perPassenger !== null;
+  var move = exempt ? travel.perPassenger : travel.perPerson;
+  out.push({ kind: 'row', left: '교통  기름값·통행료' + (exempt ? '(운전자 빼고)' : ''), right: won(move) });
+  return move;
 }
 
 function renderReceipt() {
@@ -99,8 +109,7 @@ function drawPng() {
   var W = 720, pad = 48, lh = { title: 64, meta: 40, row: 52, total: 72, note: 40, cut: 36 };
   var font = '"Pretendard Variable", Pretendard, sans-serif';
   var c = document.createElement('canvas').getContext('2d');
-  // 메모·방 이름 줄이 그림 폭을 넘으면 낱말 단위로 줄을 나눈다. 전에는 메모만 나눠서
-  // "강릉 2박 3일 대학 동기 MT 겨울 여행 · 12월 18일(금) ~ …" 같은 긴 방 줄이 옆으로 눌려 찍혔다
+  // 메모·방 이름 줄이 그림 폭을 넘으면 낱말 단위로 줄을 나눈다. 안 나누면 긴 방 이름 줄이 옆으로 눌려 찍힌다
   var wrapFont = { note: '400 22px ', meta: '400 24px ' };
   var drawn = [];
   lines.forEach(function (l) {

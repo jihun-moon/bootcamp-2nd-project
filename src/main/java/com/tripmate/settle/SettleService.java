@@ -373,7 +373,8 @@ public class SettleService {
         if (!me.isHost() && !me.getId().equals(req.fromId()) && !me.getId().equals(req.toId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
-        var byId = trip.getMembers().stream().collect(Collectors.toMap(Member::getId, m -> m));
+        // 나간 사람도 보낼·받을 줄에 나오니 그 줄도 끝낼 수 있게 나간 사람까지 찾는다
+        var byId = trip.getEveryone().stream().collect(Collectors.toMap(Member::getId, m -> m));
         var from = byId.get(req.fromId());
         var to = byId.get(req.toId());
         if (from == null || to == null || from == to) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이 방 두 사람 사이만 돼요");

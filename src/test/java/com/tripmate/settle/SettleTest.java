@@ -108,6 +108,14 @@ class SettleTest {
         for (var t : b.get("transfers")) if (t.get("toName").asString().equals("민지(나감)")) toMinji += t.get("amount").asInt();
         assertThat(toMinji).isEqualTo(70_000);
         assertThat(b.get("balances").size()).isEqualTo(8);
+
+        // 나간 민지에게 보낼 줄도 "보냈어요"로 끝낼 수 있다(전에는 400)
+        for (var t : b.get("transfers")) {
+            if (t.get("toId").asInt() != 2) continue;
+            markPaid("재현", t.get("fromId").asInt(), 2, t.get("amount").asInt()).andExpect(status().isCreated());
+            break;
+        }
+        assertThat(board("시우").get("payments").size()).isEqualTo(1);
     }
 
     @Test
